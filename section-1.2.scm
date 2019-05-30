@@ -130,3 +130,85 @@ coins, then add in special handling for dimes.
 
 (define (count-change amount)
   (if (< amount 0) 0 (+ 1 (cc 2 1 amount))))
+
+;; Exercise 1.11 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (f-recursive n)
+  (define (addend m)
+    (* m (f-recursive (- n m))))
+  (if (< n 3) n (+ (addend 1) (addend 2) (addend 3))))
+
+(define (f-iterative n)
+  (define (solve a b c)
+    (+ (* 3 a) (* 2 b) c))
+  (define (go a b c count)
+    (if (= count 0) a (go b c (solve a b c) (- count 1))))
+  (go 0 1 2 n))
+
+;; Exercise 1.12 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (pascal n)
+  (define (f row col)
+    (cond ((or (= col 0) (= col row)) 1)
+          ((or (< col 0) (> col row)) 0)
+          (else (+ (f (- row 1) (- col 1))
+                   (f (- row 1) col)))))
+  (define (g row col count)
+    (cond ((> col row) (g (+ row 1) 0 count))
+          ((= count 0) (f row col))
+          (else (g row (+ col 1) (- count 1)))))
+  (g 0 0 n))
+
+;; Exercise 1.13 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#|
+
+Let:
+
+  ϕ = (1 + √5)/2 and
+  ψ = (1 - √5)/2.
+
+Note that ϕ and ψ are positive and negative respectively, and that ψ² < 1 (the
+proofs are omitted for brevity).
+
+We will first prove that the following statement P(n) holds for all natural
+numbers n.
+
+  Fib(n) = (ϕⁿ - ψⁿ)/√5
+
+It is easy to show that P(0) holds:
+
+  Fib(0) = (((1 + √5)/2)⁰ - ((1 - √5)/2)⁰)/√5   by substitution
+  Fib(0) = 0
+  0      = 0                                    by the definition of Fib(n)
+
+And similarly P(1):
+
+  Fib(1) = (((1 + √5)/2)¹ - ((1 - √5)/2)¹)/√5   by substitution
+  Fib(1) = 1
+  1      = 1                                    by the definition of Fib(n)
+
+To prove the general statement, it will suffice to show that for some i,
+if P(i) holds and P(i-1) holds, then P(i+1) also holds.
+
+  Fib(i+1)                        = (ϕⁱ⁺¹ - ψⁱ⁺¹)/√5
+  Fib(i)       + Fib(i-1)         = (ϕⁱ⁺¹ - ψⁱ⁺¹)/√5   by definition of Fib(n)
+  (ϕⁱ - ψⁱ)/√5 + (ϕⁱ⁻¹ - ψⁱ⁻¹)/√5 = (ϕⁱ⁺¹ - ψⁱ⁺¹)/√5   because P(i) and P(i-1)
+  ϕⁱ - ψⁱ + ϕⁱ⁻¹ - ψⁱ⁻¹           = ϕⁱ⁺¹ - ψⁱ⁺¹
+  ϕⁱ⁻¹ + ϕⁱ - ϕⁱ⁺¹                = ψⁱ⁻¹ + ψⁱ - ψⁱ⁺¹
+  ϕⁱ(ϕ⁻¹ + 1 - ϕ)                 = ψⁱ(ψ⁻¹ + 1 - ψ)
+  ϕⁱ(0)                           = ψⁱ(0)              (reduction omitted)
+  0                               = 0
+
+Now to prove that Fib(n) is the closest integer to ϕⁿ/√5, it will suffice to
+show that | Fib(n) - ϕⁿ/√5 | < 1/2 holds for all natural numbers n.
+
+  | Fib(n)       - ϕⁿ/√5 | < 1/2
+  | (ϕⁿ - ψⁿ)/√5 - ϕⁿ/√5 | < 1/2       because P above
+  | -ψⁿ |                  < √5/2
+  | -ψⁿ |²                 < (√5/2)²
+  (ψ²)ⁿ                    < 5/4
+  1ⁿ                       < 5/4       because ψ² < 1 and n ≥ 0
+  1                        < 5/4       QED
+
+|#
