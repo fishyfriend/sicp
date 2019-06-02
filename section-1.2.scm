@@ -212,3 +212,172 @@ show that | Fib(n) - ϕⁿ/√5 | < 1/2 holds for all natural numbers n.
   1                        < 5/4       QED
 
 |#
+
+;; Exercise 1.14 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#|
+
+(cc 11 5)
+      ├─(cc 11 4)
+      │   ├─(cc 11 3)
+      │   │   ├─(cc 11 2)
+      │   │   │   ├─(cc 11 1)
+      │   │   │   │   ├─(cc 11 0)
+      │   │   │   │   │   └─0
+      │   │   │   │   └─(cc 10 1)
+      │   │   │   │       ├─(cc 10 0)
+      │   │   │   │       │   └─0
+      │   │   │   │       └─(cc 9 1)
+      │   │   │   │           ├─(cc 9 0)
+      │   │   │   │           │   └─0
+      │   │   │   │           └─(cc 8 1)
+      │   │   │   │               ├─(cc 8 0)
+      │   │   │   │               │   └─0
+      │   │   │   │               └─(cc 7 1)
+      │   │   │   │                   ├─(cc 7 0)
+      │   │   │   │                   │   └─0
+      │   │   │   │                   └─(cc 6 1)
+      │   │   │   │                       ├─(cc 6 0)
+      │   │   │   │                       │   └─0
+      │   │   │   │                       └─(cc 5 1)
+      │   │   │   │                           ├─(cc 5 0)
+      │   │   │   │                           │   └─0
+      │   │   │   │                           └─(cc 4 1)
+      │   │   │   │                               ├─(cc 4 0)
+      │   │   │   │                               │   └─0
+      │   │   │   │                               └─(cc 3 1)
+      │   │   │   │                                   ├─(cc 3 0)
+      │   │   │   │                                   │   └─0
+      │   │   │   │                                   └─(cc 2 1)
+      │   │   │   │                                       ├─(cc 2 0)
+      │   │   │   │                                       │   └─0
+      │   │   │   │                                       └─(cc 1 1)
+      │   │   │   │                                           ├─(cc 1 0)
+      │   │   │   │                                           │   └─0
+      │   │   │   │                                           └─(cc 0 1)
+      │   │   │   │                                               └─1
+      │   │   │   └─(cc 6 2)
+      │   │   │       ├─(cc 6 1)
+      │   │   │       │   ├─(cc 6 0)
+      │   │   │       │   │   └─0
+      │   │   │       │   └─(cc 5 1)
+      │   │   │       │       ├─(cc 5 0)
+      │   │   │       │       │   └─0
+      │   │   │       │       └─(cc 4 1)
+      │   │   │       │           ├─(cc 4 0)
+      │   │   │       │           │   └─0
+      │   │   │       │           └─(cc 3 1)
+      │   │   │       │               ├─(cc 3 0)
+      │   │   │       │               │   └─0
+      │   │   │       │               └─(cc 2 1)
+      │   │   │       │                   ├─(cc 2 0)
+      │   │   │       │                   │   └─0
+      │   │   │       │                   └─(cc 1 1)
+      │   │   │       │                       ├─(cc 1 0)
+      │   │   │       │                       │   └─0
+      │   │   │       │                       └─(cc 0 1)
+      │   │   │       │                           └─1
+      │   │   │       └─(cc 1 2)
+      │   │   │           ├─(cc 1 1)
+      │   │   │           │   ├─(cc 1 0)
+      │   │   │           │   │   └─0
+      │   │   │           │   └─(cc 0 1)
+      │   │   │           │       └─1
+      │   │   │           └─(cc -4 2)
+      │   │   │               └─0
+      │   │   └─(cc 1 3)
+      │   │       ├─(cc 1 2)
+      │   │       │   ├─(cc 1 1)
+      │   │       │   │   ├─(cc 1 0)
+      │   │       │   │   │   └─0
+      │   │       │   │   └─(cc 0 1)
+      │   │       │   │       └─1
+      │   │       │   └─(cc -4 2)
+      │   │       │       └─0
+      │   │       └─(cc -9 3)
+      │   │           └─0
+      │   └─(cc -14 4)
+      │       └─0
+      └─(cc -39 5)
+          └─0
+
+The space used by the process grows as Θ(n) and the number of steps as Θ(2ⁿ).
+
+Below is an adaptation of the original change-counting procedure. Instead of
+counting ways to make change, it calculates the number of recursive calls
+required to generate the result, while printing out a tree diagram of the
+computational process. This is used to generate the diagram above.
+
+|#
+
+(define (visualize-count-change amount)
+  (vis-cc amount 5 "" #f))
+
+(define (vis-cc amount kinds-of-coins prefix tee?)
+  (define child-prefix
+    (string-append prefix (if tee? "  │ " "    ")))
+  (define (draw-child-prefix tee? value)
+    (display (string-append child-prefix (if tee? "  ├─" "  └─") value)))
+  (display (list "cc" amount kinds-of-coins))
+  (newline)
+  (cond ((= amount 0)
+         (begin (draw-child-prefix #f "1\n") 1))
+        ((or (< amount 0) (= kinds-of-coins 0))
+         (begin (draw-child-prefix #f "0\n") 1))
+        (else (let* ((qty1 (begin (draw-child-prefix #t "")
+                                  (vis-cc amount
+                                          (- kinds-of-coins 1)
+                                          child-prefix
+                                          #t)))
+                     (qty2 (begin (draw-child-prefix #f "")
+                                  (vis-cc (- amount
+                                             (first-denomination kinds-of-coins))
+                                          kinds-of-coins
+                                          child-prefix
+                                          #f))))
+                     (+ qty1 qty2 1)))))
+
+;; Exercise 1.15 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (cube x) (* x x x))
+
+(define (p x) (begin (display ".") (- (* 3 x) (* 4 (cube x)))))
+
+(define (sine angle)
+  (if (not (> (abs angle) 0.1))
+      angle
+      (p (sine (/ angle 3.0)))))
+
+#|
+a. When evaluating (sine 12.15), p is applied five times.
+b. For (sine a), the order of growth in both space and # of steps is Θ(log a).
+|#
+
+;; Exercise 1.16 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (iterative-fast-expt b n)
+  (define (go a b n)
+    (cond ((= n 0) a)
+          ((even? n) (go a (square b) (/ n 2)))
+          (else (go (* a b) b (- n 1)))))
+  (go 1 b n))
+
+;; Exercise 1.17 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (double x) (+ x x))
+(define (halve x) (/ x 2))
+
+(define (*-recursive x y)
+  (cond ((= y 0) 0)
+        ((= y 1) x)
+        ((even? y) (*-recursive (double x) (halve y)))
+        (else (+ x (*-recursive x (- y 1))))))
+
+;; Exercise 1.18 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (*-iterative x y)
+  (define (go acc x y)
+    (cond ((= y 0) acc)
+          ((even? y) (go acc (double x) (halve y)))
+          (else (go (+ acc x) x (- y 1)))))
+  (go 0 x y))
