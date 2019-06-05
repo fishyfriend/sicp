@@ -625,3 +625,34 @@ is indeed consistent with an order of growth of Θ(√n).
 (search-for-primes (expt 10 14) -1 3) ; 9.72s, 9.70s, 9.67s
 (search-for-primes (expt 10 15) -1 3) ; 30.67s, 31.07s, 31.35s
 |#
+
+;; Exercise 1.23 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (next x)
+  (if (= x 2) 3 (+ x 2)))
+
+(define (find-divisor n test-divisor)
+  (cond ((> (square test-divisor) n) n)
+        ((divides? test-divisor n) test-divisor)
+        (else (find-divisor n (next test-divisor)))))
+
+#|
+(search-for-primes (expt 10 10) -1 3) ; 0.06s, 0.06s, 0.06s
+(search-for-primes (expt 10 11) -1 3) ; 0.19s, 0.19s, 0.18s
+(search-for-primes (expt 10 12) -1 3) ; 0.56s, 0.56s, 0.58s
+(search-for-primes (expt 10 13) -1 3) ; 1.85s, 1.86s, 1.86s
+|#
+
+#|
+The new algorithm runs around in around 60% the time as the old algorithm, worse
+than the expected 50%. The discrepancy could be explained by the observation
+that, while the new approach eliminates half of the test steps, it also adds
+new computations within each step. Namely, it replaces a single addition
+(+ test-divisor 1) with a procedure call (next test-divisor) whose evaluation
+will include an addition, an equality check and conditional branch. Roughly,
+we've replaced n steps of size z with (n/2) steps of size (6z/5):
+
+  original runtime = nz
+  revised runtime = (n/2)(6z/5) = 3nz/5 = (60/100)nz = 60% * original runtime
+
+|#
