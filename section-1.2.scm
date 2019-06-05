@@ -511,3 +511,117 @@ Tpq(Tpq(a,b)) = Tpq((a + b)q + ap, aq + bp)
 In the normal-order evaluation, as shown above, the remainder operation is
 performed 17 times. In the applicative-order evaluation, it is performed only 4
 times ((r 206 40), (r 40 6), (r 6 4), and (r 4 2)).
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (smallest-divisor n)
+  (find-divisor n 2))
+
+(define (find-divisor n test-divisor)
+  (cond ((> (square test-divisor) n) n)
+        ((divides? test-divisor n) test-divisor)
+        (else (find-divisor n (+ test-divisor 1)))))
+
+(define (divides? a b)
+  (= (remainder b a) 0))
+
+(define (prime? n)
+  (= n (smallest-divisor n)))
+
+(define (expmod base exp m)
+  (cond ((= exp 0) 1)
+        ((even? exp)
+         (remainder (square (expmod base (/ exp 2) m))
+                    m))
+        (else
+         (remainder (* base (expmod base (- exp 1) m))
+                    m))))
+
+(define (fermat-test n)
+  (define (try-it a)
+    (= (expmod a n n) a))
+  (try-it (+ 1 (random (- n 1)))))
+
+(define (fast-prime? n times)
+  (cond ((= times 0) true)
+        ((fermat-test n) (fast-prime? n (- times 1)))
+        (else false)))
+
+;; Exercise 1.21 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#|
+(smallest-divisor 199)   ; => 199
+(smallest-divisor 1999)  ; => 1999
+(smallest-divisor 19999) ; => 7
+|#
+
+;; Exercise 1.22 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (timed-prime-test n)
+  (newline)
+  (display n)
+  (start-prime-test n (runtime)))
+
+(define (start-prime-test n start-time)
+  (if (prime? n)
+      (begin (report-prime (- (runtime) start-time)) #t)
+      #f))
+
+(define (report-prime elapsed-time)
+  (display " *** ")
+  (display elapsed-time))
+
+; Set upper to -1 to remove the upper bound
+(define (search-for-primes lower upper max-results)
+  (define (go n bound results)
+    (if (and (or (= bound -1)
+                 (not (> n bound)))
+             (< results max-results))
+        (go (+ n 2)
+            bound
+            (+ results
+               (if (timed-prime-test n)
+                   1
+                   0)))))
+  (go (if (even? lower)
+          (+ lower 1)
+          lower)
+      upper
+      0))
+
+#|
+(search-for-primes (expt 10 3) -1 3)
+; primes: 1009, 1013, 1019; times to test: 0.00s, 0.00s, 0.00s
+
+(search-for-primes (expt 10 4) -1 3) ; => 10007, 10009, 100037
+; primes: 10007, 10009, 100037; times to test: 0.00s, 0.00s, 0.00s
+
+(search-for-primes (expt 10 5) -1 3)
+; primes: 100003, 100019, 100043; times to test: 0.01s, 0.00s, 0.00s
+
+(search-for-primes (expt 10 6) -1 3)
+; primes: 1000003, 1000033, 1000037; times to test: 0.00s, 0.01s, 0.00s
+|#
+
+#|
+The timings for primes up to 10^6 do not reflect an order of growth of Θ(√n).
+The reported timings are all 0.00s or 0.01s and do not follow a clear pattern.
+The timings are apparently too short to show noticeable growth at this scale.
+
+To see evidence of the order of growth we must use larger inputs, which have
+longer runtimes that can be meaningfully reported. Above n > 10^9, each tenfold
+increase in the value of n grows the timing by a factor of about √10, which
+is indeed consistent with an order of growth of Θ(√n).
+|#
+
+#|
+(search-for-primes (expt 10 7) -1 3) ; 0.01s, 0.00s, 0.01s
+(search-for-primes (expt 10 8) -1 3) ; 0.01s, 0.01s, 0.01s
+(search-for-primes (expt 10 9) -1 3) ; 0.04s, 0.03s, 0.04s
+(search-for-primes (expt 10 10) -1 3) ; 0.10s, 0.09s, 0.09s
+(search-for-primes (expt 10 11) -1 3) ; 0.30s, 0.31s, 0.31s
+(search-for-primes (expt 10 12) -1 3) ; 1.01s, 0.97s, 0.95s
+(search-for-primes (expt 10 13) -1 3) ; 3.02s, 3.05s, 3.11s
+(search-for-primes (expt 10 14) -1 3) ; 9.72s, 9.70s, 9.67s
+(search-for-primes (expt 10 15) -1 3) ; 30.67s, 31.07s, 31.35s
+|#
