@@ -381,3 +381,133 @@ b. For (sine a), the order of growth in both space and # of steps is Θ(log a).
           ((even? y) (go acc (double x) (halve y)))
           (else (go (+ acc x) x (- y 1)))))
   (go 0 x y))
+
+;; Exercise 1.19 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#|
+
+Fib(n) = Tⁿ
+T = T₀₁
+Fib(n) = T₀₁ⁿ
+
+Tpq(a,b) = (bq + aq + ap, bp + aq)
+         = ((a + b)q + ap, aq + bp)
+
+Tpq(Tpq(a,b)) = Tpq((a + b)q + ap, aq + bp)
+              = ((((a + b)q + ap) + (aq + bp))q + ((a + b)q + ap)p,
+                 ((a + b)q + ap)q + (aq + bp)p)
+              = (aq² + bq² + apq + aq² + bpq + apq + bpq + ap²,
+                 aq² + bq² + apq + apq + bp²)
+              = ((aq² + 2apq) + (bq² + 2bpq) + (ap² + aq²),
+                 (aq² + 2apq) + (bp² + bq²))
+              = ((q² + 2pq)(a + b) + (p² + q²)a, (q² + 2pq)a + (p² + q²)b)
+              = Tp'q' where p' = p² + q² and q' = q² + 2pq
+|#
+
+(define (fib n)
+  (fib-iter 1 0 0 1 n))
+
+(define (fib-iter a b p q count)
+  (cond ((= count 0) b)
+        ((even? count)
+         (fib-iter a
+                   b
+                   (+ (square p) (square q))
+                   (+ (square q) (* 2 p q))
+                   (/ count 2)))
+        (else (fib-iter (+ (* b q) (* a q) (* a p))
+                        (+ (* b p) (* a q))
+                        p
+                        q
+                        (- count 1)))))
+
+;; Exercise 1.20 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (gcd a b)
+  (if (= b 0)
+      a
+      (gcd b (remainder a b))))
+
+(define r remainder)
+
+#|
+    Asterisks denote remainder operations that are actually performed.
+
+    (gcd 206 40)
+    (if (= 40 0) 206 (gcd 40 (r 206 40)))
+    (if #f 206 (gcd 40 (r 206 40)))
+    (gcd 40 (r 206 40))
+    (if (= (r 206 40) 0) 40 (gcd (r 206 40) (r 40 (r 206 40))))
+   *(if (= 6 0) 40 (gcd (r 206 40) (r 40 (r 206 40))))
+    (if #f 40 (gcd (r 206 40) (r 40 (r 206 40))))
+    (gcd (r 206 40) (r 40 (r 206 40)))
+    (if (= (r 40 (r 206 40)) 0)
+        (r 206 40)
+        (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
+   *(if (= (r 40 6) 0)
+        (r 206 40)
+        (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
+   *(if (= 4 0)
+        (r 206 40)
+        (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
+    (if #f (r 206 40) (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
+    (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+    (if (= (r (r 206 40) (r 40 (r 206 40))) 0)
+        (r 40 (r 206 40))
+        (gcd (r (r 206 40) (r 40 (r 206 40)))
+             (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
+  **(if (= (r 6 (r 40 6)) 0)
+        (r 40 (r 206 40))
+        (gcd (r (r 206 40) (r 40 (r 206 40)))
+             (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
+   *(if (= (r 6 4) 0)
+        (r 40 (r 206 40))
+        (gcd (r (r 206 40) (r 40 (r 206 40)))
+             (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
+   *(if (= 2 0)
+        (r 40 (r 206 40))
+        (gcd (r (r 206 40) (r 40 (r 206 40)))
+             (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
+    (if #f
+        (r 40 (r 206 40))
+        (gcd (r (r 206 40) (r 40 (r 206 40)))
+             (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
+    (gcd (r (r 206 40) (r 40 (r 206 40)))
+         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
+    (if (= (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))) 0)
+        (r (r 206 40) (r 40 (r 206 40)))
+        (gcd (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+             (r (r (r 206 40) (r 40 (r 206 40)))
+                (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+ ***(if (= (r (r 40 6) (r 6 (r 40 6))) 0)
+        (r (r 206 40) (r 40 (r 206 40)))
+        (gcd (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+             (r (r (r 206 40) (r 40 (r 206 40)))
+                (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+  **(if (= (r 4 (r 6 4)) 0)
+        (r (r 206 40) (r 40 (r 206 40)))
+        (gcd (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+             (r (r (r 206 40) (r 40 (r 206 40)))
+                (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+   *(if (= (r 4 2) 0)
+        (r (r 206 40) (r 40 (r 206 40)))
+        (gcd (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+             (r (r (r 206 40) (r 40 (r 206 40)))
+                (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+   *(if (= 0 0)
+        (r (r 206 40) (r 40 (r 206 40)))
+        (gcd (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+             (r (r (r 206 40) (r 40 (r 206 40)))
+                (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+    (if #t
+        (r (r 206 40) (r 40 (r 206 40)))
+        (gcd (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+             (r (r (r 206 40) (r 40 (r 206 40)))
+                (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+  **(r 6 (r 40 6))
+   *(r 6 4)
+    2
+
+In the normal-order evaluation, as shown above, the remainder operation is
+performed 17 times. In the applicative-order evaluation, it is performed only 4
+times ((r 206 40), (r 40 6), (r 6 4), and (r 4 2)).
