@@ -593,7 +593,7 @@ times ((r 206 40), (r 40 6), (r 6 4), and (r 4 2)).
 (search-for-primes (expt 10 3) -1 3)
 ; primes: 1009, 1013, 1019; times to test: 0.00s, 0.00s, 0.00s
 
-(search-for-primes (expt 10 4) -1 3) ; => 10007, 10009, 100037
+(search-for-primes (expt 10 4) -1 3)
 ; primes: 10007, 10009, 100037; times to test: 0.00s, 0.00s, 0.00s
 
 (search-for-primes (expt 10 5) -1 3)
