@@ -656,3 +656,87 @@ we've replaced n steps of size z with (n/2) steps of size (6z/5):
   revised runtime = (n/2)(6z/5) = 3nz/5 = (60/100)nz = 60% * original runtime
 
 |#
+
+;; Exercise 1.24 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (prime? n)
+  (fast-prime? n 1000))
+
+#|
+(search-for-primes (expt 10 3) -1 3) ; 0.02s, 0.02s, 0.02s
+(search-for-primes (expt 10 6) -1 3) ; 0.03s, 0.03s, 0.03s
+(search-for-primes (expt 10 10) -1 3) ; 0.06s, 0.07s, 0.06s
+(search-for-primes (expt 10 20) -1 3) ; 0.13s, 0.13s, 0.13s
+(search-for-primes (expt 10 40) -1 3) ; 0.30s, 0.31s, 0.30s
+(search-for-primes (expt 10 80) -1 3) ; 0.78s, 0.82s, 0.78s
+(search-for-primes (expt 10 160) -1 3) ; 2.22s, 2.24s, 2.26s
+(search-for-primes (expt 10 320) -1 3) ; 9.52s, 9.75s, 9.81s
+(search-for-primes (expt 10 640) -1 3) ; 53.41s, 53.09s, 53.25s
+|#
+
+#|
+We would expect the Fermat test for primes near 1000000 to take double the time
+needed for primes near 1000 since log 1000000 = log 1000² = 2 log 1000. This
+does not quite hold up empirically on my machine: the increase in running time
+for n=1000000 is 1.5x rather than the expected 2x. It is likely that the
+non-logarithmic, constant-cost portion of the calculation accounts for most
+of the running time at this scale and so partially masks the logarithmic growth
+from n=1000 to n=1000000.
+
+Continuing on to higher values of n, the situation is different: squaring n
+grows the runtime by a factor that is near 2x. Although the factor generally
+increases with n, the increase is small, and so this observation roughly
+confirms the predicted logarithmic order of growth for n < 10^160.
+
+At very high n (> 10^160) the growth factor from squaring n explodes to 3x or
+even greater. Since we know that the number of recursive calls is logarithmic,
+something else must account for the added running time in this range. The only
+available explanation appears to be that some operations on very large numbers
+-- such as +, remainder, the random procedure, or perhaps even operations on the
+callstack -- exhibit worse-than-logarithmic performance.
+
+Given the above, we cannot consider this implementation of the Fermat test to
+have a logarithmic order of growth in the strictest sense. But for practical
+purposes, we could say it exhibits logarithmic growth for n < 10^160 and
+worse-than-logarithmic performance otherwise. Further testing and reasoning
+would be needed to uncover the exact cause of the discrepancy.
+|#
+
+;; Exercise 1.25 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (expmod base exp m)
+  (remainder (fast-expt base exp) m))
+
+#|
+This procedure is not a viable substitute for expmod. The Fermat test algorithm
+requires calculating a remainder from intermediate results at each recursive
+step, whereas the proposed revision takes a remainder at only one level of
+recursion.
+|#
+
+;; Exercise 1.26 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (expmod base exp m)
+  (cond ((= exp 0) 1)
+        ((even? exp)
+         (remainder (* (expmod base (/ exp 2) m)
+                       (expmod base (/ exp 2) m))
+                    m))
+        (else
+          (remainder (* base (expmod base (- exp 1) m))
+                     m))))
+
+#|
+Observe that:
+
+  (a) The recursion depth is logarithmic in n since the exp argument is divided
+      by 2 on each evaluation of the (even? exp) branch. If the recursion depth
+      is d then the number of evaluations of the (even? exp) branch will grow as
+      log(n).
+  (b) Since we now make two recursive calls in the (even? exp) branch, the
+      running time of the outermost expmod will double for each evaluation of
+      the branch.
+
+Putting (a) and (b) together, we get an order of growth Θ(2^(log n)) which is
+equivalent to Θ(2^(log2 n)), which reduces to Θ(n).
+|#
