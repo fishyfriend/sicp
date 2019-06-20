@@ -1,11 +1,12 @@
 ;; Exercise 1.9 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+; The first procedure generates a recursive process.
+
 (define (+ a b)
   (if (= 0 a)
       b
       (inc (+ (dec a) b))))
 
-#|
 (+ 4 5)
 (if (= 0 4) 5 (inc (+ (dec 4) 5)))
 (inc (+ (dec 4) 5))
@@ -25,14 +26,14 @@
 (inc (inc 7))
 (inc 8)
 9
-|#
+
+; The second procedure generates an iterative process.
 
 (define (+ a b)
   (if (= a 0)
       b
       (+ (dec a) (inc b))))
 
-#|
 (+ 4 5)
 (if (= 4 0) 5 (+ (dec 4) (inc 5)))
 (+ (dec 4) (inc 5))
@@ -48,12 +49,6 @@
 (+ 0 9)
 (if (= 0 0) 9 (+ (dec 0) (inc 9)))
 9
-|#
-
-#|
-The first procedure generates a recursive process; the second, an iterative
-process.
-|#
 
 ;; Exercise 1.10 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -64,28 +59,22 @@ process.
         (else (A (- x 1)
                  (A x (- y 1))))))
 
-(A 1 10)
-;1024
+(A 1 10) ;1024
+(A 2 4) ;65536
+(A 3 3) ;65536
 
-(A 2 4)
-;65536
+(define (f n) (A 0 n)) ;(f n) computes 2*n.
+(define (g n) (A 1 n)) ;(g n) computes 2^n.
+(define (h n) (A 2 n)) ;(h n) computes 2↑↑n.
 
-(A 3 3)
-;65536
+#| The last answer uses Knuth up-arrow notation. It is equivalent to saying that
+(h n) computes P(n) where
 
-(define (f n) (A 0 n))
-;(f n) computes 2*n.
+          / 2          if n = 1
+  P(n) = {
+          \ 2^P(n-1)   otherwise. |#
 
-(define (g n) (A 1 n))
-;(g n) computes 2^n.
-
-(define (h n) (A 2 n))
-#|
-(h n) computes P(n) where P(n) = 2 if n = 1, and 2^P(n-1) otherwise.
-More concise answer using Knuth up-arrow notation: (h n) computes 2↑↑n.
-|#
-
-;; Example: Counting change ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Example: Counting change ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (count-change amount)
   (cc amount 5))
@@ -106,14 +95,12 @@ More concise answer using Knuth up-arrow notation: (h n) computes 2↑↑n.
         ((= kinds-of-coins 4) 25)
         ((= kinds-of-coins 5) 50)))
 
-#|
-Here is a more efficient version without using memoization. It was inspired by
-the observation most kinds of coin are exact multiples of each other: one
+#| Here is a more efficient version without using memoization. It was inspired
+by the observation most kinds of coin are exact multiples of each other: one
 half-dollar equals two quarters, one quarter equals five nickels, and one nickel
 equals five pennies. One can use this information to build an efficient
 recursive algorithm for calculating change using only this limited subset of
-coins, then add in special handling for dimes.
-|#
+coins, then add in special handling for dimes. |#
 
 (define (cc kind n-coins n-subcoins)
   (define n-unused-subcoins
@@ -161,9 +148,7 @@ coins, then add in special handling for dimes.
 
 ;; Exercise 1.13 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-#|
-
-Let:
+#| Let
 
   ϕ = (1 + √5)/2 and
   ψ = (1 - √5)/2.
@@ -188,34 +173,58 @@ And similarly P(1):
   Fib(1) = 1
   1      = 1                                    by the definition of Fib(n)
 
-To prove the general statement, it will suffice to show that for some i,
-if P(i) holds and P(i-1) holds, then P(i+1) also holds.
+Now we will show that for some i, if P(i) holds and P(i-1) holds, then P(i+1)
+also holds.
 
-  Fib(i+1)                        = (ϕⁱ⁺¹ - ψⁱ⁺¹)/√5
+  Fib(i+1)                        = (ϕⁱ⁺¹ - ψⁱ⁺¹)/√5   P(i+1)
   Fib(i)       + Fib(i-1)         = (ϕⁱ⁺¹ - ψⁱ⁺¹)/√5   by definition of Fib(n)
   (ϕⁱ - ψⁱ)/√5 + (ϕⁱ⁻¹ - ψⁱ⁻¹)/√5 = (ϕⁱ⁺¹ - ψⁱ⁺¹)/√5   because P(i) and P(i-1)
   ϕⁱ - ψⁱ + ϕⁱ⁻¹ - ψⁱ⁻¹           = ϕⁱ⁺¹ - ψⁱ⁺¹
   ϕⁱ⁻¹ + ϕⁱ - ϕⁱ⁺¹                = ψⁱ⁻¹ + ψⁱ - ψⁱ⁺¹
-  ϕⁱ(ϕ⁻¹ + 1 - ϕ)                 = ψⁱ(ψ⁻¹ + 1 - ψ)
-  ϕⁱ(0)                           = ψⁱ(0)              (reduction omitted)
+  ϕⁱ(ϕ⁻¹ + 1 - ϕ)                 = ψⁱ(ψ⁻¹ + 1 - ψ)    (reduction omitted for
+  ϕⁱ(0)                           = ψⁱ(0)              brevity)
   0                               = 0
 
-Now to prove that Fib(n) is the closest integer to ϕⁿ/√5, it will suffice to
-show that | Fib(n) - ϕⁿ/√5 | < 1/2 holds for all natural numbers n.
+To prove that Fib(n) is the closest integer to ϕⁿ/√5, we will show that
+|Fib(n) - ϕⁿ/√5| < 1/2 holds for all natural numbers n.
 
-  | Fib(n)       - ϕⁿ/√5 | < 1/2
-  | (ϕⁿ - ψⁿ)/√5 - ϕⁿ/√5 | < 1/2       because P above
-  | -ψⁿ |                  < √5/2
-  | -ψⁿ |²                 < (√5/2)²
-  (ψ²)ⁿ                    < 5/4
-  1ⁿ                       < 5/4       because ψ² < 1 and n ≥ 0
-  1                        < 5/4       QED
-
-|#
+  |Fib(n)       - ϕⁿ/√5| < 1/2
+  |(ϕⁿ - ψⁿ)/√5 - ϕⁿ/√5| < 1/2       because P(n)
+  |-ψⁿ|                  < √5/2
+  |-ψⁿ|²                 < (√5/2)²
+  (ψ²)ⁿ                  < 5/4
+  1ⁿ                     < 5/4      because ψ² < 1 and n ≥ 0
+  1                      < 5/4      QED |#
 
 ;; Exercise 1.14 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-#|
+(define (visualize-count-change amount)
+  (define (go amount kinds-of-coins prefix tee?)
+    (define child-prefix
+      (string-append prefix (if tee? "  │ " "    ")))
+    (define (draw-child-prefix tee? value)
+      (display (string-append child-prefix (if tee? "  ├─" "  └─") value)))
+    (display (list "cc" amount kinds-of-coins))
+    (newline)
+    (cond ((= amount 0)
+           (begin (draw-child-prefix #f "1\n") 1))
+          ((or (< amount 0) (= kinds-of-coins 0))
+           (begin (draw-child-prefix #f "0\n") 1))
+          (else (let* ((qty1 (begin (draw-child-prefix #t "")
+                                    (go amount
+                                        (- kinds-of-coins 1)
+                                        child-prefix
+                                        #t)))
+                       (qty2 (begin (draw-child-prefix #f "")
+                                    (go (- amount
+                                           (first-denomination kinds-of-coins))
+                                        kinds-of-coins
+                                        child-prefix
+                                        #f))))
+                       (+ qty1 qty2 1))))
+  (go amount 5 "" #f)))
+
+#| The space used by the process grows as Θ(n) and the number of steps as Θ(2ⁿ).
 
 (cc 11 5)
       ├─(cc 11 4)
@@ -299,43 +308,7 @@ show that | Fib(n) - ϕⁿ/√5 | < 1/2 holds for all natural numbers n.
       │   └─(cc -14 4)
       │       └─0
       └─(cc -39 5)
-          └─0
-
-The space used by the process grows as Θ(n) and the number of steps as Θ(2ⁿ).
-
-Below is an adaptation of the original change-counting procedure. Instead of
-counting ways to make change, it calculates the number of recursive calls
-required to generate the result, while printing out a tree diagram of the
-computational process. This is used to generate the diagram above.
-
-|#
-
-(define (visualize-count-change amount)
-  (vis-cc amount 5 "" #f))
-
-(define (vis-cc amount kinds-of-coins prefix tee?)
-  (define child-prefix
-    (string-append prefix (if tee? "  │ " "    ")))
-  (define (draw-child-prefix tee? value)
-    (display (string-append child-prefix (if tee? "  ├─" "  └─") value)))
-  (display (list "cc" amount kinds-of-coins))
-  (newline)
-  (cond ((= amount 0)
-         (begin (draw-child-prefix #f "1\n") 1))
-        ((or (< amount 0) (= kinds-of-coins 0))
-         (begin (draw-child-prefix #f "0\n") 1))
-        (else (let* ((qty1 (begin (draw-child-prefix #t "")
-                                  (vis-cc amount
-                                          (- kinds-of-coins 1)
-                                          child-prefix
-                                          #t)))
-                     (qty2 (begin (draw-child-prefix #f "")
-                                  (vis-cc (- amount
-                                             (first-denomination kinds-of-coins))
-                                          kinds-of-coins
-                                          child-prefix
-                                          #f))))
-                     (+ qty1 qty2 1)))))
+          └─0 |#
 
 ;; Exercise 1.15 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -348,10 +321,8 @@ computational process. This is used to generate the diagram above.
       angle
       (p (sine (/ angle 3.0)))))
 
-#|
-a. When evaluating (sine 12.15), p is applied five times.
-b. For (sine a), the order of growth in both space and # of steps is Θ(log a).
-|#
+; a. When evaluating (sine 12.15), p is applied five times.
+; b. For (sine a), the order of growth in both space and # of steps is Θ(log a).
 
 ;; Exercise 1.16 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -637,15 +608,13 @@ is indeed consistent with an order of growth of Θ(√n).
         (else (find-divisor n (next test-divisor)))))
 
 #|
-(search-for-primes (expt 10 10) -1 3) ; 0.06s, 0.06s, 0.06s
-(search-for-primes (expt 10 11) -1 3) ; 0.19s, 0.19s, 0.18s
-(search-for-primes (expt 10 12) -1 3) ; 0.56s, 0.56s, 0.58s
-(search-for-primes (expt 10 13) -1 3) ; 1.85s, 1.86s, 1.86s
-|#
+(search-for-primes (expt 10 3) -1 3) ; 0.20s, 0.20s, 0.21s
+(search-for-primes (expt 10 4) -1 3) ; 0.60s, 0.60s, 0.60s
+(search-for-primes (expt 10 5) -1 3) ; 1.83s, 1.83s, 1.81s
+(search-for-primes (expt 10 6) -1 3) ; 5.84s, 5.84s, 5.85s
 
-#|
-The new algorithm runs around in around 60% the time as the old algorithm, worse
-than the expected 50%. The discrepancy could be explained by the observation
+The new algorithm runs takes a bit more than 60% as long as the old algorithm,
+worse than the expected 50%. The discrepancy can be explained by the observation
 that, while the new approach eliminates half of the test steps, it also adds
 new computations within each step. Namely, it replaces a single addition
 (+ test-divisor 1) with a procedure call (next test-divisor) whose evaluation
@@ -653,9 +622,7 @@ will include an addition, an equality check and conditional branch. Roughly,
 we've replaced n steps of size z with (n/2) steps of size (6z/5):
 
   original runtime = nz
-  revised runtime = (n/2)(6z/5) = 3nz/5 = (60/100)nz = 60% * original runtime
-
-|#
+  revised runtime = (n/2)(6z/5) = 3nz/5 = (60/100)nz = 60% * original runtime |#
 
 ;; Exercise 1.24 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
