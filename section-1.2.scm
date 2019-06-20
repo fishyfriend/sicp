@@ -726,42 +726,44 @@ only 4 times in applicative-order evaluation, as shown below. |#
       upper
       0))
 
-#|
+(define (start-prime-test-modified n start-time)
+  (define (repeat times)
+          (if (> times 0)
+              (begin (prime? n)
+                     (repeat (- times 1)))))
+  (if (prime? n)
+      (begin (repeat 9999)
+             (report-prime (- (runtime) start-time))
+             #t)
+      #f))
+
+#| The timings for primes up to 10^6 reflect an order of growth of Θ(√n). For
+each tenfold increase in n, the runtime grows approximately √10 times. This
+behavior is consistent with an order of growth Θ(√n).
+
+This conclusion was reached after modifying the test code to account for the
+high speed of this particular test system. More specifically, the procedure
+start-prime-test has been replaced with a version that repeats its primality
+test an additional 9999 times.
+
+The modification was necessary because without it, the runtimes for n in this
+range were too short to be useful for reasoning about the order of growth. The
+runtime procedure reports in 0.01s increments, and the reported runtimes for
+primes up to 10^6 were all essentially zero. Thus, even if our prime test were
+exhibiting Θ(√n) growth, the growth in reported timings would be flat (implying,
+incorrectly, an order of growth Θ(k) for some constant k). |#
+
 (search-for-primes (expt 10 3) -1 3)
-; primes: 1009, 1013, 1019; times to test: 0.00s, 0.00s, 0.00s
+; primes: 1009, 1013, 1019; timings: 0.29s, 0.28s, 0.29s
 
 (search-for-primes (expt 10 4) -1 3)
-; primes: 10007, 10009, 100037; times to test: 0.00s, 0.00s, 0.00s
+; primes: 10007, 10009, 100037; timings: 0.92s, 0.93s, 0.93s
 
 (search-for-primes (expt 10 5) -1 3)
-; primes: 100003, 100019, 100043; times to test: 0.01s, 0.00s, 0.00s
+; primes: 100003, 100019, 100043; timings: 2.91s, 3.10s, 2.93s
 
 (search-for-primes (expt 10 6) -1 3)
-; primes: 1000003, 1000033, 1000037; times to test: 0.00s, 0.01s, 0.00s
-|#
-
-#|
-The timings for primes up to 10^6 do not reflect an order of growth of Θ(√n).
-The reported timings are all 0.00s or 0.01s and do not follow a clear pattern.
-The timings are apparently too short to show noticeable growth at this scale.
-
-To see evidence of the order of growth we must use larger inputs, which have
-longer runtimes that can be meaningfully reported. Above n > 10^9, each tenfold
-increase in the value of n grows the timing by a factor of about √10, which
-is indeed consistent with an order of growth of Θ(√n).
-|#
-
-#|
-(search-for-primes (expt 10 7) -1 3) ; 0.01s, 0.00s, 0.01s
-(search-for-primes (expt 10 8) -1 3) ; 0.01s, 0.01s, 0.01s
-(search-for-primes (expt 10 9) -1 3) ; 0.04s, 0.03s, 0.04s
-(search-for-primes (expt 10 10) -1 3) ; 0.10s, 0.09s, 0.09s
-(search-for-primes (expt 10 11) -1 3) ; 0.30s, 0.31s, 0.31s
-(search-for-primes (expt 10 12) -1 3) ; 1.01s, 0.97s, 0.95s
-(search-for-primes (expt 10 13) -1 3) ; 3.02s, 3.05s, 3.11s
-(search-for-primes (expt 10 14) -1 3) ; 9.72s, 9.70s, 9.67s
-(search-for-primes (expt 10 15) -1 3) ; 30.67s, 31.07s, 31.35s
-|#
+; primes: 1000003, 1000033, 1000037; timings: 9.26s, 9.26s, 9.19s
 
 ;; Exercise 1.23 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -773,19 +775,19 @@ is indeed consistent with an order of growth of Θ(√n).
         ((divides? test-divisor n) test-divisor)
         (else (find-divisor n (next test-divisor)))))
 
-#|
 (search-for-primes (expt 10 3) -1 3) ; 0.20s, 0.20s, 0.21s
 (search-for-primes (expt 10 4) -1 3) ; 0.60s, 0.60s, 0.60s
 (search-for-primes (expt 10 5) -1 3) ; 1.83s, 1.83s, 1.81s
 (search-for-primes (expt 10 6) -1 3) ; 5.84s, 5.84s, 5.85s
 
-The new algorithm runs takes a bit more than 60% as long as the old algorithm,
-worse than the expected 50%. The discrepancy can be explained by the observation
-that, while the new approach eliminates half of the test steps, it also adds
-new computations within each step. Namely, it replaces a single addition
-(+ test-divisor 1) with a procedure call (next test-divisor) whose evaluation
-will include an addition, an equality check and conditional branch. Roughly,
-we've replaced n steps of size z with (n/2) steps of size (6z/5):
+#| The new algorithm runs takes a bit more than 60% as long as the old
+algorithm, worse than the expected 50%. The discrepancy can be explained by the
+observation that, while the new approach eliminates half of the test steps, it
+also adds new computations within each step. Namely, it replaces a single
+addition (+ test-divisor 1) with a procedure call (next test-divisor) whose
+evaluation will include an addition, an equality check and conditional branch.
+Roughly speaking, we've replaced n steps of size z with (n/2) steps of size
+(6z/5):
 
   original runtime = nz
   revised runtime = (n/2)(6z/5) = 3nz/5 = (60/100)nz = 60% * original runtime |#
