@@ -355,25 +355,26 @@ To prove that Fib(n) is the closest integer to ϕⁿ/√5, we will show that
 
 ;; Exercise 1.19 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-#|
+#| Given
 
-Fib(n) = Tⁿ
-T = T₀₁
-Fib(n) = T₀₁ⁿ
+  Tpq(a,b) = (bq + aq + ap, bp + aq)
 
-Tpq(a,b) = (bq + aq + ap, bp + aq)
-         = ((a + b)q + ap, aq + bp)
+we will show that Tpq(Tpq(a,b)) is equivalent to Tp'q'(a,b) where
 
-Tpq(Tpq(a,b)) = Tpq((a + b)q + ap, aq + bp)
-              = ((((a + b)q + ap) + (aq + bp))q + ((a + b)q + ap)p,
-                 ((a + b)q + ap)q + (aq + bp)p)
-              = (aq² + bq² + apq + aq² + bpq + apq + bpq + ap²,
-                 aq² + bq² + apq + apq + bp²)
-              = ((aq² + 2apq) + (bq² + 2bpq) + (ap² + aq²),
-                 (aq² + 2apq) + (bp² + bq²))
-              = ((q² + 2pq)(a + b) + (p² + q²)a, (q² + 2pq)a + (p² + q²)b)
-              = Tp'q' where p' = p² + q² and q' = q² + 2pq
-|#
+  p' = p² + q² and
+  q' = q² + 2pq.
+
+Tpq(Tpq(a,b)) = Tpq(bq + aq + ap, bp + aq)
+              = ((bp + aq)q + (bq + aq + ap)q + (bq + aq + ap)p,
+                 (bp + aq)p + (bq + aq + ap)q)
+              = (bpq + aq² + bq² + aq² + apq + bpq + apq + ap²,
+                 bp² + apq + bq² + aq² + apq)
+              = ((bq² + 2bpq) + (aq² + 2apq) + (ap² + aq²),
+                 (bp² + bq²) + (aq² + 2apq))
+              = (b(q² + 2pq) + a(q² + 2pq) + a(p² + q²),
+                 b(p² + q²) + a(q² + 2pq))
+              = (bq' + aq' + ap', bp' + aq')
+              = Tp'q'(a,b) QED. |#
 
 (define (fib n)
   (fib-iter 1 0 0 1 n))
