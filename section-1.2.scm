@@ -400,89 +400,254 @@ Tpq(Tpq(a,b)) = Tpq(bq + aq + ap, bp + aq)
       a
       (gcd b (remainder a b))))
 
-(define r remainder)
+#| (visualize-normal-order expr) generates a visualization of the normal-order
+evaluation of expr. The remainder procedure is abbreviated as r for brevity.
+Each step during which a remainder operation was actually performed is prefixed
+with an annotation, and the return value is the total number of remainder
+operations performed. |#
 
-#|
-    Asterisks denote remainder operations that are actually performed.
+(define (visualize-normal-order expr)
+  ; (eval e) returns a pair (e2 . r) where e2 is e evaluated one additional step
+  ; and r is true iff a remainder operation was performed.
+  (define (eval expr)
+    (cond ((not (equal? (subst expr) expr))    (cons (subst expr) #f))
+          ((or (boolean? expr) (number? expr)) (cons expr #f))
+          ((eq? (car expr) 'if)                (eval-if expr))
+          (else                                (eval-binop expr))))
+  (define (eval-if expr)
+    (let* ((arg1 (cadr expr))
+           (arg2 (caddr expr))
+           (arg3 (cadddr expr))
+           (pair1 (eval arg1)))
+          (if (equal? (car pair1) arg1)
+              (cons (if arg1 arg2 arg3) #f)
+              (cons (list 'if (car pair1) arg2 arg3) (cdr pair1)))))
+  (define (eval-binop expr)
+    (let* ((op (car expr))
+           (arg1 (cadr expr))
+           (arg2 (caddr expr))
+           (pair1 (eval arg1))
+           (pair2 (eval arg2)))
+          (cond ((not (equal? (car pair1) arg1))
+                 (cons (list op (car pair1) arg2) (cdr pair1)))
+                ((not (equal? (car pair2) arg2))
+                 (cons (list op arg1 (car pair2)) (cdr pair2)))
+                ((eq? op '=) (cons (= arg1 arg2) #f))
+                ((eq? op 'r) (cons (remainder arg1 arg2)
+                                   (list 'remainder arg1 arg2)))
+                (else (error "unknown operand" op)))))
+  (define (subst expr)
+    (cond ((or (number? expr) (boolean? expr)) expr)
+          ((eq? (car expr) 'gcd)
+           (let ((a (cadr expr))
+                 (b (caddr expr)))
+                (list 'if (list '= b 0) a (list 'gcd b (list 'r a b)))))
+          (else expr)))
+  (define (show pair)
+    (if (cdr pair)
+        (begin (display "; operation performed: ")
+               (display (cdr pair))
+               (newline)))
+    (pp (car pair) (current-output-port) #t)
+    (newline))
+  (define (go pair count)
+    (show pair)
+    (let* ((expr (car pair))
+           (incr (if (cdr pair) 1 0))
+           (pair2 (eval expr)))
+          (if (not (equal? expr (car pair2)))
+              (go (eval expr) (+ count incr))
+              count)))
+  (go (cons expr #f) 0))
+
+#| (count-remainder-ops a b) calculates the number of remainder operations that
+would be performed during applicative-order evaluation of (gcd a b). |#
+
+(define (count-remainder-ops a b)
+  (define (go a b count)
+    (if (= b 0)
+        count
+        (go b (remainder a b) (+ count 1))))
+  (go a b 0))
+
+#| The remainder operation is performed 18 times in normal-order evaluation, and
+only 4 times in applicative-order evaluation, as shown below. |#
+
+(visualize-normal-order '(gcd 206 40))
 
     (gcd 206 40)
-    (if (= 40 0) 206 (gcd 40 (r 206 40)))
-    (if #f 206 (gcd 40 (r 206 40)))
+
+    (if (= 40 0)
+        206
+        (gcd 40 (r 206 40)))
+
+    (if #f
+        206
+        (gcd 40 (r 206 40)))
+
     (gcd 40 (r 206 40))
-    (if (= (r 206 40) 0) 40 (gcd (r 206 40) (r 40 (r 206 40))))
-   *(if (= 6 0) 40 (gcd (r 206 40) (r 40 (r 206 40))))
-    (if #f 40 (gcd (r 206 40) (r 40 (r 206 40))))
+
+    (if (= (r 206 40) 0)
+        40
+        (gcd (r 206 40) (r 40 (r 206 40))))
+
+    ; operation performed: (remainder 206 40)
+    (if (= 6 0)
+        40
+        (gcd (r 206 40) (r 40 (r 206 40))))
+
+    (if #f
+        40
+        (gcd (r 206 40) (r 40 (r 206 40))))
+
     (gcd (r 206 40) (r 40 (r 206 40)))
+
     (if (= (r 40 (r 206 40)) 0)
         (r 206 40)
         (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
-   *(if (= (r 40 6) 0)
+
+    ; operation performed: (remainder 206 40)
+    (if (= (r 40 6) 0)
         (r 206 40)
         (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
-   *(if (= 4 0)
+
+    ; operation performed: (remainder 40 6)
+    (if (= 4 0)
         (r 206 40)
         (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
-    (if #f (r 206 40) (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
+
+    (if #f
+        (r 206 40)
+        (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
+
     (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+
     (if (= (r (r 206 40) (r 40 (r 206 40))) 0)
         (r 40 (r 206 40))
         (gcd (r (r 206 40) (r 40 (r 206 40)))
              (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
-  **(if (= (r 6 (r 40 6)) 0)
+
+    ; operation performed: (remainder 206 40)
+    (if (= (r 6 (r 40 (r 206 40))) 0)
         (r 40 (r 206 40))
         (gcd (r (r 206 40) (r 40 (r 206 40)))
              (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
-   *(if (= (r 6 4) 0)
+
+    ; operation performed: (remainder 206 40)
+    (if (= (r 6 (r 40 6)) 0)
         (r 40 (r 206 40))
         (gcd (r (r 206 40) (r 40 (r 206 40)))
              (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
-   *(if (= 2 0)
+
+    ; operation performed: (remainder 40 6)
+    (if (= (r 6 4) 0)
         (r 40 (r 206 40))
         (gcd (r (r 206 40) (r 40 (r 206 40)))
              (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
+
+    ; operation performed: (remainder 6 4)
+    (if (= 2 0)
+        (r 40 (r 206 40))
+        (gcd (r (r 206 40) (r 40 (r 206 40)))
+             (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
+
     (if #f
         (r 40 (r 206 40))
         (gcd (r (r 206 40) (r 40 (r 206 40)))
              (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
+
     (gcd (r (r 206 40) (r 40 (r 206 40)))
          (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
+
     (if (= (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))) 0)
         (r (r 206 40) (r 40 (r 206 40)))
-        (gcd (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-             (r (r (r 206 40) (r 40 (r 206 40)))
-                (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
- ***(if (= (r (r 40 6) (r 6 (r 40 6))) 0)
+        (gcd
+         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+         (r (r (r 206 40) (r 40 (r 206 40)))
+            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+
+    ; operation performed: (remainder 206 40)
+    (if (= (r (r 40 6) (r (r 206 40) (r 40 (r 206 40)))) 0)
         (r (r 206 40) (r 40 (r 206 40)))
-        (gcd (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-             (r (r (r 206 40) (r 40 (r 206 40)))
-                (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
-  **(if (= (r 4 (r 6 4)) 0)
+        (gcd
+         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+         (r (r (r 206 40) (r 40 (r 206 40)))
+            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+
+    ; operation performed: (remainder 40 6)
+    (if (= (r 4 (r (r 206 40) (r 40 (r 206 40)))) 0)
         (r (r 206 40) (r 40 (r 206 40)))
-        (gcd (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-             (r (r (r 206 40) (r 40 (r 206 40)))
-                (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
-   *(if (= (r 4 2) 0)
+        (gcd
+         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+         (r (r (r 206 40) (r 40 (r 206 40)))
+            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+
+    ; operation performed: (remainder 206 40)
+    (if (= (r 4 (r 6 (r 40 (r 206 40)))) 0)
         (r (r 206 40) (r 40 (r 206 40)))
-        (gcd (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-             (r (r (r 206 40) (r 40 (r 206 40)))
-                (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
-   *(if (= 0 0)
+        (gcd
+         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+         (r (r (r 206 40) (r 40 (r 206 40)))
+            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+
+    ; operation performed: (remainder 206 40)
+    (if (= (r 4 (r 6 (r 40 6))) 0)
         (r (r 206 40) (r 40 (r 206 40)))
-        (gcd (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-             (r (r (r 206 40) (r 40 (r 206 40)))
-                (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+        (gcd
+         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+         (r (r (r 206 40) (r 40 (r 206 40)))
+            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+
+    ; operation performed: (remainder 40 6)
+    (if (= (r 4 (r 6 4)) 0)
+        (r (r 206 40) (r 40 (r 206 40)))
+        (gcd
+         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+         (r (r (r 206 40) (r 40 (r 206 40)))
+            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+
+    ; operation performed: (remainder 6 4)
+    (if (= (r 4 2) 0)
+        (r (r 206 40) (r 40 (r 206 40)))
+        (gcd
+         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+         (r (r (r 206 40) (r 40 (r 206 40)))
+            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+
+    ; operation performed: (remainder 4 2)
+    (if (= 0 0)
+        (r (r 206 40) (r 40 (r 206 40)))
+        (gcd
+         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+         (r (r (r 206 40) (r 40 (r 206 40)))
+            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+
     (if #t
         (r (r 206 40) (r 40 (r 206 40)))
-        (gcd (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-             (r (r (r 206 40) (r 40 (r 206 40)))
-                (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
-  **(r 6 (r 40 6))
-   *(r 6 4)
+        (gcd
+         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+         (r (r (r 206 40) (r 40 (r 206 40)))
+            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+
+    (r (r 206 40) (r 40 (r 206 40)))
+
+    ; operation performed: (remainder 206 40)
+    (r 6 (r 40 (r 206 40)))
+
+    ; operation performed: (remainder 206 40)
+    (r 6 (r 40 6))
+
+    ; operation performed: (remainder 40 6)
+    (r 6 4)
+
+    ; operation performed: (remainder 6 4)
     2
 
-In the normal-order evaluation, as shown above, the remainder operation is
-performed 17 times. In the applicative-order evaluation, it is performed only 4
-times ((r 206 40), (r 40 6), (r 6 4), and (r 4 2)).
+    ;Value: 17
+
+(count-remainder-ops 206 40)
+
+    ;Value: 4
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
