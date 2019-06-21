@@ -795,47 +795,29 @@ Roughly speaking, we've replaced n steps of size z with (n/2) steps of size
 ;; Exercise 1.24 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (prime? n)
-  (fast-prime? n 1000))
+  (fast-prime? n 100))
 
-#|
-(search-for-primes (expt 10 3) -1 3) ; 0.02s, 0.02s, 0.02s
-(search-for-primes (expt 10 6) -1 3) ; 0.03s, 0.03s, 0.03s
-(search-for-primes (expt 10 10) -1 3) ; 0.06s, 0.07s, 0.06s
-(search-for-primes (expt 10 20) -1 3) ; 0.13s, 0.13s, 0.13s
-(search-for-primes (expt 10 40) -1 3) ; 0.30s, 0.31s, 0.30s
-(search-for-primes (expt 10 80) -1 3) ; 0.78s, 0.82s, 0.78s
-(search-for-primes (expt 10 160) -1 3) ; 2.22s, 2.24s, 2.26s
-(search-for-primes (expt 10 320) -1 3) ; 9.52s, 9.75s, 9.81s
-(search-for-primes (expt 10 640) -1 3) ; 53.41s, 53.09s, 53.25s
-|#
+(search-for-primes (expt 10 3) -1 3) ; 1.79s, 1.87s, 1.93s
+(search-for-primes (expt 10 4) -1 3) ; 2.29s, 2.24s, 2.31s
+(search-for-primes (expt 10 5) -1 3) ; 2.59s, 2.67s, 2.70s
+(search-for-primes (expt 10 6) -1 3) ; 3.03s, 3.01s, 3.18s
 
-#|
-We would expect the Fermat test for primes near 1000000 to take double the time
-needed for primes near 1000 since log 1000000 = log 1000² = 2 log 1000. This
-does not quite hold up empirically on my machine: the increase in running time
-for n=1000000 is 1.5x rather than the expected 2x. It is likely that the
-non-logarithmic, constant-cost portion of the calculation accounts for most
-of the running time at this scale and so partially masks the logarithmic growth
-from n=1000 to n=1000000.
-
-Continuing on to higher values of n, the situation is different: squaring n
-grows the runtime by a factor that is near 2x. Although the factor generally
-increases with n, the increase is small, and so this observation roughly
-confirms the predicted logarithmic order of growth for n < 10^160.
-
-At very high n (> 10^160) the growth factor from squaring n explodes to 3x or
-even greater. Since we know that the number of recursive calls is logarithmic,
-something else must account for the added running time in this range. The only
-available explanation appears to be that some operations on very large numbers
--- such as +, remainder, the random procedure, or perhaps even operations on the
-callstack -- exhibit worse-than-logarithmic performance.
-
-Given the above, we cannot consider this implementation of the Fermat test to
-have a logarithmic order of growth in the strictest sense. But for practical
-purposes, we could say it exhibits logarithmic growth for n < 10^160 and
-worse-than-logarithmic performance otherwise. Further testing and reasoning
-would be needed to uncover the exact cause of the discrepancy.
-|#
+#| We would expect the Fermat test for primes near 1,000,000 to take double the
+time needed for primes near 1000 since log 1000000 = log 1000² = 2 log 1000.
+This expectation does not quite hold up empirically on my machine: the increase
+in running time from n=1000 to n=1000000 is closer to 1.65x rather than the
+expected 2x. To understand the discrepancy, note that the calculation includes
+some constant-cost, non-logarithmic elements. We can assume that those elements
+account for a non-trivial fraction of the processing time for n <= 1000000 as
+there is no other good explanation. Now, since we don't know exactly what
+portion of the reported timings is constant-cost and what portion is
+logarithmic, it will be difficult to verify the order of growth empirically by
+simply comparing two absolute runtimes. We must instead look at the runtime
+deltas, which by virtue of being deltas will not be affected by constant costs.
+Considering the reported runtimes for n=10^x, moving stepwise from x=3 to x=6,
+we find that the increase in runtime for each step is fairly consistent.
+Runtime increases about 0.4s for each tenfold increase in n. This observation
+supports that the order of growth for the procedure is in fact logarithmic. |#
 
 ;; Exercise 1.25 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
