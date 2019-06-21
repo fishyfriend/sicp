@@ -686,11 +686,9 @@ only 4 times in applicative-order evaluation, as shown below. |#
 
 ;; Exercise 1.21 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-#|
 (smallest-divisor 199)   ; => 199
 (smallest-divisor 1999)  ; => 1999
 (smallest-divisor 19999) ; => 7
-|#
 
 ;; Exercise 1.22 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -726,16 +724,18 @@ only 4 times in applicative-order evaluation, as shown below. |#
       upper
       0))
 
-(define (start-prime-test-modified n start-time)
+(define (start-prime-test n start-time)
   (define (repeat times)
           (if (> times 0)
               (begin (prime? n)
                      (repeat (- times 1)))))
   (if (prime? n)
-      (begin (repeat 9999)
+      (begin (repeat prime-test-n-reps)
              (report-prime (- (runtime) start-time))
              #t)
       #f))
+
+(define prime-test-n-reps 9999)
 
 #| The timings for primes up to 10^6 reflect an order of growth of Θ(√n). For
 each tenfold increase in n, the runtime grows approximately √10 times. This
