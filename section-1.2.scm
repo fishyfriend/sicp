@@ -874,3 +874,20 @@ encounter the (even? exp) branch. So the order of growth is Θ(2ⁱ), which redu
 to linear:
 
   Θ(2ⁱ) = Θ(2^(log₂ exp)) = Θ(exp) |#
+
+;; Exercise 1.27 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (fools-fermat-test? n)
+  (define (go a n)
+    (cond ((= a 0) #t)
+          ((= (expmod a n n) a) (go (- a 1) n))
+          (else #f)))
+  (go (- n 1) n))
+
+(fools-fermat-test? 561) ;#t
+(fools-fermat-test? 1105) ;#t
+(fools-fermat-test? 1729) ;#t
+(fools-fermat-test? 2465) ;#t
+(fools-fermat-test? 2821) ;#t
+(fools-fermat-test? 6601) ;#t
+  
