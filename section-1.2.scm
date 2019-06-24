@@ -470,184 +470,184 @@ would be performed during applicative-order evaluation of (gcd a b). |#
         (go b (remainder a b) (+ count 1))))
   (go a b 0))
 
-#| The remainder operation is performed 18 times in normal-order evaluation, and
+#| The remainder operation is performed 17 times in normal-order evaluation, and
 only 4 times in applicative-order evaluation, as shown below. |#
 
 (visualize-normal-order '(gcd 206 40))
 
-    (gcd 206 40)
+  (gcd 206 40)
 
-    (if (= 40 0)
-        206
-        (gcd 40 (r 206 40)))
+  (if (= 40 0)
+      206
+      (gcd 40 (r 206 40)))
 
-    (if #f
-        206
-        (gcd 40 (r 206 40)))
+  (if #f
+      206
+      (gcd 40 (r 206 40)))
 
-    (gcd 40 (r 206 40))
+  (gcd 40 (r 206 40))
 
-    (if (= (r 206 40) 0)
-        40
-        (gcd (r 206 40) (r 40 (r 206 40))))
+  (if (= (r 206 40) 0)
+      40
+      (gcd (r 206 40) (r 40 (r 206 40))))
 
-    ; operation performed: (remainder 206 40)
-    (if (= 6 0)
-        40
-        (gcd (r 206 40) (r 40 (r 206 40))))
+  ; operation performed: (remainder 206 40)
+  (if (= 6 0)
+      40
+      (gcd (r 206 40) (r 40 (r 206 40))))
 
-    (if #f
-        40
-        (gcd (r 206 40) (r 40 (r 206 40))))
+  (if #f
+      40
+      (gcd (r 206 40) (r 40 (r 206 40))))
 
-    (gcd (r 206 40) (r 40 (r 206 40)))
+  (gcd (r 206 40) (r 40 (r 206 40)))
 
-    (if (= (r 40 (r 206 40)) 0)
-        (r 206 40)
-        (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
+  (if (= (r 40 (r 206 40)) 0)
+      (r 206 40)
+      (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
 
-    ; operation performed: (remainder 206 40)
-    (if (= (r 40 6) 0)
-        (r 206 40)
-        (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
+  ; operation performed: (remainder 206 40)
+  (if (= (r 40 6) 0)
+      (r 206 40)
+      (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
 
-    ; operation performed: (remainder 40 6)
-    (if (= 4 0)
-        (r 206 40)
-        (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
+  ; operation performed: (remainder 40 6)
+  (if (= 4 0)
+      (r 206 40)
+      (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
 
-    (if #f
-        (r 206 40)
-        (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
+  (if #f
+      (r 206 40)
+      (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
 
-    (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+  (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
 
-    (if (= (r (r 206 40) (r 40 (r 206 40))) 0)
-        (r 40 (r 206 40))
-        (gcd (r (r 206 40) (r 40 (r 206 40)))
-             (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
+  (if (= (r (r 206 40) (r 40 (r 206 40))) 0)
+      (r 40 (r 206 40))
+      (gcd (r (r 206 40) (r 40 (r 206 40)))
+           (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
 
-    ; operation performed: (remainder 206 40)
-    (if (= (r 6 (r 40 (r 206 40))) 0)
-        (r 40 (r 206 40))
-        (gcd (r (r 206 40) (r 40 (r 206 40)))
-             (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
+  ; operation performed: (remainder 206 40)
+  (if (= (r 6 (r 40 (r 206 40))) 0)
+      (r 40 (r 206 40))
+      (gcd (r (r 206 40) (r 40 (r 206 40)))
+           (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
 
-    ; operation performed: (remainder 206 40)
-    (if (= (r 6 (r 40 6)) 0)
-        (r 40 (r 206 40))
-        (gcd (r (r 206 40) (r 40 (r 206 40)))
-             (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
+  ; operation performed: (remainder 206 40)
+  (if (= (r 6 (r 40 6)) 0)
+      (r 40 (r 206 40))
+      (gcd (r (r 206 40) (r 40 (r 206 40)))
+           (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
 
-    ; operation performed: (remainder 40 6)
-    (if (= (r 6 4) 0)
-        (r 40 (r 206 40))
-        (gcd (r (r 206 40) (r 40 (r 206 40)))
-             (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
+  ; operation performed: (remainder 40 6)
+  (if (= (r 6 4) 0)
+      (r 40 (r 206 40))
+      (gcd (r (r 206 40) (r 40 (r 206 40)))
+           (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
 
-    ; operation performed: (remainder 6 4)
-    (if (= 2 0)
-        (r 40 (r 206 40))
-        (gcd (r (r 206 40) (r 40 (r 206 40)))
-             (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
+  ; operation performed: (remainder 6 4)
+  (if (= 2 0)
+      (r 40 (r 206 40))
+      (gcd (r (r 206 40) (r 40 (r 206 40)))
+           (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
 
-    (if #f
-        (r 40 (r 206 40))
-        (gcd (r (r 206 40) (r 40 (r 206 40)))
-             (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
+  (if #f
+      (r 40 (r 206 40))
+      (gcd (r (r 206 40) (r 40 (r 206 40)))
+           (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
 
-    (gcd (r (r 206 40) (r 40 (r 206 40)))
-         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
+  (gcd (r (r 206 40) (r 40 (r 206 40)))
+       (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
 
-    (if (= (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))) 0)
-        (r (r 206 40) (r 40 (r 206 40)))
-        (gcd
-         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-         (r (r (r 206 40) (r 40 (r 206 40)))
-            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+  (if (= (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))) 0)
+      (r (r 206 40) (r 40 (r 206 40)))
+      (gcd
+       (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+       (r (r (r 206 40) (r 40 (r 206 40)))
+          (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
 
-    ; operation performed: (remainder 206 40)
-    (if (= (r (r 40 6) (r (r 206 40) (r 40 (r 206 40)))) 0)
-        (r (r 206 40) (r 40 (r 206 40)))
-        (gcd
-         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-         (r (r (r 206 40) (r 40 (r 206 40)))
-            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+  ; operation performed: (remainder 206 40)
+  (if (= (r (r 40 6) (r (r 206 40) (r 40 (r 206 40)))) 0)
+      (r (r 206 40) (r 40 (r 206 40)))
+      (gcd
+       (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+       (r (r (r 206 40) (r 40 (r 206 40)))
+          (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
 
-    ; operation performed: (remainder 40 6)
-    (if (= (r 4 (r (r 206 40) (r 40 (r 206 40)))) 0)
-        (r (r 206 40) (r 40 (r 206 40)))
-        (gcd
-         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-         (r (r (r 206 40) (r 40 (r 206 40)))
-            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+  ; operation performed: (remainder 40 6)
+  (if (= (r 4 (r (r 206 40) (r 40 (r 206 40)))) 0)
+      (r (r 206 40) (r 40 (r 206 40)))
+      (gcd
+       (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+       (r (r (r 206 40) (r 40 (r 206 40)))
+          (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
 
-    ; operation performed: (remainder 206 40)
-    (if (= (r 4 (r 6 (r 40 (r 206 40)))) 0)
-        (r (r 206 40) (r 40 (r 206 40)))
-        (gcd
-         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-         (r (r (r 206 40) (r 40 (r 206 40)))
-            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+  ; operation performed: (remainder 206 40)
+  (if (= (r 4 (r 6 (r 40 (r 206 40)))) 0)
+      (r (r 206 40) (r 40 (r 206 40)))
+      (gcd
+       (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+       (r (r (r 206 40) (r 40 (r 206 40)))
+          (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
 
-    ; operation performed: (remainder 206 40)
-    (if (= (r 4 (r 6 (r 40 6))) 0)
-        (r (r 206 40) (r 40 (r 206 40)))
-        (gcd
-         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-         (r (r (r 206 40) (r 40 (r 206 40)))
-            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+  ; operation performed: (remainder 206 40)
+  (if (= (r 4 (r 6 (r 40 6))) 0)
+      (r (r 206 40) (r 40 (r 206 40)))
+      (gcd
+       (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+       (r (r (r 206 40) (r 40 (r 206 40)))
+          (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
 
-    ; operation performed: (remainder 40 6)
-    (if (= (r 4 (r 6 4)) 0)
-        (r (r 206 40) (r 40 (r 206 40)))
-        (gcd
-         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-         (r (r (r 206 40) (r 40 (r 206 40)))
-            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+  ; operation performed: (remainder 40 6)
+  (if (= (r 4 (r 6 4)) 0)
+      (r (r 206 40) (r 40 (r 206 40)))
+      (gcd
+       (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+       (r (r (r 206 40) (r 40 (r 206 40)))
+          (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
 
-    ; operation performed: (remainder 6 4)
-    (if (= (r 4 2) 0)
-        (r (r 206 40) (r 40 (r 206 40)))
-        (gcd
-         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-         (r (r (r 206 40) (r 40 (r 206 40)))
-            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+  ; operation performed: (remainder 6 4)
+  (if (= (r 4 2) 0)
+      (r (r 206 40) (r 40 (r 206 40)))
+      (gcd
+       (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+       (r (r (r 206 40) (r 40 (r 206 40)))
+          (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
 
-    ; operation performed: (remainder 4 2)
-    (if (= 0 0)
-        (r (r 206 40) (r 40 (r 206 40)))
-        (gcd
-         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-         (r (r (r 206 40) (r 40 (r 206 40)))
-            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+  ; operation performed: (remainder 4 2)
+  (if (= 0 0)
+      (r (r 206 40) (r 40 (r 206 40)))
+      (gcd
+       (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+       (r (r (r 206 40) (r 40 (r 206 40)))
+          (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
 
-    (if #t
-        (r (r 206 40) (r 40 (r 206 40)))
-        (gcd
-         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-         (r (r (r 206 40) (r 40 (r 206 40)))
-            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+  (if #t
+      (r (r 206 40) (r 40 (r 206 40)))
+      (gcd
+       (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+       (r (r (r 206 40) (r 40 (r 206 40)))
+          (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
 
-    (r (r 206 40) (r 40 (r 206 40)))
+  (r (r 206 40) (r 40 (r 206 40)))
 
-    ; operation performed: (remainder 206 40)
-    (r 6 (r 40 (r 206 40)))
+  ; operation performed: (remainder 206 40)
+  (r 6 (r 40 (r 206 40)))
 
-    ; operation performed: (remainder 206 40)
-    (r 6 (r 40 6))
+  ; operation performed: (remainder 206 40)
+  (r 6 (r 40 6))
 
-    ; operation performed: (remainder 40 6)
-    (r 6 4)
+  ; operation performed: (remainder 40 6)
+  (r 6 4)
 
-    ; operation performed: (remainder 6 4)
-    2
+  ; operation performed: (remainder 6 4)
+  2
 
-    ;Value: 17
+  ;Value: 17
 
 (count-remainder-ops 206 40)
 
-    ;Value: 4
+  ;Value: 4
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -737,6 +737,18 @@ only 4 times in applicative-order evaluation, as shown below. |#
 
 (define prime-test-n-reps 9999)
 
+(search-for-primes (expt 10 3) -1 3)
+; primes: 1009, 1013, 1019; timings: 0.29s, 0.28s, 0.29s
+
+(search-for-primes (expt 10 4) -1 3)
+; primes: 10007, 10009, 100037; timings: 0.92s, 0.93s, 0.93s
+
+(search-for-primes (expt 10 5) -1 3)
+; primes: 100003, 100019, 100043; timings: 2.91s, 3.10s, 2.93s
+
+(search-for-primes (expt 10 6) -1 3)
+; primes: 1000003, 1000033, 1000037; timings: 9.26s, 9.26s, 9.19s
+
 #| The timings for primes up to 10^6 reflect an order of growth of Θ(√n). For
 each tenfold increase in n, the runtime grows approximately √10 times. This
 behavior is consistent with an order of growth Θ(√n).
@@ -752,18 +764,6 @@ runtime procedure reports in 0.01s increments, and the reported runtimes for
 primes up to 10^6 were all essentially zero. Thus, even if our prime test were
 exhibiting Θ(√n) growth, the growth in reported timings would be flat (implying,
 incorrectly, Θ(1)). |#
-
-(search-for-primes (expt 10 3) -1 3)
-; primes: 1009, 1013, 1019; timings: 0.29s, 0.28s, 0.29s
-
-(search-for-primes (expt 10 4) -1 3)
-; primes: 10007, 10009, 100037; timings: 0.92s, 0.93s, 0.93s
-
-(search-for-primes (expt 10 5) -1 3)
-; primes: 100003, 100019, 100043; timings: 2.91s, 3.10s, 2.93s
-
-(search-for-primes (expt 10 6) -1 3)
-; primes: 1000003, 1000033, 1000037; timings: 9.26s, 9.26s, 9.19s
 
 ;; Exercise 1.23 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -795,7 +795,7 @@ Roughly speaking, we've replaced n steps of size z with (n/2) steps of size
 ;; Exercise 1.24 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (prime? n)
-  (fast-prime? n 100))
+  (fast-prime? n 10))
 
 (search-for-primes (expt 10 3) -1 3) ; 1.79s, 1.87s, 1.93s
 (search-for-primes (expt 10 4) -1 3) ; 2.29s, 2.24s, 2.31s
@@ -807,29 +807,44 @@ time needed for primes near 1000 since log 1000000 = log 1000² = 2 log 1000.
 This expectation does not quite hold up empirically on my machine: the increase
 in running time from n=1000 to n=1000000 is closer to 1.65x rather than the
 expected 2x. To understand the discrepancy, note that the calculation includes
-some constant-cost, non-logarithmic elements. We can assume that those elements
-account for a non-trivial fraction of the processing time for n <= 1000000 as
-there is no other good explanation. Now, since we don't know exactly what
-portion of the reported timings is constant-cost and what portion is
-logarithmic, it will be difficult to verify the order of growth empirically by
-simply comparing two absolute runtimes. We must instead look at the runtime
-deltas, which by virtue of being deltas will not be affected by constant costs.
-Considering the reported runtimes for n=10^x, moving stepwise from x=3 to x=6,
-we find that the increase in runtime for each step is fairly consistent.
-Runtime increases about 0.4s for each tenfold increase in n. This observation
-supports that the order of growth for the procedure is in fact logarithmic. |#
+some constant-cost, non-logarithmic elements. Those elements must account for a
+non-trivial fraction of the processing time for n <= 1000000.
+
+Since we do not know what fraction of the reported timings is constant-cost and
+what fraction is logarithmic, it will be difficult to verify the order of growth
+empirically by simply comparing two absolute runtimes. We must instead look at
+the runtime deltas, which by virtue of being deltas will not be affected by
+constant costs. Considering the reported runtimes for n=10^x, moving stepwise
+from x=3 to x=6, we find that the increase in runtime for each step is fairly
+consistent. Runtime increases about 0.4s for each tenfold increase in n. This
+observation confirms that the order of growth for the procedure is in fact
+logarithmic. |#
 
 ;; Exercise 1.25 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (fast-expt b n)
+i  (cond ((= n 0) 1)
+         ((even? n) (square (fast-expt b (/ n 2))))
+         (else (* b (fast-expt b (- n 1))))))
 
 (define (expmod base exp m)
   (remainder (fast-expt base exp) m))
 
-#|
-This procedure is not a viable substitute for expmod. The Fermat test algorithm
-requires calculating a remainder from intermediate results at each recursive
-step, whereas the proposed revision takes a remainder at only one level of
-recursion.
-|#
+#| The revised expmod procedure is logically equivalent to the original. Its
+order of growth also appears equivalent to the original in terms of both running
+time and memory usage. Observe that both versions generate a deferred
+computation where the number of steps grows as log(exp).
+
+The above analysis assumes that time and space requirements are the same for all
+operations on numeric values of any size. If that assumption doesn't hold, the
+orders of growth could be different. In the original version we compute the
+remainder as a single step at the end. In the revised version we interleave
+remainder calls with square and *. The latter approach ensures that a quantity
+larger than m is never passed as the first argument to remainder or square, or
+as the second argument to *. If the order of growth of remainder, *, or any
+numeric primitives used inside square is worse than Θ(1) in either time or
+space, then the original expmod could be less efficient since the computation
+it generates deals with larger numbers (up to base^exp) as arguments. |#
 
 ;; Exercise 1.26 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -843,17 +858,19 @@ recursion.
           (remainder (* base (expmod base (- exp 1) m))
                      m))))
 
-#|
-Observe that:
+#| Like the original expmod, this procedure builds up a deferred computation
+where the number of steps grows as the total number of recursive calls to
+itself. If we can determine how the number of recursive calls grows in relation
+to exp, then we will also have determined the order of growth of the procedure
+in terms of both time and space.
 
-  (a) The recursion depth is logarithmic in n since the exp argument is divided
-      by 2 on each evaluation of the (even? exp) branch. If the recursion depth
-      is d then the number of evaluations of the (even? exp) branch will grow as
-      log(n).
-  (b) Since we now make two recursive calls in the (even? exp) branch, the
-      running time of the outermost expmod will double for each evaluation of
-      the branch.
+Imagine we tag each execution of expmod with a depth attribute. The outermost
+expmod has depth 0, any recursive calls it generates have depth 1, and so on.
+Let i be the maximum depth reached during a particular invocation of expmod. We
+can see that i grows as log₂(exp) since we divide exp by two repeatedly until
+reaching the stopping condition. We can also see that the total number of
+recursive calls grows as 2ⁱ since we make two recursive calls each time we
+encounter the (even? exp) branch. So the order of growth is Θ(2ⁱ), which reduces
+to linear:
 
-Putting (a) and (b) together, we get an order of growth Θ(2^(log n)) which is
-equivalent to Θ(2^(log2 n)), which reduces to Θ(n).
-|#
+  Θ(2ⁱ) = Θ(2^(log₂ exp)) = Θ(exp) |#
