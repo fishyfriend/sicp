@@ -751,7 +751,7 @@ range were too short to be useful for reasoning about the order of growth. The
 runtime procedure reports in 0.01s increments, and the reported runtimes for
 primes up to 10^6 were all essentially zero. Thus, even if our prime test were
 exhibiting Θ(√n) growth, the growth in reported timings would be flat (implying,
-incorrectly, an order of growth Θ(k) for some constant k). |#
+incorrectly, Θ(1)). |#
 
 (search-for-primes (expt 10 3) -1 3)
 ; primes: 1009, 1013, 1019; timings: 0.29s, 0.28s, 0.29s
