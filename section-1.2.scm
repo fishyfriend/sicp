@@ -890,4 +890,62 @@ to linear:
 (fools-fermat-test? 2465) ;#t
 (fools-fermat-test? 2821) ;#t
 (fools-fermat-test? 6601) ;#t
-  
+
+;; Exercise 1.28 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (expmod base exp m)
+  (define (next x)
+    (if (nontrivial-sqrt? x m)
+        0
+        (remainder (square x) m)))
+  (cond ((= exp 0) 1)
+        ((even? exp)
+         (next (expmod base (/ exp 2) m)))
+        (else (remainder (* base (expmod base (- exp 1) m))
+                         m))))
+
+(define (nontrivial-sqrt? x n)
+  (and (not (= x 1))
+       (not (= x (- n 1)))
+       (= (remainder (square x) n) 1)))
+
+(define (miller-rabin-test n)
+  (define (try-it a)
+    (not (= (expmod a (- n 1) n) 0)))
+  (try-it (+ 1 (random (- n 1)))))
+
+(define (fast-prime? n times)
+  (cond ((= times 0) true)
+        ((miller-rabin-test n) (fast-prime? n (- times 1)))
+        (else false)))
+
+(define (prime? n)
+  (fast-prime? n 100))
+
+#| With the Fermat test it was sufficient to repeat the test 10 times, but here
+I repeat 100 times as there were occasional errors using only 10. The text
+misleadingly claims that the Miller-Rabin test is foolproof, but it is a
+probabilistic algorithm just like the Fermat test. It would be more correct to
+claim only that there are no numbers which consistently fool the Miller-Rabin
+test. That is still an improvement over the Fermat test, which is always fooled
+by Carmichael numbers. |#
+
+; known prime numbers
+(prime? 1009) ;#t
+(prime? 10007) ;#t
+(prime? 100003) ;#t
+(prime? 1000003) ;#t
+
+; known non-prime numbers
+(prime? 1000) ;#f
+(prime? 10000) ;#f
+(prime? 100000) ;#f
+(prime? 1000000) ;#f
+
+; Carmichael numbers
+(prime? 561) ;#f
+(prime? 1105) ;#f
+(prime? 1729) ;#f
+(prime? 2465) ;#f
+(prime? 2821) ;#f
+(prime? 6601) ;#f
