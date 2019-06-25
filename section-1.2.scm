@@ -1252,3 +1252,188 @@ value of k and the corresponding result, stopping when the result is accurate to
                 (lambda (i) (- (* 2 i) 1))
                 k)
      (- x)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (average-damp f)
+  (lambda (x) (average x (f x))))
+
+(define (deriv g)
+  (lambda (x)
+    (/ (- (g (+ x dx)) (g x))
+       dx)))
+
+(define dx 0.00001)
+
+(define (newton-transform g)
+  (lambda (x)
+    (- x (/ (g x) ((deriv g) x)))))
+
+(define (newtons-method g guess)
+  (fixed-point (newton-transform g) guess))
+
+(define (fixed-point-of-transform g transform guess)
+  (fixed-point (transform g) guess))
+
+;; Exercise 1.40 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (cube x) (* x x x))
+
+(define (cubic a b c)
+  (lambda (x) (+ (cube x) (* a (square x)) (* b x) c)))
+
+; (x+3)(x+2)(x+1) = x³ + 6x² + 11x + 6 = (cubic 6 11 6) with zeros -1, -2, -3
+(newtons-method (cubic 6 11 6) 1) ; -.9999999999359223 ≈ -1
+
+;; Exercise 1.41 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (double f)
+  (lambda (x) (f (f x))))
+
+(define (inc x) (+ x 1))
+
+(((double (double double)) inc) 5) ; 21
+
+;; Exercise 1.42 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (compose f g)
+  (lambda (x) (f (g x))))
+
+((compose square inc) 6) ; 49
+
+;; Exercise 1.43 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (repeated f n)
+  (if (= n 1)
+      f
+      (compose f (repeated f (- n 1)))))
+
+((repeated square 2) 5) ; 625
+
+;; Exercise 1.44 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (smooth f dx)
+  (lambda (x) (/ (+ (f (- x dx))
+                    (f x)
+                    (f (+ x dx)))
+                 3)))
+
+(define (n-fold-smooth f n dx)
+  ((repeated (lambda (f) (smooth f dx)) n) f))
+
+;; Exercise 1.45 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#| (f x n) returns a procedure for y ↦ x/yⁿ⁻¹, the function whose fixed points
+are solutions to g(x) = ⁿ√x. |#
+
+(define (f x n)
+  (lambda (y) (/ x (expt y (- n 1)))))
+
+#| (fixed-point-steps f first-guess max-steps) returns the number of steps that
+(fixed-point f first-guess) would require to converge on a solution, or #f if it
+would not converge within max-steps steps. |#
+
+(define (fixed-point-count-steps f first-guess max-steps)
+  (define (close-enough? v1 v2)
+    (< (abs (- v1 v2)) tolerance))
+  (define (try guess step)
+    (let ((next (f guess)))
+      (cond ((>= step max-steps) #f)
+            ((close-enough? guess next) step)
+            (else (try next (+ 1 step))))))
+  (try first-guess 1))
+
+#| nth-root-test counts and displays the number of steps required for
+convergence of fixed-point search on f for each combination of average damps d,
+x, and n within the specified ranges, using the *inc procedures to increment
+those quantities. When a non-converging test case is encountered, the rest of
+the cases for the current value of d are skipped. |#
+
+(define (nth-root-test dmin dmax dinc
+                       xmin xmax xinc
+                       nmin nmax ninc
+                       first-guess max-steps)
+  (define (iter d x n)
+    (cond ((> d dmax) (display "; done") (newline))
+          ((> x xmax) (display "; ") (newline)
+                      (iter (dinc d) xmin nmin))
+          ((> n nmax) (iter d (xinc x) nmin))
+          ((nth-root-count-steps d x n first-guess max-steps)
+           (iter d x (ninc n)))
+          (else (iter (dinc d) xmin nmin))))
+  (iter dmin xmin nmin))
+
+(define (nth-root-count-steps d x n first-guess max-steps)
+  (let ((result (fixed-point-count-steps ((repeated average-damp d) (f x n))
+                                         first-guess
+                                         max-steps)))
+    (display "; ")
+    (display (list 'nth-root-count-steps d x n first-guess max-steps))
+    (display " => ")
+    (display (if result result "doesn't converge"))
+    (newline)
+    result))
+
+#| xinc is for iterating over x values. Skip x=1 as it's a trivial case. |#
+
+(define (xinc x)
+  (if (< (abs (- x 1e-3)) 1e-6)
+      (* x 1e6)
+      (* x 1e3)))
+
+#| Now we run the test procedure. |#
+
+(nth-root-test 2 8 inc 1e-12 1e12 xinc 5 10 inc 1.0 1000))
+
+  ; (nth-root-count-steps 2 .000000000001 5 1. 1000) => 22
+  ; (nth-root-count-steps 2 .000000000001 6 1. 1000) => 23
+  ; (nth-root-count-steps 2 .000000000001 7 1. 1000) => 20
+  ; (nth-root-count-steps 2 .000000000001 8 1. 1000) => doesn't converge
+  ;
+  ; (nth-root-count-steps 3 .000000000001 5 1. 1000) => 47
+  ; (nth-root-count-steps 3 .000000000001 6 1. 1000) => 40
+  ; ...
+  ; (nth-root-count-steps 3 1000.0000000000002 5 1. 1000) => 40
+  ; (nth-root-count-steps 3 1000.0000000000002 6 1. 1000) => 38
+  ; ...
+  ; (nth-root-count-steps 3 1000000000.0000002 9 1. 1000) => 130
+  ; (nth-root-count-steps 3 1000000000.0000002 10 1. 1000) => 132
+  ;
+  ; (nth-root-count-steps 4 .000000000001 5 1. 1000) => 96
+  ; (nth-root-count-steps 4 .000000000001 6 1. 1000) => 82
+  ; ...
+  ; (nth-root-count-steps 4 1000.0000000000002 5 1. 1000) => 72
+  ; (nth-root-count-steps 4 1000.0000000000002 6 1. 1000) => 70
+  ; ...
+  ; (nth-root-count-steps 4 1000000000.0000002 9 1. 1000) => 258
+  ; (nth-root-count-steps 4 1000000000.0000002 10 1. 1000) => 260
+  ; ...
+
+#| We can see from running the test procedure that, for the range of x and n
+tested, the ideal number of average damps d is 3. Using d=2 results in at
+least one result that doesn't converge (or converges very slowly), and using d=4
+or greater results in consistently slower executions across the entire range of
+input values. Thus, we implement nth-root using 3 average damps. |#
+
+(define (nth-root x n)
+  (fixed-point ((repeated average-damp 3) (f x n)) 1.0))
+
+;; Exercise 1.46 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (iterative-improve good-enough? improve)
+  (lambda (guess)
+    (if (good-enough? guess)
+        guess
+        ((iterative-improve good-enough? improve)
+         (improve guess)))))
+
+(define (sqrt x)
+  ((iterative-improve (lambda (guess) (< (abs (- (square guess) x)) 0.001))
+                      (lambda (guess) (average guess (/ x guess))))
+   x))
+
+(define (fixed-point f first-guess)
+  ((iterative-improve (lambda (guess)
+                        (< (abs (- guess (f guess))) tolerance))
+                      f)
+   first-guess))
