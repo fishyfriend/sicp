@@ -66,14 +66,12 @@
 (define (a-plus-abs-b a b)
   ((if (> b 0) + -) a b))
 
-#|
-The body of the procedure consists of a single combination whose operator
+#| The body of the procedure consists of a single combination whose operator
 evaluates to + or - depending whether b is positive or nonpositive. The
 procedure is thus equivalent to (+ a b) for positive values of b and (- a b)
 for nonpositive values of b. Since adding a positive number or subtracting a
 nonpositive number are both equivalent to adding the number's absolute value,
-the body of the procedure is also equivalent to (+ a (abs b)).
-#|
+the body of the procedure is also equivalent to (+ a (abs b)). #|
 
 ;; Exercise 1.5 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -86,8 +84,7 @@ the body of the procedure is also equivalent to (+ a (abs b)).
 
 (test 0 (p))
 
-#|
-With applicative-order evaluation: Evaluating the expression (test 0 (p))
+#| With applicative-order evaluation: Evaluating the expression (test 0 (p))
 requires first to evaluate the operator and operands. The second operand (p) is
 a combination whose operator evaluates to itself due to the recursive definition
 (define (p) (p)). So evaluating the second operand never terminates, and
@@ -96,8 +93,7 @@ evaluating (test 0 (p)) will cause the interpreter to hang indefinitely.
 With normal-order evaluation: The expression (test 0 (p)) expands to
 (if (= 0 0) 0 (p)) under evaluation. Since the predicate is true, the expression
 evaluates to the consequent branch automatically, and the alternative branch (p)
-need never be evaluated. Evaluating this expression yields 0.
-|#
+need never be evaluated. Evaluating this expression yields 0. |#
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -131,8 +127,7 @@ need never be evaluated. Evaluating this expression yields 0.
           (sqrt-iter (improve guess x)
                      x)))
 
-#|
-Using the new sqrt-iter procedure results in infinite recursion.
+#| Using the new sqrt-iter procedure results in infinite recursion.
 
 Since new-if is an ordinary procedure, not a special form, it cannot be
 evaluated without first evaluating all its operands. Inside the new sqrt-iter,
@@ -142,13 +137,11 @@ of the predicate (first operand). Thus the evaluation of sqrt-iter results in an
 infinitely nested series of calls to sqrt-iter and new-if. Since none of these
 calls ever returns, we would expect evaluation to continue indefinitely until a
 stack overflow occurs. (In fact, in MIT/GNU Scheme running with --stack 1000,
-the error is "maximum recursion depth exceeded".)
-|#
+the error is "maximum recursion depth exceeded".) |#
 
 ;; Exercise 1.7 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-#|
-We can use error as a percentage of the expected (correct) value as a measure
+#| We can use error as a percentage of the expected (correct) value as a measure
 of the effectiveness of our square root procedure. For example, for (sqrt 100),
 the expected value is 10. If our procedure returns 11, then the error is 10%.
 
@@ -171,8 +164,7 @@ but 1.0000000000000002e100, which differs from the supplied radicand 1e100 by
 more than the cutoff value of 0.001. Thus, 1e50 doesn't pass the good-enough?
 test, and as the correct answer doesn't pass, we can see that any other answer
 we might arrive at will not pass either, and so our evaluation will continue to
-"improve" and test guesses indefinitely.
-|#
+"improve" and test guesses indefinitely. |#
 
 (define (sqrt-iter guess old-guess x)
   (if (good-enough? guess old-guess x)
@@ -187,11 +179,9 @@ we might arrive at will not pass either, and so our evaluation will continue to
 (define (sqrt x)
   (sqrt-iter 1.0 0.0 x))
 
-#|
-The revised square-root procedure above works better for both small and large
+#| The revised square-root procedure above works better for both small and large
 numbers. It is more accurate overall, and for very large numbers, it returns a
-value in cases where the original procedure would have run indefinitely.
-|#
+value in cases where the original procedure would have run indefinitely. |#
 
 ;; Exercise 1.8 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
