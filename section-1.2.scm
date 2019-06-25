@@ -1072,3 +1072,18 @@ by Carmichael numbers. |#
   (define (term i) i)
   (define (pred i) (= (gcd i n) 1))
   (filtered-accumulate * 1 term 1 inc (- n 1) pred))
+
+;; Exercise 1.34 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (f g)
+  (g 2))
+
+#| Evaluating (f f) in the interpreter results in an error: "The object 2 is not
+applicable." During evaluation the interpreter first substitutes f's argument
+into the body of the procedure, yielding (f 2). Now to evaluate (f 2) it must
+perform same substitution, yielding (2 2). Here the trouble occurs. When
+evaluating a combination we first evaluate the subexpressions, and we expect the
+left most subexpression (the operator) to evaluate to a procedure. In this case,
+though, it is the literal 2, which is not a procedure. Evaluating a combination
+whose operator is not a procedure does not make sense, so the interpreter cannot
+proceed. |#
