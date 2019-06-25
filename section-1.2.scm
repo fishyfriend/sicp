@@ -949,3 +949,126 @@ by Carmichael numbers. |#
 (prime? 2465) ;#f
 (prime? 2821) ;#f
 (prime? 6601) ;#f
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (cube x) (* x x x))
+
+(define (sum term a next b)
+  (if (> a b)
+      0
+      (+ (term a)
+         (sum term (next a) next b))))
+
+(define (inc n) (+ n 1))
+
+(define (integral f a b dx)
+  (define (add-dx x) (+ x dx))
+  (* (sum f (+ a (/ dx 2.0)) add-dx b)
+     dx))
+
+;; Exercise 1.29 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (simpsons-integral f a b n)
+  (define h (/ (- b a) n))
+  (define (y k) (f (+ a (* k h))))
+  (define (term k) (+ (* 4 (y k)) (* 2 (y (+ k 1)))))
+  (define (next k) (+ k 2))
+  (* (/ h 3)
+     (+ (y 0)
+        (sum term 1 next (- n 1))
+        (y n))))
+
+(integral cube 0 1 0.01)          ;          .24998750000000042
+(integral cube 0 1 0.001)         ;          .249999875000001
+(simpsons-integral cube 0 1 100)  ; 77/300 ≈ .25666666666666665
+(simpsons-integral cube 0 1 1000) ; 94/375 ≈ .25066666666666665
+
+;; Exercise 1.30 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (sum term a next b)
+  (define (iter a result)
+    (if (> a b)
+        result
+        (iter (next a) (+ result (term a)))))
+  (iter a 0))
+
+;; Exercise 1.31 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; a.
+
+(define (product term a next b)
+  (define (iter a result)
+    (if (> a b)
+        result
+        (iter (next a) (* result (term a)))))
+  (iter a 1))
+
+(define (factorial n)
+  (define (term k) k)
+  (product term 1 inc n))
+
+(define (approx-pi n)
+  (define (frac k) (/ (+ k 1) (+ k 2)))
+  (define (term k) (if (odd? k) (frac k) (/ 1 (frac k))))
+  (* 4 (product term 1 inc n)))
+
+(approx-pi 10)   ; ≈ 3.2751010413348074
+(approx-pi 100)  ; ≈ 3.1570301764551676
+(approx-pi 1000) ; ≈ 3.1431607055322663
+
+; b.
+(define (product term a next b)
+  (if (> a b)
+      1
+      (* (term a)
+         (product term (next a) next b))))
+
+;; Exercise 1.32 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; a.
+
+(define (accumulate combiner null-value term a next b)
+  (if (> a b)
+      null-value
+      (combiner (term a)
+                (accumulate combiner null-value term (next a) next b))))
+
+(define (sum term a next b)
+  (accumulate + 0 term a next b))
+
+(define (product term a next b)
+  (accumulate * 1 term a next b))
+
+; b.
+
+(define (accumulate combiner null-value term a next b)
+  (define (iter a result)
+    (if (> a b)
+        result
+        (iter (next a) (combiner result (term a)))))
+  (iter a null-value))
+
+;; Exercise 1.33 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (filtered-accumulate combiner null-value term a next b pred)
+  (define (iter a result)
+    (if (> a b)
+        result
+        (iter (next a)
+              (if (pred a)
+                  (combiner result (term a))
+                  result))))
+  (iter a null-value))
+
+; a.
+
+(define (sum-of-squares-of-primes a b)
+  (filtered-accumulate + 0 square a inc b prime?))
+
+; b.
+
+(define (product-of-relative-primes n)
+  (define (term i) i)
+  (define (pred i) (= (gcd i n) 1))
+  (filtered-accumulate * 1 term 1 inc (- n 1) pred))
