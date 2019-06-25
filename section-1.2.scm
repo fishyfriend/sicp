@@ -1087,3 +1087,168 @@ left most subexpression (the operator) to evaluate to a procedure. In this case,
 though, it is the literal 2, which is not a procedure. Evaluating a combination
 whose operator is not a procedure does not make sense, so the interpreter cannot
 proceed. |#
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define tolerance 0.00001)
+
+(define (fixed-point f first-guess)
+  (define (close-enough? v1 v2)
+    (< (abs (- v1 v2)) tolerance))
+  (define (try guess)
+    (let ((next (f guess)))
+      (if (close-enough? guess next)
+          next
+          (try next))))
+  (try first-guess))
+
+(define (average a b) (/ (+ a b) 2))
+
+;; Exercise 1.35 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#| Given
+
+  ϕ = (1 + √5)/2 and
+  f(x) = 1 + 1/x,
+
+we can show that f(ϕ) = ϕ as follows:
+
+  f(ϕ) = 1 + 1/ϕ
+       = 1 + 1/((1 + √5)/2)
+       = 1 + 2/(1 + √5)
+       = (1 + √5 + 2)/(1 + √5)
+       = (3 + √5)/(1 + √5)
+       = (3 + √5)(1 - √5)/(1 + √5)(1 - √5)
+       = (3 - 2√5 - 5)/(1 - 5)
+       = (-2 - 2√5)/(-4)
+       = (1 + √5)/2
+       = ϕ |#
+
+(fixed-point (lambda (x) (+ 1 (/ 1 x))) 1.0) ; 1.6180327868852458
+
+;; Exercise 1.36 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#| The below version of fixed-point displays the current approximation prefixed
+by a step count. It takes 34 steps to reach an acceptable answer without average
+damping. With average damping, the number of steps is reduced to 9. The
+transformation of the equation to introduce average damping is shown.
+
+  x^x = 1000
+  x   = log(1000)/log(x)
+  2x  = log(1000)/log(x) + x
+  x   = (log(1000)/log(x) + x)/2 |#
+
+(define (fixed-point f first-guess)
+  (define (close-enough? v1 v2)
+    (< (abs (- v1 v2)) tolerance))
+  (define (try guess step)
+    (let ((next (f guess)))
+      (display ";") (display step) (display " : ") (display next) (newline)
+      (if (close-enough? guess next)
+          next
+          (try next (+ 1 step)))))
+  (try first-guess 1))
+
+(fixed-point (lambda (x) (/ (log 1000) (log x))) 2.0)
+
+  ;1 : 9.965784284662087
+  ;2 : 3.004472209841214
+  ; ...
+  ;33 : 4.555540912917957
+  ;34 : 4.555532270803653
+  ;Value: 4.555532270803653
+
+(fixed-point (lambda (x) (/ (+ (/ (log 1000) (log x)) x) 2)) 2.0)
+
+  ;1 : 5.9828921423310435
+  ;2 : 4.922168721308343
+  ; ...
+  ;8 : 4.5555465521473675
+  ;9 : 4.555537551999825
+  ;Value: 4.555537551999825
+
+;; Exercise 1.37 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; a.
+
+(define (cont-frac n d k)
+  (define (iter i)
+    (/ (n i) (denom i)))
+  (define (denom i)
+    (if (= i k)
+        (d i)
+        (+ (d i)
+           (iter (+ i 1)))))
+  (iter 1))
+
+#| test-cont-frac approximates 1/ϕ for successive values of k, printing out each
+value of k and the corresponding result, stopping when the result is accurate to
+4 decimal places. The stopping condition is achieved at k=10. |#
+
+(define (test-cont-frac)
+  (define (accurate-enough? guess)
+    (= (round-to-decimal-places guess 4)
+       (round-to-decimal-places (/ 1 phi) 4)))
+  (define (iter k)
+    (let ((guess (approximate-one-over-phi k)))
+      (display ";") (display k) (display " : ") (display guess) (newline)
+      (if (accurate-enough? guess)
+          guess
+          (iter (+ k 1)))))
+  (iter 1))
+
+(define phi (/ (+ 1 (sqrt 5)) 2))
+
+(define (approximate-one-over-phi k)
+  (cont-frac (lambda (i) 1.0)
+             (lambda (i) 1.0)
+             k))
+
+(define (round-to-decimal-places x n)
+  (define scale (expt 10 n))
+  (/ (round (* scale x)) scale))
+
+(test-cont-frac)
+
+  ;1 : 1.
+  ;2 : .5
+  ;3 : .6666666666666666
+  ;4 : .6000000000000001
+  ;5 : .625
+  ;6 : .6153846153846154
+  ;7 : .6190476190476191
+  ;8 : .6176470588235294
+  ;9 : .6181818181818182
+  ;10 : .6179775280898876
+  ;Value: .6179775280898876
+
+; b.
+
+(define (cont-frac n d k)
+  (define (iter i acc)
+    (if (= i 0)
+        acc
+        (iter (- i 1)
+              (/ (n i)
+                 (+ (d i) acc)))))
+  (iter (- k 1) (/ (n k) (d k))))
+
+;; Exercise 1.38 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (approximate-e k)
+  (define (n i) 1.0)
+  (define (d i)
+    (if (= (remainder i 3) 2)
+        (* 2 (+ (quotient i 3) 1))
+        1))
+  (+ (cont-frac n d k) 2))
+
+(approximate-e 100) ; 2.7182817182817183
+
+;; Exercise 1.39 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (tan-cf x k)
+  (/ (cont-frac (lambda (i) (- (square x)))
+                (lambda (i) (- (* 2 i) 1))
+                k)
+     (- x)))
