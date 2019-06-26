@@ -270,3 +270,32 @@ the small test program below. |#
       (mul-interval x
                     (make-interval (/ 1.0 (upper-bound y))
                                    (/ 1.0 (lower-bound y))))))
+
+;; Exercise 2.11 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (mul-interval x y)
+  (define (both p i) (and (p (upper-bound i)) (p (lower-bound i))))
+  (define (pos? i) (both (lambda (x) (>= x 0)) i))
+  (define (neg? i) (both (lambda (x) (<= x 0)) i))
+
+  ; Define the following values as procedures instead of precomputing them per
+  ; the exercise prompt, which requires limiting the multiplications performed.
+  (define (p1) (* (lower-bound x) (lower-bound y)))
+  (define (p2) (* (lower-bound x) (upper-bound y)))
+  (define (p3) (* (upper-bound x) (lower-bound y)))
+  (define (p4) (* (upper-bound x) (upper-bound y)))
+
+  (cond ((pos? x)
+         (cond ((pos? y) (make-interval (p1) (p4)))
+               ((neg? y) (make-interval (p2) (p3)))
+               (else     (make-interval (p3) (p4)))))
+        ((neg? x)
+         (cond ((pos? y) (make-interval (p2) (p3)))
+               ((neg? y) (make-interval (p1) (p4)))
+               (else     (make-interval (p1) (p2)))))
+        (else
+         (cond ((pos? y) (make-interval (p2) (p4)))
+               ((neg? y) (make-interval (p1) (p3)))
+               (else     (let ((p1 (p1)) (p2 (p2)) (p3 (p3)) (p4 (p4)))
+                           (make-interval (max p1 p2 p3 p4)
+                                          (min p1 p2 p3 p4))))))))
