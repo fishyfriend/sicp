@@ -169,23 +169,22 @@ minimum value of the second. |#
 ;; Exercise 2.9 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 #| First we are to show that the width of the sum of two intervals is a function
-only of their widths. Let i1, i2 be any two intervals. By the definition of the
-sum of two intervals given above, we know that
+only of their widths. Let i1, i2 be any two intervals and let ub and lb be the
+functions that compute an interval's upper and lower bounds respectively. By the
+definition of the sum of two intervals given above, we know that
 
-  upperbound(i1 + i2) = upperbound(i1) + upperbound(i2) and
-  lowerbound(i1 + i2) = lowerbound(i1) + lowerbound(i2).
+  ub(i1 + i2) = ub(i1) + ub(i2) and
+  lb(i1 + i2) = lb(i1) + lb(i2).
 
 The width of an interval is defined as
 
-  width(i) = 1/2 * (upperbound(i) - lowerbound(i)).
+  width(i) = 1/2 * (ub(i) - lb(i)).
 
-Applying substitution gives us
+Thus:
 
-  width(i1 + i2) = 1/2 * (upperbound(i1 + i2) - lowerbound(i1 + i2))
-                 = 1/2 * (   (upperbound(i1) + upperbound(i2)) -
-                             (lowerbound(i1) + lowerbound(i2))   )
-                 = 1/2 * (upperbound(i1) - lowerbound(i1)) +
-                   1/2 * (upperbound(i2) - lowerbound(i2))
+  width(i1 + i2) = 1/2 * (ub(i1 + i2) - lb(i1 + i2))
+                 = 1/2 * ((ub(i1) + ub(i2)) - (lb(i1) + lb(i2)))
+                 = 1/2 * (ub(i1) - lb(i1)) + 1/2 * (ub(i2) - lb(i2))
                  = width(i1) + width(i2)
 
 which shows that the width of a sum of two intervals is a function only of their
@@ -195,19 +194,16 @@ Second we are to show that the same property is true of the difference of two
 intervals. By the definition of the difference of two intervals, for any two
 intervals i3 and i4 we know that
 
-  upperbound(i3 - i4) = lowerbound(i3) - upperbound(i4) and
-  lowerbound(i3 - i4) = upperbound(i3) - lowerbound(i4).
+  ub(i3 - i4) = lb(i3) - ub(i4) and
+  lb(i3 - i4) = ub(i3) - lb(i4).
 
-Applying substitution gives us
+Thus:
 
-  width(i3 - i4) = 1/2 * (upperbound(i3 - i4) - lowerbound(i3 - i4))
-                 = 1/2 * (   (lowerbound(i3) - upperbound(i4)) -
-                             (upperbound(i3) - lowerbound(i4))   )
-                 = 1/2 * (lowerbound(i3) - upperbound(i3)) +
-                   1/2 * (lowerbound(i4) - upperbound(i4))
-                 = (-1) * 1/2 * (upperbound(i3) - lowerbound(i3)) +
-                   (-1) * 1/2 * (upperbound(i4) - lowerbound(i4))
-                 = (-1)(width(i3) + width(i4))
+  width(i3 - i4) = 1/2 * (ub(i3 - i4) - lb(i3 - i4))
+                 = 1/2 * ((lb(i3) - ub(i4)) - (ub(i3) - lb(i4)))
+                 = 1/2 * (lb(i3) - ub(i3)) + 1/2 * (lb(i4) - ub(i4))
+                 = (-1/2) * (ub(i3) - lb(i3)) + (-1/2) * (ub(i4) - lb(i4))
+                 = -(width(i3) + width(i4))
 
 which shows that the width of a difference of two intervals is a function only
 of their widths.
