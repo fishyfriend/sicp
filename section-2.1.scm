@@ -295,3 +295,84 @@ the small test program below. |#
                (else     (let ((p1 (p1)) (p2 (p2)) (p3 (p3)) (p4 (p4)))
                            (make-interval (max p1 p2 p3 p4)
                                           (min p1 p2 p3 p4))))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (make-center-width c w)
+  (make-interval (- c w) (+ c w)))
+
+(define (center i)
+  (/ (+ (lower-bound i) (upper-bound i)) 2))
+
+(define (width i)
+  (/ (- (upper-bound i) (lower-bound i)) 2))
+
+;; Exercise 2.12 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (make-center-percent c p)
+  (let ((width (* c (/ p 100))))
+    (make-interval (- c width) (+ c width))))
+
+(define (percent i)
+  (* (/ (width i) (center i)) 100))
+
+;; Exercise 2.13 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#| We are to derive a formula for approximating the tolerance of the product of
+two intervals in terms of the tolerances of the factors.
+
+Using our previous definitions of operations on intervals, for some interval i,
+the upper bound, lower bound, width, center, and tolerance have the following
+equivalencies:
+
+  ub(i) = center(i) * (1 + tol(i))
+  lb(i) = center(i) * (1 - tol(i))
+  width(i) = (ub(i) - lb(i)) / 2
+  center(i) = (ub(i) + lb(i)) / 2
+  tol(i) = width(i) / center(i)
+
+The bounds of the product of two intervals i and j (with all endpoints positive)
+are defined as
+
+  ub(ij) = ub(i) * ub(j)
+  lb(ij) = lb(i) * lb(j).
+
+Using these facts we can derive the approximation formula:
+
+  ub(ij) = ub(i)                    * ub(j)
+         = center(i) * (1 + tol(i)) * center(j) * (1 + tol(j))
+
+  lb(ij) = lb(i)                    * lb(j)
+         = center(i) * (1 - tol(i)) * center(j) * (1 - tol(j))
+
+  tol(ij) = width(ij)                        / center(ij)
+          = ((ub(ij)        - lb(ij)) / 2)   / ((ub(ij)        + lb(ij)) / 2)
+          =  (ub(ij)        - lb(ij))        /  (ub(ij)        + lb(ij))
+          =  (ub(i) * ub(j) - lb(i) * lb(j)) /  (ub(i) * ub(j) + lb(i) * lb(j))
+
+            center(i) * (1 + tol(i)) * center(j) * (1 + tol(j)) -
+            center(i) * (1 - tol(i)) * center(j) * (1 - tol(j))
+          = —————————————————————————————————————————————————————
+            center(i) * (1 + tol(i)) * center(j) * (1 + tol(j)) +
+            center(i) * (1 - tol(i)) * center(j) * (1 - tol(j))
+
+            (1 + tol(i)) * (1 + tol(j)) - (1 - tol(i)) * (1 - tol(j))
+          = —————————————————————————————————————————————————————————
+            (1 + tol(i)) * (1 + tol(j)) + (1 - tol(i)) * (1 - tol(j))
+
+            (1 + tol(i) + tol(j) + tol(i) * tol(j)) -
+            (1 - tol(i) - tol(j) + tol(i) * tol(j))
+          = —————————————————————————————————————————
+            (1 + tol(i) + tol(j) + tol(i) * tol(j)) +
+            (1 - tol(i) - tol(j) + tol(i) * tol(j))
+
+            2 * tol(i) + 2 * tol(j)     tol(i) + tol(j)
+          = ——————————————————————— = ———————————————————
+            2 + 2 * tol(i) * tol(j)   1 + tol(i) * tol(j)
+
+Since we assume small tolerances, tol(i) and tol(j) are small fractions, and so
+their product will be very small. As an approximation we can assume it is 0,
+which yields this simple approximation for the tolerance of the product of
+intervals:
+
+  tol(ij) = tol(i) + tol(j) |#
