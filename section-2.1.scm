@@ -112,3 +112,161 @@ g, and h respectively, then we know that (car (cons a b)) returns a and
   (if (= (remainder z 3) 0)
       (+ 1 (cdr (/ z 3)))
       0))
+
+;; Exercise 2.6 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define zero (lambda (f) (lambda (x) x)))
+
+(define (add-1 n)
+  (lambda (f) (lambda (x) (f ((n f) x)))))
+
+(define one (lambda (f) (lambda (x) (f x))))
+(define two (lambda (f) (lambda (x) (f (f x)))))
+
+(define (+ a b)
+  (lambda (f) (lambda (x) ((a f) ((b f) x)))))
+
+; Change a Church numeral to a standard number
+(define (church->integer n) ((n 1+) 0))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (add-interval x y)
+  (make-interval (+ (lower-bound x) (lower-bound y))
+                 (+ (upper-bound x) (upper-bound y))))
+
+(define (mul-interval x y)
+  (let ((p1 (* (lower-bound x) (lower-bound y)))
+        (p2 (* (lower-bound x) (upper-bound y)))
+        (p3 (* (upper-bound x) (lower-bound y)))
+        (p4 (* (upper-bound x) (upper-bound y))))
+    (make-interval (min p1 p2 p3 p4)
+                   (max p1 p2 p3 p4))))
+
+(define (div-interval x y)
+  (mul-interval x
+                (make-interval (/ 1.0 (upper-bound y))
+                               (/ 1.0 (lower-bound y)))))
+
+;; Exercise 2.7 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (make-interval a b) (cons a b))
+
+(define (upper-bound i) (max (car i) (cdr i)))
+(define (lower-bound i) (min (car i) (cdr i)))
+
+;; Exercise 2.8 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#| The minimum value of the difference of two intervals must be the minimum
+value of the first interval minus the maximum value of the second. The maximum
+value of the difference must be the maximum value of the first minus the
+minimum value of the second. |#
+
+(define (sub-interval x y)
+  (make-interval (- (lower-bound x) (upper-bound y))
+                 (- (upper-bound x) (lower-bound y))))
+
+;; Exercise 2.9 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#| First we are to show that the width of the sum of two intervals is a function
+only of their widths. Let i1, i2 be any two intervals. By the definition of the
+sum of two intervals given above, we know that
+
+  upperbound(i1 + i2) = upperbound(i1) + upperbound(i2) and
+  lowerbound(i1 + i2) = lowerbound(i1) + lowerbound(i2).
+
+The width of an interval is defined as
+
+  width(i) = 1/2 * (upperbound(i) - lowerbound(i)).
+
+Applying substitution gives us
+
+  width(i1 + i2) = 1/2 * (upperbound(i1 + i2) - lowerbound(i1 + i2))
+                 = 1/2 * (   (upperbound(i1) + upperbound(i2)) -
+                             (lowerbound(i1) + lowerbound(i2))   )
+                 = 1/2 * (upperbound(i1) - lowerbound(i1)) +
+                   1/2 * (upperbound(i2) - lowerbound(i2))
+                 = width(i1) + width(i2)
+
+which shows that the width of a sum of two intervals is a function only of their
+widths.
+
+Second we are to show that the same property is true of the difference of two
+intervals. By the definition of the difference of two intervals, for any two
+intervals i3 and i4 we know that
+
+  upperbound(i3 - i4) = lowerbound(i3) - upperbound(i4) and
+  lowerbound(i3 - i4) = upperbound(i3) - lowerbound(i4).
+
+Applying substitution gives us
+
+  width(i3 - i4) = 1/2 * (upperbound(i3 - i4) - lowerbound(i3 - i4))
+                 = 1/2 * (   (lowerbound(i3) - upperbound(i4)) -
+                             (upperbound(i3) - lowerbound(i4))   )
+                 = 1/2 * (lowerbound(i3) - upperbound(i3)) +
+                   1/2 * (lowerbound(i4) - upperbound(i4))
+                 = (-1) * 1/2 * (upperbound(i3) - lowerbound(i3)) +
+                   (-1) * 1/2 * (upperbound(i4) - lowerbound(i4))
+                 = (-1)(width(i3) + width(i4))
+
+which shows that the width of a difference of two intervals is a function only
+of their widths.
+
+Finally we are to show by counterexample that the property does not hold for
+multiplication and division of intervals. For a given operation f over two
+intervals, if the property *does* hold for that operation, then for any
+intervals a, b, c, and d,
+
+  width(a) = width(b) and
+  width(c) = width(d)
+
+implies
+
+  width(f(a,c)) = width(f(b,d)).
+
+We can prove the property does not hold for f by finding an a, b, c, and d for
+which the first and second equalities hold true but not the third.
+
+The intervals a=(10,20), b=(20,30), c=(30,60), and d=(60,90) satisfactorily
+prove the assertion for both multiplication and division, as shown by running
+the small test program below. |#
+
+(define (width i) (/ (- (upper-bound i) (lower-bound i)) 2))
+
+(define (test-counterexample f a b c d)
+  (display "test with (a b c d) = ") (display (list a b c d)) (newline)
+  (display "width(a) = ") (display (width a)) (newline)
+  (display "width(b) = ") (display (width b)) (newline)
+  (display "width(c) = ") (display (width c)) (newline)
+  (display "width(d) = ") (display (width d)) (newline)
+  (display "width(f(a,c)) = ") (display (width (f a c))) (newline)
+  (display "width(f(b,d)) = ") (display (width (f b d))) (newline)
+  (if (and (= (width a) (width b))
+           (= (width c) (width d))
+           (not (= (width (f a c)) (width (f b d)))))
+      (display "success: the property does not hold!")
+      (display "inconclusive result: width(f(a,c)) = width(f(b,d))"))
+  (newline))
+
+(define a (make-interval 10 20))
+(define b (make-interval 20 30))
+(define c (make-interval 30 60))
+(define d (make-interval 60 90))
+
+(test-counterexample mul-interval a b c d)
+(test-counterexample div-interval a b c d)
+(test-counterexample add-interval a b c d)
+(test-counterexample sub-interval a b c d)
+
+;; Exercise 2.10 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (contains-interval? i n)
+  (and (>= n (lower-bound i))
+       (<= n (upper-bound i))))
+
+(define (div-interval x y)
+  (if (contains-interval? y 0)
+      (error "division by zero")
+      (mul-interval x
+                    (make-interval (/ 1.0 (upper-bound y))
+                                   (/ 1.0 (lower-bound y))))))
