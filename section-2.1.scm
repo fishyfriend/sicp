@@ -376,3 +376,90 @@ which yields this simple approximation for the tolerance of the product of
 intervals:
 
   tol(ij) = tol(i) + tol(j) |#
+
+;; Exercise 2.14 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#| Below, a test procedure is used to compare different methods of computing
+several different intervallic expressions. Those expressions whose
+implementations include division or subtraction may show different results
+when different implementations are used, whereas those whose implementations are
+composed purely of multiplication or addition return consistent results. |#
+
+(define (test f a-center a-width b-center b-width)
+  (let* ((a (make-center-width a-center a-width))
+         (b (make-center-width b-center b-width))
+         (result (f a b))
+         (result-center (center result))
+         (result-width (width result)))
+      (display "; c=") (display result-center)
+      (display " w=") (display result-width) (newline)))
+
+(define (percent-error expected value)
+  (* 100 (abs (/ (- value expected) expected))))
+
+(define (par1 r1 r2)
+  (div-interval (mul-interval r1 r2)
+                (add-interval r1 r2)))
+
+(define (par2 r1 r2)
+  (let ((one (make-interval 1 1)))
+    (div-interval one
+                  (add-interval (div-interval one r1)
+                                (div-interval one r2)))))
+
+(test par1 100 1 100 1) ; c=50.02000200020002 w=1.50020002000200
+(test par2 100 1 100 1) ; c=50. w=.5000000000000036
+(test par1 150 5 300 10) ; c=100.44493882091213 w=10.014831294030401
+(test par2 150 5 300 10) ; c=100. w=3.3333333333333286
+
+(define (div-twice a b) (div-interval (mul-interval (div-interval a b) b) b))
+(define (div-thrice a b) (div-interval (mul-interval (div-twice a b) b) b))
+
+(test div-interval 100 1 100 1) ; c=1.0002000200020003 w=2.0002000200020076e-2
+(test div-twice 100 1 100 1) ; c=1.0008001600240033 w=.0400120020002801
+(test div-thrice 100 1 100 1) ; c=1.0018006601460259 w=.06003801020198035
+(test div-interval 150 5 300 10) ; c=.5011123470522802 w=3.3370411568409336e-2
+(test div-twice 150 5 300 10) ; c=.5044543374729801 w=.06688930105258473
+(test div-thrice 150 5 300 10) ; c=.5100408410748722 w=.10070580700417978
+
+(define (xxy1 x y) (mul-interval (mul-interval x x) y))
+(define (xxy2 x y) (mul-interval x (mul-interval x y)))
+
+(test xxy1 100 1 100 1) ; c=1000300 w=30001
+(test xxy2 100 1 100 1) ; c=1000300 w=30001
+(test xxy1 150 5 300 10) ; c=6772500 w=675250
+(test xxy2 150 5 300 10) ; c=6772500 w=675250
+
+(define (add-twice a b) (add-interval (sub-interval (add-interval a b) b) b))
+(define (add-thrice a b) (add-interval (sub-interval (add-twice a b) b) b))
+
+(test add-interval 150 5 300 10) ; c=450 w=15
+(test add-twice 150 5 300 10) ; c=450 w=35
+(test add-thrice 150 5 300 10) ; c=450 w=55
+
+(define (quad-sum1 a b)
+  (let ((double-sum (add-interval (add-interval a b) (add-interval a b))))
+    (add-interval double-sum double-sum)))
+
+(define (quad-sum2 a b)
+  (let ((2a+b (add-interval a (add-interval a b)))
+        (2b (add-interval b b)))
+    (add-interval (add-interval 2a+b 2a+b) 2b)))
+
+(test quad-sum1 150 5 300 10) ; c=1800 w=60
+(test quad-sum2 150 5 300 10) ; c=1800 w=60
+
+;; Exercise 2.15 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#| The observation is correct: formulas produce tighter error bounds when
+variables that carry uncertainty are not repeated inside the formula. Not only
+are the error bounds on the results tighter, but also they are more correct for
+this (and probably most) problem domains. The reason is that variables which
+simulate a real-world quantity can only have one actual value at any given time.
+When we include such a variable in a formula more than once, and that variable
+carries uncertainty, then the overall uncertainty of the formula will
+erroneously reflect that *each* occurrence of that variable could have any value
+within the variable's entire range of possibilities. It is as though we had used
+several variables with identical uncertainties instead of just one! Avoiding
+repeating uncertain variables inside a formula ensures that the uncertainty of
+the formula as a whole is not distorted. |#
