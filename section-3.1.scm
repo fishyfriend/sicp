@@ -82,3 +82,46 @@
                    (if (> attempts 7)
                        (call-the-cops)
                        "Incorrect password")))))))
+
+;; Exercise 3.5 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (monte-carlo trials experiment)
+  (define (iter trials-remaining trials-passed)
+    (cond ((= trials-remaining 0)
+           (/ trials-passed trials))
+          ((experiment)
+           (iter (- trials-remaining 1) (+ trials-passed 1)))
+          (else
+           (iter (- trials-remaining 1) trials-passed))))
+  (iter trials 0))
+
+(define (random-in-range low high)
+  (let ((range (- high low)))
+    (+ low (random range))))
+
+(define (estimate-integral P x1 x2 y1 y2 trials)
+  (define (experiment)
+    (P (random-in-range x1 x2) (random-in-range y1 y2)))
+  (* (monte-carlo trials experiment)
+     (abs (- x1 x2))
+     (abs (- y1 y2))))
+
+(define (in-unit-circle? x y)
+  (<= (+ (square x) (square y)) 1.))
+
+(define (estimate-pi)
+  (estimate-integral in-unit-circle? -1. 1. -1. 1. 1000000.))
+
+(estimate-pi) ; 3.141824
+
+;; Exercise 3.6 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (rand-update x) (+ 1 x))
+(define (random-init) (random 1000))
+
+(define rand
+  (let ((x (random-init)))
+    (lambda (m)
+      (cond ((eq? m 'generate) (set! x (rand-update x))
+                               x)
+            ((eq? m 'reset) (lambda (n) (set! x n)))))))
