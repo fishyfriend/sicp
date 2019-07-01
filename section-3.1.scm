@@ -164,3 +164,48 @@
 
 (+ (f 0) (f 1)) ; 1
 (+ (f 1) (f 0)) ; 0
+
+;; Exercise 3.9 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; recursive version
+
+(define (factorial n)
+  (if (= n 1)
+      1
+      (* n (factorial (- n 1)))))
+
+#|   global env
+         ↓
+[...................]
+  ↑  ↑  ↑  ↑  ↑  ↑
+  │  │  │  │  │  └[ n: 6 ] ← E1
+  │  │  │  │  └[ n: 5 ] ← E2
+  │  │  │  └[ n: 4 ] ← E3
+  │  │  └[ n: 3 ] ← E4
+  │  └[ n: 2 ] ← E5
+  └[ n: 1 ] ← E6 |#
+
+; iterative version
+
+(define (factorial n)
+  (fact-iter 1 1 n))
+
+(define (fact-iter product counter max-count)
+  (if (> counter max-count)
+      product
+      (fact-iter (* counter product)
+                 (+ counter 1)
+                 max-count)))
+
+#|    global env
+          ↓
+[.....................]
+  ↑  ↑  ↑  ↑  ↑  ↑  ↑
+  │  │  │  │  │  │  └[ product: 1   counter: 1   max-count: 6 ] ← E1
+  │  │  │  │  │  └[ product: 1   counter: 2   max-count: 6 ] ← E2
+  │  │  │  │  └[ product: 2   counter: 3   max-count: 6 ] ← E3
+  │  │  │  └[ product: 6   counter: 4   max-count: 6 ] ← E4
+  │  │  └[ product: 24   counter: 5   max-count: 6 ] ← E5
+  │  └[ product: 120   counter: 6   max-count: 6 ] ← E6
+  └[ product: 720   counter: 7   max-count: 6 ] ← E7 |#
+  
