@@ -488,6 +488,6 @@ When we include such a variable in a formula more than once, and that variable
 carries uncertainty, then the overall uncertainty of the formula will
 erroneously reflect that *each* occurrence of that variable could have any value
 within the variable's entire range of possibilities. It is as though we had used
-several variables with identical uncertainties instead of just one! Avoiding
-repeating uncertain variables inside a formula ensures that the uncertainty of
-the formula as a whole is not distorted. |#
+several variables with identical uncertainties instead of just one! Using
+an uncertainty-carrying variable only once inside a formula avoids this problem.
+|#
