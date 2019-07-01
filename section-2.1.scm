@@ -379,11 +379,20 @@ intervals:
 
 ;; Exercise 2.14 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-#| Below, a test procedure is used to compare different methods of computing
-several different intervallic expressions. Those expressions whose
-implementations include division or subtraction may show different results
-when different implementations are used, whereas those whose implementations are
-composed purely of multiplication or addition return consistent results. |#
+#| Below, a test procedure is used to evaluate different implementations of
+several intervallic expressions. For a given expression, implementations may
+produce inconsistent results when the same inputs are used in positions that
+affect the final result differently. For example:
+
+  par1(r1,r2) = (a*b)/(c+d) where a=r1 b=r2 c=r1 d=r2
+  par2(r1,r2) = 1/(1/a+1/b) where a=r1 b=r2
+
+In par1, input r1 is used in terms (a, c) that affect the final result in
+opposite directions whereas only one direction in par2. For the same input
+values, par1 generates a wider result interval than par2.
+
+Where implementations do not use inputs in "contradictory" ways, the results
+are consistent; see xxy1 and xxy2 below for example. |#
 
 (define (test f a-center a-width b-center b-width)
   (let* ((a (make-center-width a-center a-width))
@@ -407,39 +416,58 @@ composed purely of multiplication or addition return consistent results. |#
                   (add-interval (div-interval one r1)
                                 (div-interval one r2)))))
 
-(test par1 100 1 100 1) ; c=50.02000200020002 w=1.50020002000200
-(test par2 100 1 100 1) ; c=50. w=.5000000000000036
+(test par1 100 1 100 1)  ; c=50.02000200020002  w=1.50020002000200
+(test par2 100 1 100 1)  ; c=50.                w=.5000000000000036
+
 (test par1 150 5 300 10) ; c=100.44493882091213 w=10.014831294030401
-(test par2 150 5 300 10) ; c=100. w=3.3333333333333286
+(test par2 150 5 300 10) ; c=100.               w=3.3333333333333286
 
-(define (div-twice a b) (div-interval (mul-interval (div-interval a b) b) b))
-(define (div-thrice a b) (div-interval (mul-interval (div-twice a b) b) b))
+(define (div-twice a b)
+  (div-interval (mul-interval (div-interval a b) b) b))
 
-(test div-interval 100 1 100 1) ; c=1.0002000200020003 w=2.0002000200020076e-2
-(test div-twice 100 1 100 1) ; c=1.0008001600240033 w=.0400120020002801
-(test div-thrice 100 1 100 1) ; c=1.0018006601460259 w=.06003801020198035
-(test div-interval 150 5 300 10) ; c=.5011123470522802 w=3.3370411568409336e-2
-(test div-twice 150 5 300 10) ; c=.5044543374729801 w=.06688930105258473
-(test div-thrice 150 5 300 10) ; c=.5100408410748722 w=.10070580700417978
+(define (div-thrice a b)
+  (div-interval (mul-interval (div-twice a b) b) b))
 
-(define (xxy1 x y) (mul-interval (mul-interval x x) y))
-(define (xxy2 x y) (mul-interval x (mul-interval x y)))
+(test div-interval 100 1 100 1)  ; c=1.0002000200020003 w=2.0002000200020076e-2
+(test div-twice 100 1 100 1)     ; c=1.0008001600240033 w=.0400120020002801
+(test div-thrice 100 1 100 1)    ; c=1.0018006601460259 w=.06003801020198035
+
+(test div-interval 150 5 300 10) ; c=.5011123470522802  w=3.3370411568409336e-2
+(test div-twice 150 5 300 10)    ; c=.5044543374729801  w=.06688930105258473
+(test div-thrice 150 5 300 10)   ; c=.5100408410748722  w=.10070580700417978
+
+(define (xxy1 x y)
+  (mul-interval (mul-interval x x) y))
+
+(define (xxy2 x y)
+  (mul-interval x (mul-interval x y)))
 
 (test xxy1 100 1 100 1) ; c=1000300 w=30001
 (test xxy2 100 1 100 1) ; c=1000300 w=30001
+
 (test xxy1 150 5 300 10) ; c=6772500 w=675250
 (test xxy2 150 5 300 10) ; c=6772500 w=675250
 
-(define (add-twice a b) (add-interval (sub-interval (add-interval a b) b) b))
-(define (add-thrice a b) (add-interval (sub-interval (add-twice a b) b) b))
+(define (add-twice a b)
+  (add-interval (sub-interval (add-interval a b) b) b))
+
+(define (add-thrice a b)
+  (add-interval (sub-interval (add-twice a b) b) b))
+
+(define (add-alt a b)
+  (sub-interval (mul-interval (add-interval a b)
+                              (make-interval 2 2))
+                (add-interval a b)))
 
 (test add-interval 150 5 300 10) ; c=450 w=15
-(test add-twice 150 5 300 10) ; c=450 w=35
-(test add-thrice 150 5 300 10) ; c=450 w=55
+(test add-twice 150 5 300 10)    ; c=450 w=35
+(test add-thrice 150 5 300 10)   ; c=450 w=55
+(test add-alt 150 5 300 10)      ; c=450 w=45
 
 (define (quad-sum1 a b)
-  (let ((double-sum (add-interval (add-interval a b) (add-interval a b))))
-    (add-interval double-sum double-sum)))
+  (define sum (add-interval a b))
+  (define double-sum (add-interval sum sum))
+  (add-interval double-sum double-sum))
 
 (define (quad-sum2 a b)
   (let ((2a+b (add-interval a (add-interval a b)))
