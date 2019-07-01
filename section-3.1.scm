@@ -125,3 +125,42 @@
       (cond ((eq? m 'generate) (set! x (rand-update x))
                                x)
             ((eq? m 'reset) (lambda (n) (set! x n)))))))
+
+;; Exercise 3.7 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (password-protect dispatch password)
+  (lambda (attempt m)
+    (if (eq? attempt password)
+        (dispatch m)
+        (lambda (m) "Incorrect password"))))
+
+(define (make-joint account password new-password)
+  (password-protect (lambda (m) (account password m))
+                    new-password))
+
+(define (make-account balance password)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        "Insufficient funds"))
+  (define (deposit amount)
+    (set! balance (+ balance amount))
+    balance)
+  (define (dispatch m)
+    (cond ((eq? m 'withdraw) withdraw)
+          ((eq? m 'deposit) deposit)
+          (else (error "Unknown request -- MAKE-ACCOUNT"
+                       m))))
+  (password-protect dispatch password))
+
+;; Exercise 3.8 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define f
+  (let ((y 0))
+    (lambda (x)
+      (set! y (if (= y 0) 1 0))
+      (if (= x y) (/ 1 2) 0))))
+
+(+ (f 0) (f 1)) ; 1
+(+ (f 1) (f 0)) ; 0
