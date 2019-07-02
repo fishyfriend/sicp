@@ -413,3 +413,179 @@ sequence, (op a b) should be equivalent to (op b a). |#
   (fold-left (lambda (x y) (cons y x)) '() sequence))
 
 (reverse '(1 2 3)) ; (3 2 1)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (enumerate-interval low high)
+  (if (> low high)
+      '()
+      (cons low (enumerate-interval (+ low 1) high))))
+
+(define (flatmap proc seq)
+  (accumulate append '() (map proc seq)))
+
+(define (prime-sum? pair)
+  (prime? (+ (car pair) (cadr pair))))
+
+(define (make-pair-sum pair)
+  (list (car pair) (cadr pair) (+ (car pair) (cadr pair))))
+
+(define (remove item sequence)
+  (filter (lambda (x) (not (= x item)))
+          sequence))
+
+; prime-finding procedures from section 1.2
+
+(define (smallest-divisor n)
+  (find-divisor n 2))
+
+(define (find-divisor n test-divisor)
+  (cond ((> (square test-divisor) n) n)
+        ((divides? test-divisor n) test-divisor)
+        (else (find-divisor n (+ test-divisor 1)))))
+
+(define (divides? a b)
+  (= (remainder b a) 0))
+
+(define (prime? n)
+  (= n (smallest-divisor n)))
+
+;; Exercise 2.40 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (unique-pairs n)
+  (flatmap (lambda (i)
+             (map (lambda (j) (list i j))
+                  (enumerate-interval 1 (- i 1))))
+           (enumerate-interval 1 n)))
+
+(unique-pairs 3) ; ((2 1) (3 1) (3 2)
+
+(define (prime-sum-pairs n)
+  (map make-pair-sum
+       (filter prime-sum? (unique-pairs n))))
+
+(prime-sum-pairs 6) ; ((2 1 3) (3 2 5) (4 1 5) (4 3 7) (5 2 7) (6 1 7) (6 5 11))
+
+;; Exercise 2.41 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (find-triples-with-sum n s)
+  (let ((triples
+         (flatmap (lambda (i)
+                    (map (lambda (j)
+                           (list i j (- s i j)))
+                         (enumerate-interval 1 (min i (- s 1 i)))))
+                  (enumerate-interval 1 (min n (- s 2))))))
+       (filter (lambda (ijk) (<= (caddr ijk) (cadr ijk)))
+               triples)))
+
+(find-triples-with-sum 5 9) ; ((3 3 3) (4 3 2) (4 4 1) (5 2 2) (5 3 1))
+
+;; Exercise 2.42 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (queens board-size)
+  (define (queen-cols k)
+    (if (= k 0)
+        (list empty-board)
+        (filter
+          (lambda (positions) (safe? k positions))
+          (flatmap
+            (lambda (rest-of-queens)
+              (map (lambda (new-row)
+                     (adjoin-position new-row k rest-of-queens))
+                   (enumerate-interval 1 board-size)))
+            (queen-cols (- k 1))))))
+  (queen-cols board-size))
+
+(define (row-of-queen positions col)
+  (list-ref positions (- col 1)))
+
+(define empty-board '())
+
+(define (adjoin-position new-row k position)
+  (append position (list new-row)))
+
+(define (safe-from k1 k2 positions)
+  (let ((row1 (row-of-queen positions k1))
+        (row2 (row-of-queen positions k2)))
+       (cond ((= k1 k2) #t)
+             ((= row1 row2) #f)
+             ((= (abs (- row1 row2))
+                 (abs (- k1 k2)))
+              #f)
+             (else #t))))
+
+(define (safe? k positions)
+  (fold-left (lambda (acc col)
+               (if (not acc)
+                   #f
+                   (safe-from k col positions)))
+             #t
+             (enumerate-interval 1 (length positions))))
+
+(queens 5)
+; ((1 3 5 2 4) (1 4 2 5 3) (2 4 1 3 5) (2 5 3 1 4) (3 1 4 2 5)
+;  (3 5 2 4 1) (4 1 3 5 2) (4 2 5 3 1) (5 2 4 1 3) (5 3 1 4 2))
+
+;; Exercise 2.43 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (queens-slow board-size)
+  (define (queen-cols k)
+    (set! count (+ 1 count))
+    (if (= k 0)
+        (list empty-board)
+        (filter
+          (lambda (positions) (safe? k positions))
+          (flatmap
+            (lambda (new-row)
+              (map (lambda (rest-of-queens)
+                     (adjoin-position new-row k rest-of-queens))
+                   (queen-cols (- k 1))))
+            (enumerate-interval 1 board-size)))))
+  (queen-cols board-size))
+
+(define (time-queens f n reps)
+  (define t0 (runtime))
+  (define (iter count)
+    (if (= count 0)
+        (- (runtime) t0)
+        (begin (f n)
+               (iter (- count 1)))))
+  (/ (iter reps) reps))
+
+(define time-orig (time-queens queens 8 100)) ; .21199999999999988
+(define time-slow (time-queens queens-slow 8 1)) ; 361.36
+(/ time-slow time-orig) ; 1704.5283018867935
+
+#| The revised version runs slowly because moving the recursive call to the
+inner loop changes the runtime order of growth.
+
+In the original version, queen-cols is called approximately board-size times,
+as there is a single recursive call per invocation of the procedure, and the
+parameter that supplies the stop condition, k, is decremented each time.
+
+In the revised version, each invocation of queen-cols makes board-size
+additional recursive calls. Thus the toplevel invocation of queen-cols will make
+about (board-size)^(board-size) recursive calls in total.
+
+The above gives us a runtime order of growth of Θ(n) for the original queen-cols
+and Θ(nⁿ) for the revised version. Note that we are making two important
+assumptions: we are using the number of recursive calls as a proxy for the
+running time, and we are estimating the actual number of calls. These
+assumptions make the reasoning easier but will distort the answer somewhat.
+
+For the eight-queens puzzle, n=8, so if the original solves it in time T then
+based on these orders of growth, we expect the revised version to take about
+2,000,000 T:
+
+  nⁿ / n = 8⁸ / 8 = 8⁷ = 2097152
+
+The difference I measured empirically (see above) was 1705 T, so the revised
+version performed more than 1000x better than predicted by the estimate.
+
+To improve this estimate we would want to break down the two assumptions. The
+number of recursive calls is pretty close to the prediction (I checked) so it is
+the first assumption -- the number of recursive calls as a proxy for the
+running time -- that would have to be reexamined. We would want to develop a
+formula for predicting the running time of queen-cols from k. This is surely
+possible, but does not appear straightforward as the runtime depends on the
+number of results returned by (queen-cols (- k 1)). |#
