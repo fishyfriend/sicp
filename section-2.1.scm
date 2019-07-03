@@ -395,13 +395,13 @@ Where implementations do not use inputs in "contradictory" ways, the results
 are consistent; see xxy1 and xxy2 below for example. |#
 
 (define (test f a-center a-width b-center b-width)
-  (let* ((a (make-center-width a-center a-width))
-         (b (make-center-width b-center b-width))
-         (result (f a b))
-         (result-center (center result))
-         (result-width (width result)))
-      (display "; c=") (display result-center)
-      (display " w=") (display result-width) (newline)))
+  (let ((a (make-center-width a-center a-width))
+        (b (make-center-width b-center b-width)))
+    (let ((result (f a b)))
+      (let ((result-center (center result))
+            (result-width (width result)))
+        (display "; c=") (display result-center)
+        (display " w=") (display result-width) (newline)))))
 
 (define (percent-error expected value)
   (* 100 (abs (/ (- value expected) expected))))
