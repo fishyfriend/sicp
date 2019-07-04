@@ -223,3 +223,103 @@ quote |#
 (deriv '((x * y) * (x + 3)) 'x) ; ((x * y) + (y * (x + 3)))
 (deriv '(x + (3 * (x + (y + 2)))) 'x) ; 4
 (deriv '(x + 3 * (x + y + 2)) 'x) ; 4
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (element-of-set? x set)
+  (cond ((null? set) false)
+        ((equal? x (car set)) true)
+        (else (element-of-set? x (cdr set)))))
+
+(define (adjoin-set x set)
+  (if (element-of-set? x set)
+      set
+      (cons x set)))
+
+(define (intersection-set set1 set2)
+  (cond ((or (null? set1) (null? set2)) '())
+        ((element-of-set? (car set1) set2)
+         (cons (car set1)
+               (intersection-set (cdr set1) set2)))
+        (else (intersection-set (cdr set1) set2))))
+
+;; Exercise 2.59 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (union-set set1 set2)
+  (cond ((null? set1) set2)
+        ((null? set2) set1)
+        ((element-of-set? (car set1) set2) (union-set (cdr set1) set2))
+        (else (cons (car set1) (union-set (cdr set1) set2)))))
+
+;; Exercise 2.60 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; element-of-set? is unchanged: Θ(n). Note that the size of n will generally be
+; larger than before, since we permit duplicates.
+(define (element-of-set? x set)
+  (cond ((null? set) false)
+        ((equal? x (car set)) true)
+        (else (element-of-set? x (cdr set)))))
+
+; adjoin-set is more efficient: previously Θ(n), now Θ(1).
+(define (adjoin-set x set) (cons x set))
+
+; intersection-set is equally efficient: Θ(n²). Again, n values will be larger
+; than in the original implementation.
+(define (intersection-set set1 set2)
+  (filter (lambda (x) (element-of-set? x set2)) set1))
+
+; union-set is more efficient: previously Θ(n²), now Θ(n).
+(define (union-set set1 set2) (append set1 set2))
+
+#| This representation might be preferable for an application that does a lot of
+intense set-building but only needs to query the sets infrequently. For example,
+say we are tech support for a large SaaS company. When investigating customer
+firewall issues, it is occasionally helpful to have the ability to know whether
+any of our servers have received traffic from a given IP address over the past,
+say, 24 hours. So we create a service that periodically collects the last day's
+worth of logs from all the servers and exposes a queryable set for checking the
+IPs. We don't use the query functionality too frequently but we are constantly
+collecting and aggregating the data, meaning the bulk of our set API usage is
+adjoin and union operations. So we save computing resources by choosing the
+implementation where those operations are more efficient. However, our queries
+will be slower due to higher n values, so if we start making frequent queries,
+this implementation choice might be worth revisiting. |#
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (element-of-set? x set)
+  (cond ((null? set) false)
+        ((= x (car set)) true)
+        ((< x (car set)) false)
+        (else (element-of-set? x (cdr set)))))
+
+(define (intersection-set set1 set2)
+  (if (or (null? set1) (null? set2))
+      '()
+      (let ((x1 (car set1)) (x2 (car set2)))
+        (cond ((= x1 x2)
+               (cons x1
+                     (intersection-set (cdr set1)
+                                       (cdr set2))))
+              ((< x1 x2)
+               (intersection-set (cdr set1) set2))
+              ((< x2 x1)
+               (intersection-set set1 (cdr set2)))))))
+
+;; Exercise 2.61 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (adjoin-set x set)
+  (cond ((null? set) (list x))
+        ((<= x (car set)) (cons x set))
+        (else (cons (car set) (adjoin-set x (cdr set))))))
+
+;; Exercise 2.62 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (union-set set1 set2)
+  (cond ((null? set1) set2)
+        ((null? set2) set1)
+        (else
+          (let ((x1 (car set1)) (x2 (car set2)))
+            (cond ((= x1 x2) (union-set (cdr set1) set2))
+                  ((< x1 x2) (cons x1 (union-set (cdr set1) set2)))
+                  (else (cons x2 (union-set set1 (cdr set2)))))))))
