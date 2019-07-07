@@ -1,0 +1,12 @@
+(ordered-list-set . (
+  ("Eric Smith" . (tree-set . ((position . "sales associate")
+                               ()
+                               ((salary . 120000) () ()))))
+  ("Jane Trent" . (tree-set . ((position . "prod mgr")
+                               ()
+                               ((salary . 150000) () ()))))
+  ("Maude Auden" . (ordered-list-set . ((position . "code monkey")
+                                        (salary . 200000))))
+  ("Lisa Prebbin" . (ordered-list-set . ((position . "micromanager")
+                                         (salary . 220000))))
+))
