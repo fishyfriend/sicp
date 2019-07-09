@@ -117,32 +117,23 @@
 
 
 ;;EXERCISE 1.1
-;: 10
-;10
+;: 10 ;10
 
-;: (+ 5 3 4)
-;12
+;: (+ 5 3 4) ;12
 
-;: (- 9 1)
-;8
+;: (- 9 1) ;8
 
-;: (/ 6 2)
-;4
+;: (/ 6 2) ;4
 
-;: (+ (* 2 4) (- 4 6))
-;6
+;: (+ (* 2 4) (- 4 6)) ;6
 
-;: (define a 3)
-;a
+;: (define a 3) ;a
 
-;: (define b (+ a 1))
-;b
+;: (define b (+ a 1)) ;b
 
-;: (+ a b (* a b))
-;19
+;: (+ a b (* a b)) ;19
 
-;: (= a b)
-;#f
+;: (= a b) ;#f
 
 ;: (if (and (> b a) (< b (* a b)))
 ;:     b
@@ -154,8 +145,7 @@
 ;:       (else 25))
 ;16
 
-;: (+ 2 (if (> b a) b a))
-;6
+;: (+ 2 (if (> b a) b a)) ;6
 
 ;: (* (cond ((> a b) a)
 ;: 	 ((< a b) b)
@@ -322,6 +312,7 @@
 (define (cbrt x)
   (cbrt-iter 1.0 0.0 x))
 
+
 ;;;SECTION 1.1.8
 
 (define (square x) (* x x))
@@ -403,7 +394,6 @@
               (+ counter 1))))
   (iter 1 1))
 
-
 ;;EXERCISE 1.9
 (define (+ a b)
   (if (= a 0)
@@ -463,23 +453,17 @@
         (else (A (- x 1)
                  (A x (- y 1))))))
 
-;: (A 1 10)
-;1024
+;: (A 1 10) ;1024
 
-;: (A 2 4)
-;65536
+;: (A 2 4) ;65536
 
-;: (A 3 3)
-;65536
+;: (A 3 3) ;65536
 
-(define (f n) (A 0 n))
-;(f n) computes 2*n.
+(define (f n) (A 0 n)) ;(f n) computes 2*n.
 
-(define (g n) (A 1 n))
-;(g n) computes 2^n.
+(define (g n) (A 1 n)) ;(g n) computes 2^n.
 
-(define (h n) (A 2 n))
-;(h n) computes 2↑↑n.
+(define (h n) (A 2 n)) ;(h n) computes 2↑↑n.
 
 ; The last answer uses Knuth up-arrow notation. It is equivalent to saying that
 ; (h n) computes P(n) where
@@ -634,6 +618,7 @@
 ;   1ⁿ                     < 5/4      because ψ² < 1 and n ≥ 0
 ;   1                      < 5/4      QED
 
+
 ;;;SECTION 1.2.3
 
 ;;EXERCISE 1.14
@@ -669,6 +654,8 @@
 ; process grows as Θ(n) and the number of steps as Θ(2ⁿ).
 ;
 ; (visualize-count-change 11)
+;
+; Output:
 ;
 ; (cc 11 5)
 ;       ├─(cc 11 4)
@@ -765,8 +752,8 @@
        (p (sine (/ angle 3.0)))))
 
 ; a. When evaluating (sine 12.15), p is applied five times.
-
 ; b. For (sine a), the order of growth in both space and # of steps is Θ(log a).
+
 
 ;;;SECTION 1.2.4
 
@@ -940,7 +927,6 @@
 
 ; (count-remainder-ops a b) calculates the number of remainder operations that
 ; would be performed during applicative-order evaluation of (gcd a b).
-
 (define (count-remainder-ops a b)
   (define (go a b count)
     (if (= b 0)
@@ -951,181 +937,179 @@
 ; The remainder operation is performed 17 times in normal-order evaluation, and
 ; only 4 times in applicative-order evaluation, as shown below.
 ;
-; (visualize-normal-order '(gcd 206 40))
+; (count-remainder-ops 206 40) ; 4
 ;
-;   (gcd 206 40)
+; (visualize-normal-order '(gcd 206 40)) ; 17
 ;
-;   (if (= 40 0)
-;       206
-;       (gcd 40 (r 206 40)))
+; Output:
 ;
-;   (if #f
-;       206
-;       (gcd 40 (r 206 40)))
+; (gcd 206 40)
 ;
-;   (gcd 40 (r 206 40))
+; (if (= 40 0)
+;     206
+;     (gcd 40 (r 206 40)))
 ;
-;   (if (= (r 206 40) 0)
-;       40
-;       (gcd (r 206 40) (r 40 (r 206 40))))
+; (if #f
+;     206
+;     (gcd 40 (r 206 40)))
 ;
-;   ; operation performed: (remainder 206 40)
-;   (if (= 6 0)
-;       40
-;       (gcd (r 206 40) (r 40 (r 206 40))))
+; (gcd 40 (r 206 40))
 ;
-;   (if #f
-;       40
-;       (gcd (r 206 40) (r 40 (r 206 40))))
+; (if (= (r 206 40) 0)
+;     40
+;     (gcd (r 206 40) (r 40 (r 206 40))))
 ;
-;   (gcd (r 206 40) (r 40 (r 206 40)))
+; ; operation performed: (remainder 206 40)
+; (if (= 6 0)
+;     40
+;     (gcd (r 206 40) (r 40 (r 206 40))))
 ;
-;   (if (= (r 40 (r 206 40)) 0)
-;       (r 206 40)
-;       (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
+; (if #f
+;     40
+;     (gcd (r 206 40) (r 40 (r 206 40))))
 ;
-;   ; operation performed: (remainder 206 40)
-;   (if (= (r 40 6) 0)
-;       (r 206 40)
-;       (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
+; (gcd (r 206 40) (r 40 (r 206 40)))
 ;
-;   ; operation performed: (remainder 40 6)
-;   (if (= 4 0)
-;       (r 206 40)
-;       (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
+; (if (= (r 40 (r 206 40)) 0)
+;     (r 206 40)
+;     (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
 ;
-;   (if #f
-;       (r 206 40)
-;       (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
+; ; operation performed: (remainder 206 40)
+; (if (= (r 40 6) 0)
+;     (r 206 40)
+;     (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
 ;
-;   (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+; ; operation performed: (remainder 40 6)
+; (if (= 4 0)
+;     (r 206 40)
+;     (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
 ;
-;   (if (= (r (r 206 40) (r 40 (r 206 40))) 0)
-;       (r 40 (r 206 40))
-;       (gcd (r (r 206 40) (r 40 (r 206 40)))
-;            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
+; (if #f
+;     (r 206 40)
+;     (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
 ;
-;   ; operation performed: (remainder 206 40)
-;   (if (= (r 6 (r 40 (r 206 40))) 0)
-;       (r 40 (r 206 40))
-;       (gcd (r (r 206 40) (r 40 (r 206 40)))
-;            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
+; (gcd (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
 ;
-;   ; operation performed: (remainder 206 40)
-;   (if (= (r 6 (r 40 6)) 0)
-;       (r 40 (r 206 40))
-;       (gcd (r (r 206 40) (r 40 (r 206 40)))
-;            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
+; (if (= (r (r 206 40) (r 40 (r 206 40))) 0)
+;     (r 40 (r 206 40))
+;     (gcd (r (r 206 40) (r 40 (r 206 40)))
+;          (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
 ;
-;   ; operation performed: (remainder 40 6)
-;   (if (= (r 6 4) 0)
-;       (r 40 (r 206 40))
-;       (gcd (r (r 206 40) (r 40 (r 206 40)))
-;            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
+; ; operation performed: (remainder 206 40)
+; (if (= (r 6 (r 40 (r 206 40))) 0)
+;     (r 40 (r 206 40))
+;     (gcd (r (r 206 40) (r 40 (r 206 40)))
+;          (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
 ;
-;   ; operation performed: (remainder 6 4)
-;   (if (= 2 0)
-;       (r 40 (r 206 40))
-;       (gcd (r (r 206 40) (r 40 (r 206 40)))
-;            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
+; ; operation performed: (remainder 206 40)
+; (if (= (r 6 (r 40 6)) 0)
+;     (r 40 (r 206 40))
+;     (gcd (r (r 206 40) (r 40 (r 206 40)))
+;          (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
 ;
-;   (if #f
-;       (r 40 (r 206 40))
-;       (gcd (r (r 206 40) (r 40 (r 206 40)))
-;            (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
+; ; operation performed: (remainder 40 6)
+; (if (= (r 6 4) 0)
+;     (r 40 (r 206 40))
+;     (gcd (r (r 206 40) (r 40 (r 206 40)))
+;          (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
 ;
-;   (gcd (r (r 206 40) (r 40 (r 206 40)))
-;        (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
+; ; operation performed: (remainder 6 4)
+; (if (= 2 0)
+;     (r 40 (r 206 40))
+;     (gcd (r (r 206 40) (r 40 (r 206 40)))
+;          (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
 ;
-;   (if (= (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))) 0)
-;       (r (r 206 40) (r 40 (r 206 40)))
-;       (gcd
-;        (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-;        (r (r (r 206 40) (r 40 (r 206 40)))
-;           (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+; (if #f
+;     (r 40 (r 206 40))
+;     (gcd (r (r 206 40) (r 40 (r 206 40)))
+;          (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))))
 ;
-;   ; operation performed: (remainder 206 40)
-;   (if (= (r (r 40 6) (r (r 206 40) (r 40 (r 206 40)))) 0)
-;       (r (r 206 40) (r 40 (r 206 40)))
-;       (gcd
-;        (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-;        (r (r (r 206 40) (r 40 (r 206 40)))
-;           (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+; (gcd (r (r 206 40) (r 40 (r 206 40)))
+;      (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))
 ;
-;   ; operation performed: (remainder 40 6)
-;   (if (= (r 4 (r (r 206 40) (r 40 (r 206 40)))) 0)
-;       (r (r 206 40) (r 40 (r 206 40)))
-;       (gcd
-;        (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-;        (r (r (r 206 40) (r 40 (r 206 40)))
-;           (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+; (if (= (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))) 0)
+;     (r (r 206 40) (r 40 (r 206 40)))
+;     (gcd
+;      (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+;      (r (r (r 206 40) (r 40 (r 206 40)))
+;         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
 ;
-;   ; operation performed: (remainder 206 40)
-;   (if (= (r 4 (r 6 (r 40 (r 206 40)))) 0)
-;       (r (r 206 40) (r 40 (r 206 40)))
-;       (gcd
-;        (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-;        (r (r (r 206 40) (r 40 (r 206 40)))
-;           (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+; ; operation performed: (remainder 206 40)
+; (if (= (r (r 40 6) (r (r 206 40) (r 40 (r 206 40)))) 0)
+;     (r (r 206 40) (r 40 (r 206 40)))
+;     (gcd
+;      (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+;      (r (r (r 206 40) (r 40 (r 206 40)))
+;         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
 ;
-;   ; operation performed: (remainder 206 40)
-;   (if (= (r 4 (r 6 (r 40 6))) 0)
-;       (r (r 206 40) (r 40 (r 206 40)))
-;       (gcd
-;        (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-;        (r (r (r 206 40) (r 40 (r 206 40)))
-;           (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+; ; operation performed: (remainder 40 6)
+; (if (= (r 4 (r (r 206 40) (r 40 (r 206 40)))) 0)
+;     (r (r 206 40) (r 40 (r 206 40)))
+;     (gcd
+;      (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+;      (r (r (r 206 40) (r 40 (r 206 40)))
+;         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
 ;
-;   ; operation performed: (remainder 40 6)
-;   (if (= (r 4 (r 6 4)) 0)
-;       (r (r 206 40) (r 40 (r 206 40)))
-;       (gcd
-;        (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-;        (r (r (r 206 40) (r 40 (r 206 40)))
-;           (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+; ; operation performed: (remainder 206 40)
+; (if (= (r 4 (r 6 (r 40 (r 206 40)))) 0)
+;     (r (r 206 40) (r 40 (r 206 40)))
+;     (gcd
+;      (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+;      (r (r (r 206 40) (r 40 (r 206 40)))
+;         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
 ;
-;   ; operation performed: (remainder 6 4)
-;   (if (= (r 4 2) 0)
-;       (r (r 206 40) (r 40 (r 206 40)))
-;       (gcd
-;        (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-;        (r (r (r 206 40) (r 40 (r 206 40)))
-;           (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+; ; operation performed: (remainder 206 40)
+; (if (= (r 4 (r 6 (r 40 6))) 0)
+;     (r (r 206 40) (r 40 (r 206 40)))
+;     (gcd
+;      (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+;      (r (r (r 206 40) (r 40 (r 206 40)))
+;         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
 ;
-;   ; operation performed: (remainder 4 2)
-;   (if (= 0 0)
-;       (r (r 206 40) (r 40 (r 206 40)))
-;       (gcd
-;        (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-;        (r (r (r 206 40) (r 40 (r 206 40)))
-;           (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+; ; operation performed: (remainder 40 6)
+; (if (= (r 4 (r 6 4)) 0)
+;     (r (r 206 40) (r 40 (r 206 40)))
+;     (gcd
+;      (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+;      (r (r (r 206 40) (r 40 (r 206 40)))
+;         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
 ;
-;   (if #t
-;       (r (r 206 40) (r 40 (r 206 40)))
-;       (gcd
-;        (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
-;        (r (r (r 206 40) (r 40 (r 206 40)))
-;           (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
+; ; operation performed: (remainder 6 4)
+; (if (= (r 4 2) 0)
+;     (r (r 206 40) (r 40 (r 206 40)))
+;     (gcd
+;      (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+;      (r (r (r 206 40) (r 40 (r 206 40)))
+;         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
 ;
-;   (r (r 206 40) (r 40 (r 206 40)))
+; ; operation performed: (remainder 4 2)
+; (if (= 0 0)
+;     (r (r 206 40) (r 40 (r 206 40)))
+;     (gcd
+;      (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+;      (r (r (r 206 40) (r 40 (r 206 40)))
+;         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
 ;
-;   ; operation performed: (remainder 206 40)
-;   (r 6 (r 40 (r 206 40)))
+; (if #t
+;     (r (r 206 40) (r 40 (r 206 40)))
+;     (gcd
+;      (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40))))
+;      (r (r (r 206 40) (r 40 (r 206 40)))
+;         (r (r 40 (r 206 40)) (r (r 206 40) (r 40 (r 206 40)))))))
 ;
-;   ; operation performed: (remainder 206 40)
-;   (r 6 (r 40 6))
+; (r (r 206 40) (r 40 (r 206 40)))
 ;
-;   ; operation performed: (remainder 40 6)
-;   (r 6 4)
+; ; operation performed: (remainder 206 40)
+; (r 6 (r 40 (r 206 40)))
 ;
-;   ; operation performed: (remainder 6 4)
-;   2
+; ; operation performed: (remainder 206 40)
+; (r 6 (r 40 6))
 ;
-; ;Value: 17
+; ; operation performed: (remainder 40 6)
+; (r 6 4)
 ;
-; (count-remainder-ops 206 40)
-;
-; ;Value: 4
+; ; operation performed: (remainder 6 4)
+; 2
 
 
 ;;;SECTION 1.2.6
@@ -1170,14 +1154,9 @@
 
 
 ;;EXERCISE 1.21
-;: (smallest-divisor 199)
-; 199
-
-;: (smallest-divisor 1999)
-; 1999
-
-;: (smallest-divisor 19999)
-; 7
+; (smallest-divisor 199) ; 199
+; (smallest-divisor 1999) ; 1999
+; (smallest-divisor 19999) ; 7
 
 ;;EXERCISE 1.22
 (define (timed-prime-test n)
