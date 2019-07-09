@@ -166,9 +166,12 @@
 (define (make-rect bottom-left width height)
   (cons bottom-left (cons width height)))
 
-(define (bottom-left rect) (car rect))
-(define (width rect)       (car (cdr rect)))
-(define (height rect)      (cdr (cdr rect)))
+(define (left rect)   (x-point (car rect)))
+(define (right rect)  (+ (left rect) (width rect)))
+(define (bottom rect) (y-point (car rect)))
+(define (top rect)    (+ (bottom rect) (height rect)))
+(define (width rect)  (car (cdr rect)))
+(define (height rect) (cdr (cdr rect)))
 
 ; higher-level procedures that work using either representation
 (define (perimeter rect) (* 2 (+ (width rect) (height rect))))
