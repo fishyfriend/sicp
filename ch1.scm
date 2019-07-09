@@ -1193,6 +1193,104 @@
   (display " *** ")
   (display elapsed-time))
 
+; This solution repeats each primality test `prime-test-reps` times. Repetition
+; is necessary on a fast system where the resolution of timings reported by
+; `runtime` is too coarse to permit meaningful comparison of small timings.
+; Redefine `prime-test-reps` larger or smaller depending on your system.
+(define prime-test-reps 10000)
+
+; Set upper to `upper` for no upper bound. Search ends after `max-results`
+; primes are discovered.
+(define (search-for-primes lower upper max-results)
+  (define next (+ lower (if (even? lower) 1 2)))
+  (if (and (or (not upper) (<= lower upper))
+           (> max-results 0))
+      (if (timed-prime-test-with-reps lower (runtime) prime-test-reps)
+          (search-for-primes next upper (- max-results 1))
+          (search-for-primes next upper max-results))))
+
+(define (timed-prime-test-with-reps n start-time reps)
+  (define (iter reps)
+    (if (prime? n)
+        (begin (if (< reps 1)
+                   (report-prime (- (runtime) start-time))
+                   (iter (- reps 1)))
+               true)
+        false))
+  (newline)
+  (display n)
+  (iter reps))
+
+; (search-for-primes (expt 10 3) #f 3)
+; primes: 1009, 1013, 1019; timings: 0.29s, 0.28s, 0.29s
+
+; (search-for-primes (expt 10 4) #f 3)
+; primes: 10007, 10009, 100037; timings: 0.92s, 0.93s, 0.93s
+
+; (search-for-primes (expt 10 5) #f 3)
+; primes: 100003, 100019, 100043; timings: 2.91s, 3.10s, 2.93s
+
+; (search-for-primes (expt 10 6) #f 3)
+; primes: 1000003, 1000033, 1000037; timings: 9.26s, 9.26s, 9.19s
+
+; The timings for primes up to 1,000,000 reflect an order of growth of Θ(√n).
+; For each tenfold increase in n, the runtime grows approximately √10 times.
+; This behavior is consistent with an order of growth Θ(√n).
+
+;;EXERCISE 1.23
+(define (next x)
+  (if (= x 2) 3 (+ x 2)))
+
+(define (find-divisor n test-divisor)
+  (cond ((> (square test-divisor) n) n)
+        ((divides? test-divisor n) test-divisor)
+        (else (find-divisor n (next test-divisor)))))
+
+;(search-for-primes (expt 10 3) #f 3) ; timings: 0.20s, 0.20s, 0.21s
+;(search-for-primes (expt 10 4) #f 3) ; timings: 0.60s, 0.60s, 0.60s
+;(search-for-primes (expt 10 5) #f 3) ; timings: 1.83s, 1.83s, 1.81s
+;(search-for-primes (expt 10 6) #f 3) ; timings: 5.84s, 5.84s, 5.85s
+
+; The new algorithm takes a bit more than 60% as long as the old algorithm,
+; worse than the expected 50%. The discrepancy can be explained by the
+; observation that, while the new approach eliminates half of the test steps, it
+; also adds new computations within each step. Namely, it replaces a single
+; addition (+ test-divisor 1) with a procedure call (next test-divisor) whose
+; evaluation will include an addition, an equality check and conditional branch.
+; Roughly speaking, we've replaced n steps of size z with (n/2) steps of size
+; (6z/5):
+;
+;  original runtime = nz
+;  revised runtime = (n/2)(6z/5) = 3nz/5 = (60/100)nz = 60% * original runtime
+
+
+;;EXERCISE 1.24
+(define (prime? n)
+  (fast-prime? n 10))
+
+;(search-for-primes (expt 10 3) #f 3) ; timings: 1.79s, 1.87s, 1.93s
+;(search-for-primes (expt 10 4) #f 3) ; timings: 2.29s, 2.24s, 2.31s
+;(search-for-primes (expt 10 5) #f 3) ; timings: 2.59s, 2.67s, 2.70s
+;(search-for-primes (expt 10 6) #f 3) ; timings: 3.03s, 3.01s, 3.18s
+
+; We would expect the Fermat test for primes near 1,000,000 to take double the
+; time needed for primes near 1000 since log 1000000 = log 1000² = 2 log 1000.
+; This expectation does not quite hold up on my machine: the increase is closer
+; to 1.65x rather than the expected 2x. To understand the discrepancy, note that
+; the calculation includes some constant-cost, non-logarithmic elements. Those
+; elements must account for a non-trivial fraction of the processing time for
+; n <= 1000000.
+;
+; Since we do not know what fraction of the reported timings is constant-cost
+; and what fraction is logarithmic, it will be difficult to verify the order of
+; growth empirically simply by comparing two absolute runtimes. We must instead
+; look at the runtime deltas, which by virtue of being deltas will not be
+; affected by constant costs. Considering the reported runtimes for n=10ⁱ,
+; moving stepwise from i=3 to i=6, we find that the increase in runtime for each
+; step is fairly consistent. Runtime increases about 0.4s for each tenfold
+; increase in n. This observation confirms that the order of growth for the
+; procedure is indeed logarithmic.
+
 ;;EXERCISE 1.25
 (define (expmod base exp m)
   (remainder (fast-expt base exp) m))
