@@ -1756,7 +1756,7 @@
                                   rotate180 rotate270)))
     (combine4 (corner-split painter n))))
 
-    
+
 ;;;SECTION 2.3.1
 
 ;: (a b c d)
@@ -1788,27 +1788,43 @@
 
 
 ;; EXERCISE 2.53
-;: (list 'a 'b 'c)
+;: (list 'a 'b 'c) ; (a b c)
 ;:
-;: (list (list 'george))
+;: (list (list 'george)) ; ((george))
 ;:
-;: (cdr '((x1 x2) (y1 y2)))
+;: (cdr '((x1 x2) (y1 y2))) ; ((y1 y2))
 ;:
-;: (cadr '((x1 x2) (y1 y2)))
+;: (cadr '((x1 x2) (y1 y2))) ; (y1 y2)
 ;:
-;: (pair? (car '(a short list)))
+;: (pair? (car '(a short list))) ; #f
 ;:
-;: (memq 'red '((red shoes) (blue socks)))
+;: (memq 'red '((red shoes) (blue socks))) ; #f
 ;:
-;: (memq 'red '(red shoes blue socks))
-
+;: (memq 'red '(red shoes blue socks)) ; (red shoes blue socks)
 
 ;; EXERCISE 2.54
+(define (equal? a b)
+  (or (and (symbol? a) (symbol? b)
+           (eq? a b))
+      (and (pair? a) (pair? b)
+           (equal? (car a) (car b))
+           (equal? (cdr a) (cdr b)))
+      (and (null? a) (null? b))))
+
 ;: (equal? '(this is a list) '(this is a list))
 ;: (equal? '(this is a list) '(this (is a) list))
 
 ;; EXERCISE 2.55
-;: (car ''abracadabra)
+;: (car ''abracadabra) ;Value: quote
+
+; The special form quote and its abbreviation are evaluated recursively, so the
+; whole expression evaluates as follows:
+;
+; (car ''abracadabra)
+; (car (quote 'abracadabra))
+; (car (quote (quote abracadabra)))
+; (car (quote abracadabra)
+; quote
 
 
 ;;;SECTION 2.3.2
@@ -1855,9 +1871,10 @@
 (define (multiplicand p) (caddr p))
 
 
-;: (deriv '(+ x 3) 'x)
-;: (deriv '(* x y) 'x)
+;: (deriv '(+ x 3) 'x) ; (+ 1 0)
+;: (deriv '(* x y) 'x) ; (+ (* x 0) (+ 1 y))
 ;: (deriv '(* (* x y) (+ x 3)) 'x)
+; (+ (* (* x y) (+ 1 0)) (* (+ (* x 0) (* 1 y)) (+ x 3)))
 
 
 ;; With simplification
@@ -1879,10 +1896,43 @@
         (else (list '* m1 m2))))
 
 
-;: (deriv '(+ x 3) 'x)
-;: (deriv '(* x y) 'x)
-;: (deriv '(* (* x y) (+ x 3)) 'x)
+;: (deriv '(+ x 3) 'x) ; 1
+;: (deriv '(* x y) 'x) ; y
+;: (deriv '(* (* x y) (+ x 3)) 'x) ; (+ (* x y) (* y (+ x 3)))
 
+
+;; EXERCISE 2.56
+(define (deriv exp var)
+  (cond ((number? exp) 0)
+        ((variable? exp)
+         (if (same-variable? exp var) 1 0))
+        ((sum? exp)
+         (make-sum (deriv (addend exp) var)
+                   (deriv (augend exp) var)))
+        ((product? exp)
+         (make-sum
+           (make-product (multiplier exp)
+                         (deriv (multiplicand exp) var))
+           (make-product (deriv (multiplier exp) var)
+                         (multiplicand exp))))
+        ((exponentiation? exp)
+         (make-product (make-product (exponent exp)
+                                     (make-exponentiation
+                                       (base exp)
+                                       (make-sum (exponent exp) -1)))
+                       (deriv (base exp) var)))
+        (else
+          (error "unknown expression type -- DERIV" exp))))
+
+(define (exponentiation? x) (and (pair? x) (eq? (car x) '**)))
+(define (base e) (cadr e))
+(define (exponent e) (caddr e))
+
+(define (make-exponentiation base exponent)
+  (cond ((=number? exponent 0) 1)
+        ((=number? exponent 1) base)
+        ((and (number? base) (number? exponent)) (expt base exponent))
+        (else (list '** base exponent))))
 
 ;; EXERCISE 2.57
 ;: (deriv '(* x y (+ x 3)) 'x)
