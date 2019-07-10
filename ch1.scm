@@ -519,7 +519,7 @@
 
 ;: (count-change 100)
 
-;CHALLENGE
+;;EXTRA CREDIT
 ; Here is a more efficient version without using memoization. It was inspired by
 ; the observation most kinds of coin are exact multiples of each other: one
 ; half-dollar equals two quarters, one quarter equals five nickels, and one
