@@ -404,7 +404,7 @@ In each iteration we make two recursive calls with arguments of size n/2, and we
 also traverse a list of size n/2 with append. So the total number of steps
 approaches
 
-  n/2 + 2(n/4) + 4(n/8) ... 2ⁿn/2ⁿ⁺¹ = Σ(1..n) n/2 = (n² + n)/4
+  n/2 + 2(n/4) + 4(n/8) ... 2ⁿn/2ⁿ⁺¹ = Σ (i=1..n) i/2 = (n² + n)/4
 
 which gives us Θ(n²) as we only care about the most significant power of n.
 
@@ -713,4 +713,4 @@ iteration encode-symbol performs an Θ(n) memq check, does a couple of fixed-cos
 operations (checking the first two clauses of cond), and then calls itself
 recursively on the right branch, which reduces n by one. The Θ(n) operation
 dominates the others, and thus the total number of steps grows as
-n + (n - 1) + (n - 2) ... 1 = Σ(1..n) n = (n² + n)/2, giving Θ(n²). |#
+n + (n - 1) + (n - 2) ... 1 = Σ (i=1..n) i = (n² + n)/2, giving Θ(n²). |#
