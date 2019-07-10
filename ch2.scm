@@ -2834,7 +2834,77 @@
 
 (define (operands exp) (cdr exp))
 
-;: ((get (operator exp) 'deriv) (operands exp) var)
+; a.
+; The sum? and product? predicates of the conditional have been replaced by a
+; lookup into the dispatch table. This only works for expressions that are
+; operations and have an operator symbol that can be used as a type tag. Numbers
+; and variables aren't operations, don't have an operator symbol, and thus can't
+; be handled generically in this way without further changes.
+
+; b.
+(define (install-derivatives-package)
+  ;; internal procedures
+  (define (deriv-sum exp var)
+    (make-sum (deriv (addend exp) var)
+              (deriv (augend exp) var)))
+  (define (deriv-product exp var)
+    (make-sum
+      (make-product (multiplier exp)
+                    (deriv (multiplicand exp) var))
+      (make-product (deriv (multiplier exp) var)
+                    (multiplicand exp))))
+
+  ;; interface to the rest of the system
+  (register-deriv '+ deriv-sum)
+  (register-deriv '* deriv-product))
+
+(define (register-deriv op impl)
+  (put 'deriv op (lambda (operands var)
+                   (impl (list op (car operands) (cadr operands)) var))))
+
+(install-derivatives-package)
+
+;(deriv '(+ x 3) 'x) ; 1
+;(deriv '(* x y) 'x) ; y
+;(deriv '(* (* x y) (+ x 3)) 'x) ; (+ (* x y) (* y (+ x 3)))
+
+; c.
+(define (install-deriv-exponentiation)
+  (define (deriv-exponentiation exp var)
+    (make-product (make-product
+                    (exponent exp)
+                    (make-exponentiation (base exp)
+                                         (make-sum (exponent exp) -1)))
+                  (deriv (base exp) var)))
+  (register-deriv '** deriv-exponentiation))
+
+(install-deriv-exponentiation)
+
+;(deriv '(** x 3) 'x) ; (* 3 (** x 2))
+;(deriv '(+ (* 5 (** x 3)) (* 4 x)) 'x) ; (+ (* 5 (* 3 (** x 2))) 4)
+
+; d.
+(define (deriv exp var)
+  (cond ((number? exp) 0)
+        ((variable? exp) (if (same-variable? exp var) 1 0))
+        (else ((get (operator exp) 'deriv) (operands exp) var))))
+
+; The order of the first two arguments in all invocations of put would have to
+; be reversed (e.g. in the register-deriv procedure above). No other changes
+; are necessary to accommodate the new version of deriv, as shown below.
+
+(define (register-deriv op impl)
+  (put op 'deriv (lambda (operands var)
+                   (impl (list op (car operands) (cadr operands)) var))))
+
+(install-derivatives-package)
+(install-deriv-exponentiation)
+
+;(deriv '(+ x 3) 'x) ; 1
+;(deriv '(* x y) 'x) ; y
+;(deriv '(* (* x y) (+ x 3)) 'x) ; (+ (* x y) (* y (+ x 3)))
+;(deriv '(** x 3) 'x) ; (* 3 (** x 2))
+;(deriv '(+ (* 5 (** x 3)) (* 4 x)) 'x) ; (+ (* 5 (* 3 (** x 2))) 4)
 
 
 ;; Message passing
