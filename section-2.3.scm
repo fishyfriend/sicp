@@ -1,31 +1,3 @@
-;; Exercise 2.57 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define (make-sum a b . as)
-  (define (go as)
-    (let ((number (fold-right + 0
-                              (filter number? as)))
-          (rest (fold-right cons '()
-                            (filter (lambda (x) (not (number? x))) as))))
-      (let ((terms (if (= number 0) rest (cons number rest))))
-        (cond ((null? terms) 0)
-              ((null? (cdr terms)) (car terms))
-              (else (cons '+ terms))))))
-  (go (append (list a b) as)))
-
-(define (make-product m n . ms)
-  (define (go ms)
-    (let ((number (fold-right * 1
-                              (filter number? ms)))
-          (rest (fold-right cons '()
-                            (filter (lambda (x) (not (number? x))) ms))))
-      (let ((terms (cond ((= number 0) (list 0))
-                         ((= number 1) rest)
-                         (else (cons number rest)))))
-        (cond ((null? terms) 1)
-              ((null? (cdr terms)) (car terms))
-              (else (cons '* terms))))))
-  (go (append (list m n) ms)))
-
 ;; Exercise 2.58 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; a. using infix notation

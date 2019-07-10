@@ -1935,7 +1935,47 @@
         (else (list '** base exponent))))
 
 ;; EXERCISE 2.57
-;: (deriv '(* x y (+ x 3)) 'x)
+(define (make-sum a b . as)
+  (define (go as)
+    (let ((number (fold-right + 0
+                              (filter number? as)))
+          (rest (fold-right cons '()
+                            (filter (lambda (x) (not (number? x))) as))))
+      (let ((terms (if (= number 0) rest (cons number rest))))
+        (cond ((null? terms) 0)
+              ((null? (cdr terms)) (car terms))
+              (else (cons '+ terms))))))
+  (go (append (list a b) as)))
+
+(define (addend s) (cadr s))
+
+(define (augend s)
+  (if (null? (cdddr s))
+      (caddr s)
+      (apply make-sum (cddr s))))
+
+(define (make-product m n . ms)
+  (define (go ms)
+    (let ((number (fold-right * 1
+                              (filter number? ms)))
+          (rest (fold-right cons '()
+                            (filter (lambda (x) (not (number? x))) ms))))
+      (let ((terms (cond ((= number 0) (list 0))
+                         ((= number 1) rest)
+                         (else (cons number rest)))))
+        (cond ((null? terms) 1)
+              ((null? (cdr terms)) (car terms))
+              (else (cons '* terms))))))
+  (go (append (list m n) ms)))
+
+(define (multiplier p) (cadr p))
+
+(define (multiplicand p)
+  (if (null? (cdddr p))
+      (caddr p)
+      (apply make-product (cddr p))))
+
+;: (deriv '(* x y (+ x 3)) 'x) ; (+ (* x y) (* y (+ x 3)))
 
 
 ;;;SECTION 2.3.3
