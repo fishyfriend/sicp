@@ -2,6 +2,57 @@
 ;;; FROM CHAPTER 2 OF STRUCTURE AND INTERPRETATION OF COMPUTER PROGRAMS
 
 
+;;;SECTION 2.2.4
+; Here is test code for the picture language example (exercises 44-52). My
+; Scheme lacks graphics support so the test code outputs an HTML containing an
+; SVG image that can be viewed in a browser. Sample outputs are in ch2-piclang
+; folder.
+
+(define (draw-line v w)
+  ; omit decimal points, this can screw up the SVG rendering
+  (let ((x1 (inexact->exact (round (xcor-vect v))))
+        (y1 (inexact->exact (round (ycor-vect v))))
+        (x2 (inexact->exact (round (xcor-vect w))))
+        (y2 (inexact->exact (round (ycor-vect w)))))
+    (map display (list "<line x1=\"" x1 "\" y1=\"" y1
+                       "\" x2=\"" x2 "\" y2=\"" y2
+                       "\" stroke=\"black\" stroke-width=\"3\" />"))
+    (newline)))
+
+(define (paint-svg painter width height)
+  (define (start)
+    (display "<!DOCTYPE html>") (newline)
+    (display "<html>") (newline)
+    (display "<body>") (newline)
+    (map display (list "<svg width=\"" width "\" height=\"" height "\" >"))
+    (newline))
+  (define (end)
+    (display "</svg>") (newline)
+    (display "</body>") (newline)
+    (display "</html>") (newline))
+  (let ((frame (make-frame (make-vect 0 0)
+                           (make-vect width 0)
+                           (make-vect 0 height))))
+    (start)
+    ((flip-vert painter) frame) ; flip as SVG has origin at upper-left
+    (end)))
+
+(define (test-painter painter filename)
+  (with-output-to-file filename
+    (lambda () (paint-svg painter 500 500))))
+
+(test-painter outline "ch2-piclang/outline.html")
+(test-painter diamond "ch2-piclang/diamond.html")
+(test-painter x "ch2-piclang/x.html")
+(test-painter wave "ch2-piclang/wave.html")
+(test-painter wave-and-smile "ch2-piclang/wave-and-smile.html")
+(test-painter (right-split wave 4) "ch2-piclang/right-split-wave.html")
+(test-painter (corner-split wave 4) "ch2-piclang/corner-split.html")
+(test-painter (corner-split-less wave 4) "ch2-piclang/corner-split-less.html")
+(test-painter (square-limit wave 4) "ch2-piclang/square-limit.html")
+(test-painter (square-limit-alt wave 4) "ch2-piclang/square-limit-alt.html")
+
+
 ;;;SECTION 2.4.1
 
 ;; Ben's rectangular
@@ -164,4 +215,3 @@ b
 
 (mul b b)
 ;Value 6: (polynomial x (200 1) (102 4) (100 2) (4 4) (2 4) (0 1))
-
