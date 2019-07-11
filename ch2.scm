@@ -3315,6 +3315,10 @@
 (define (scheme-number->complex n)
   (make-complex-from-real-imag (contents n) 0))
 
+(define coercion-table (make-table))
+(define get-coercion (coercion-table 'lookup-proc))
+(define put-coercion (coercion-table 'insert-proc!))
+
 ;: (put-coercion 'scheme-number 'complex scheme-number->complex)
 
 
@@ -3341,17 +3345,63 @@
                      (list op type-tags)))))))
 
 ;; EXERCISE 2.81
-
 (define (scheme-number->scheme-number n) n)
 (define (complex->complex z) z)
+
 ;: (put-coercion 'scheme-number 'scheme-number
 ;:               scheme-number->scheme-number)
 ;: (put-coercion 'complex 'complex complex->complex)
 
 (define (exp x y) (apply-generic 'exp x y))
+
+;; following added to Scheme-number package
 ;: (put 'exp '(scheme-number scheme-number)
 ;:      (lambda (x y) (tag (expt x y))))
-
+
+; a.
+; If we call exp with two complex numbers as arguments, apply-generic will enter
+; an infinite loop. After it initially checks and fails to find a matching
+; procedure in the dispatch table, it looks up the coercion procedures for
+; converting between the arguments. Since these are now (incorrectly) present in
+; the table, it finds them. Then it calls a coercion procedure on the first
+; argument, yielding the first argument again, and recursively calls itself
+; arguments. This is identical to the previous apply-generic call, and the
+; process repeats indefinitely. (It will not overflow since apply-generic is
+; tail-recursive.)
+
+; b.
+; Louis is right to be concerned about coercion with arguments of the same type.
+; If apply-generic tries to apply such coercions, we run the risk of the problem
+; described in (a) if a matching coercion happens to be present in the coercion
+; table. That *should* only happen due to programmer error; however, it doesn't
+; hurt to ignore these coercions if present, and indeed it will make the intent
+; of apply-generic's code clearer if we explicitly don't look for them.
+
+; c.
+(define (apply-generic op . args)
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+          (apply proc (map contents args))
+          (if (and (= (length args) 2)
+                   (not (eq? (car type-tags) (cadr type-tags))))
+              (let ((type1 (car type-tags))
+                    (type2 (cadr type-tags))
+                    (a1 (car args))
+                    (a2 (cadr args)))
+                (let ((t1->t2 (get-coercion type1 type2))
+                      (t2->t1 (get-coercion type2 type1)))
+                  (cond (t1->t2
+                         (apply-generic op (t1->t2 a1) a2))
+                        (t2->t1
+                         (apply-generic op a1 (t2->t1 a2)))
+                        (else
+                         (error "No method for these types"
+                                (list op type-tags))))))
+              (error "No method for these types"
+                     (list op type-tags)))))))
+
+                     
 ;;;SECTION 2.5.3
 
 ;;; ALL procedures in 2.5.3 except make-polynomial
