@@ -176,7 +176,59 @@ z2
 ;Value 25: (polar 2.0000000000000004 . 1.5707963267948966)
 (div-complex z1 z2)
 ;Value 26: (polar 1. . 0.)
-
+
+;;;SECTION 2.4.3
+; sample set implementations for testing exercise 2.74
+
+(define (lookup given-key set-of-records)
+  ((get 'lookup (type-tag set-of-records)) given-key (contents set-of-records)))
+
+(define (compare-keys k1 k2)
+  (define (fail) (error "invalid key type(s)" k1 k2))
+  (define (compare-strings s1 s2)
+    (cond ((string<? s1 s2) 'lt)
+          ((string>? s1 s2) 'gt)
+          (else 'eq)))
+  (cond ((and (string? k1) (string? k2)) (compare-strings k1 k2))
+        ((and (symbol? k1) (symbol? k2)) (compare-strings (symbol->string k1)
+                                                          (symbol->string k2)))
+        ((and (string? k1) (symbol? k2)) 'gt)
+        ((and (symbol? k1) (string? k2)) 'lt)
+        (else (fail))))
+
+(define (key<? k1 k2) (eq? (compare-keys k1 k2) 'lt))
+(define (key>? k1 k2) (eq? (compare-keys k1 k2) 'gt))
+
+(define (install-ordered-list-set)
+  (define (key item) (car item))
+  (define (lookup given-key set-of-records)
+    (cond ((null? set-of-records) false)
+          ((key<? given-key (key (car set-of-records)))
+           false)
+          ((key>? given-key (key (car set-of-records)))
+           (lookup given-key (cdr set-of-records)))
+          (else (car set-of-records))))
+  (put 'lookup 'ordered-list-set lookup))
+
+(define (install-tree-set)
+  (define (entry tree) (car tree))
+  (define (left-branch tree) (cadr tree))
+  (define (right-branch tree) (caddr tree))
+  (define (key entry) (car entry))
+  (define (lookup given-key set-of-records)
+    (if (null? set-of-records)
+        false
+        (let ((entry (entry set-of-records)))
+          (cond ((key<? given-key (key entry))
+                 (lookup given-key (left-branch set-of-records)))
+                ((key>? given-key (key entry))
+                 (lookup given-key (right-branch set-of-records)))
+                (else entry)))))
+  (put 'lookup 'tree-set lookup))
+
+(install-ordered-list-set)
+(install-tree-set)
+
 ;;;SECTION 2.5.2
 
 (define z1 (make-complex-from-real-imag 1 1))

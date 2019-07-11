@@ -2906,6 +2906,82 @@
 ;(deriv '(** x 3) 'x) ; (* 3 (** x 2))
 ;(deriv '(+ (* 5 (** x 3)) (* 4 x)) 'x) ; (+ (* 5 (* 3 (** x 2))) 4)
 
+;;EXERCISE 2.74
+; To run the examples, use the data-directed implementations of sets in
+; ch2tests.scm and these sample data files:
+;(define file1 "ch2-data-files/section-2.4.ex-74.data1")
+;(define file2 "ch2-data-files/section-2.4.ex-74.data2")
+
+; a.
+; The contents of a personnel data file should consist of a single Scheme value,
+; a pair of the form (type-tag . set) where type-tag refers to an available
+; implementation of sets, and set is a set of employee records that conforms to
+; that implementation. Valid set implementations should expose a lookup
+; procedure via the data-directed dispatch table. (lookup key set) should return
+; data in the form of a pair (key . value), or #f if the requested key wasn't
+; found.
+
+(define (get-record file-path employee-name)
+  (with-input-from-file file-path
+    (lambda ()
+      (let ((set (read)))
+        (if (eof-object? set)
+            (error "file format incorrect" file-path)
+            (lookup employee-name set))))))
+
+;(get-record file1 "Jane Trent")
+; ("Jane Trent" tree-set (position . "prod mgr") () ((salary . 150000) () ()))
+
+;(get-record file2 "Betty Burn")
+; ("Betty Burn" ordered-list-set (position . "researcher") (salary . 160000))
+
+; b.
+; Each employee record should be a pair of the form (type-tag . set) where,
+; again, type-tag refers to an available implementation of sets, and set is a
+; set of employee records conforming to that implementation.
+
+(define (get-salary file-path employee-name)
+  (let ((record (get-record file-path employee-name)))
+    (if (not record)
+        (error "employee record not found" employee-name)
+        (let ((pair (lookup 'salary (cdr record))))
+          (if pair (cdr pair) false)))))
+
+;(get-salary file1 "Jane Trent") ; 150000
+;(get-salary file2 "Betty Burn") ; 160000
+
+; c.
+(define (find-employee-record employee-name division-files)
+  (if (null? division-files)
+      false
+      (let ((record (get-record (car division-files) employee-name)))
+        (if record
+            record
+            (find-employee-record employee-name (cdr division-files))))))
+
+;(find-employee-record "Jane Trent" (list file1 file2))
+; ("Jane Trent" tree-set (position . "prod mgr") () ((salary . 150000) () ()))
+
+;(find-employee-record "Betty Burn" (list file1 file2))
+; ("Betty Burn" ordered-list-set (position . "researcher") (salary . 160000))
+
+; d.
+; When Insatiable takes over a new company it must do the following to
+; integrate new personnel information:
+;
+;   - Ensure the new division's personnel files are implemented as Scheme sets
+;     and meet the structural requirements expressed in (a) and (b) above.
+;
+;   - If the new files don't use an existing implementation of sets, either for
+;     the files themselves or for the individual records, ensure that any novel
+;     implementations they use are packaged up as installation procedures
+;     compatible with data-directed dispatch using get/put, and ensure the
+;     installers are called in the initialization section of our
+;     personnel-processing application.
+;
+;   - Ensure the new division's files are accessible on the company-wide shared
+;     filesystem.
+
 
 ;; Message passing
 (define (make-from-real-imag x y)
