@@ -2982,6 +2982,22 @@
 ;   - Ensure the new division's files are accessible on the company-wide shared
 ;     filesystem.
 
+
+;; Message passing
+(define (make-from-real-imag x y)
+  (define (dispatch op)
+    (cond ((eq? op 'real-part) x)
+          ((eq? op 'imag-part) y)
+          ((eq? op 'magnitude)
+           (sqrt (+ (square x) (square y))))
+          ((eq? op 'angle) (atan y x))
+          (else
+           (error "Unknown op -- MAKE-FROM-REAL-IMAG" op))))
+  dispatch)
+
+(define (apply-generic op arg) (arg op))
+
+
 ;; EXERCISE 2.75
 (define (make-from-mag-ang x y)
   (define (dispatch op)
@@ -3021,20 +3037,6 @@
 ; dispatch will be best, for a similar reason -- existing code does not have to
 ; move to accommodate the new operations.
 
-
-;; Message passing
-(define (make-from-real-imag x y)
-  (define (dispatch op)
-    (cond ((eq? op 'real-part) x)
-          ((eq? op 'imag-part) y)
-          ((eq? op 'magnitude)
-           (sqrt (+ (square x) (square y))))
-          ((eq? op 'angle) (atan y x))
-          (else
-           (error "Unknown op -- MAKE-FROM-REAL-IMAG" op))))
-  dispatch)
-
-(define (apply-generic op arg) (arg op))
 
 ;;;SECTION 2.5.1
 
