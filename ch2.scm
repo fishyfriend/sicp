@@ -3147,11 +3147,156 @@
 
 ;; EXERCISE 2.77
 ;; to put in complex package
-
 ;: (put 'real-part '(complex) real-part)
 ;: (put 'imag-part '(complex) imag-part)
 ;: (put 'magnitude '(complex) magnitude)
 ;: (put 'angle '(complex) angle)
+
+; For convenience:
+;
+; (define x (cons 3 4))
+; (define y (cons 'rectangular x))
+; (define z (cons 'complex y))
+;
+; Evaluating (magnitude z) with the definitions in place, the procedure calls
+; are as follows. ─> denotes a return value.
+;
+;   (magnitude z)
+;   ├─(apply-generic 'magnitude z)
+;   │ ├─(map type-tag '(z))
+;   │ │ ├─(type-tag '(z))
+;   │ │ │ ├─(pair? '(z)) ─> true
+;   │ │ │ ├─(car '(z)) ─> 'complex
+;   │ │ │ └─> 'complex
+;   │ │ └─> '(complex)
+;   │ ├─(get 'magnitude '(complex)) ─> magnitude
+;   │ ├─(map contents '(z))
+;   │ │ ├─(cdr z) ─> y
+;   │ │ └─> '(y)
+;   │ ├─(apply magnitude '(y))
+;   │ │ ├─(magnitude y)
+;   │ │ │ ├─(apply-generic 'magnitude y)
+;   │ │ │ │ ├─(map type-tag '(y))
+;   │ │ │ │ │ ├─(type-tag '(y))
+;   │ │ │ │ │ │ ├─(pair? '(y)) ─> true
+;   │ │ │ │ │ │ ├─(car '(y)) ─> 'rectangular
+;   │ │ │ │ │ │ └─> 'rectangular
+;   │ │ │ │ │ └─> '(rectangular)
+;   │ │ │ │ ├─(get 'magnitude '(rectangular)) ─> magnitude-from-rect-pkg
+;   │ │ │ │ ├─(map contents '(y))
+;   │ │ │ │ │ ├─(cdr 'y) ─> x
+;   │ │ │ │ │ └─> '(x)
+;   │ │ │ │ ├─(apply magnitude-from-rect-pkg '(x))
+;   │ │ │ │ │ ├─(magnitude-from-rect-pkg x)
+;   │ │ │ │ │ │ ├─(real-part x)
+;   │ │ │ │ │ │ │ ├─(car x) ─> 3
+;   │ │ │ │ │ │ │ └─> 3
+;   │ │ │ │ │ │ ├─(square 3) ─> 9
+;   │ │ │ │ │ │ ├─(imag-part x)
+;   │ │ │ │ │ │ │ ├─(cdr x) ─> 4
+;   │ │ │ │ │ │ │ └─> 4
+;   │ │ │ │ │ │ ├─(square 4) ─> 16
+;   │ │ │ │ │ │ ├─(+ 9 16) ─> 25
+;   │ │ │ │ │ │ ├─(sqrt 25) ─> 5
+;   │ │ │ │ │ │ └─> 5
+;   │ │ │ │ │ └─> 5
+;   │ │ │ │ └─> 5
+;   │ │ │ └─> 5
+;   │ │ └─> 5
+;   │ └─> 5
+;   └─> 5
+;
+; apply-generic is invoked twice. The first time, it determines the type of the
+; arguments to be '(complex) and uses this to successfully look up the magnitude
+; procedure, to which it dispatches control. magnitude in turn calls
+; apply-generic, which this time determines the type of the arguments to be
+; '(rectangular) and uses this to find and dispatch to the internal magnitude
+; procedure defined inside install-rectangular-package. This procedure
+; calculates the magnitude of the rectangularly-represented complex number
+; as expected.
+
+
+;;EXERCISE 2.78
+(define (type-tag datum)
+  (cond ((number? datum) 'scheme-number)
+        ((pair? datum) (car datum))
+        (error "Bad tagged datum -- TYPE-TAG" datum)))
+
+(define (attach-tag type-tag contents)
+  (if (and (eq? type-tag 'scheme-number)
+           (number? contents))
+      contents
+      (cons type-tag contents)))
+
+(define (contents datum)
+  (cond ((number? datum) datum)
+        ((pair? datum) (cdr datum))
+        (else (error "Bad tagged datum -- CONTENTS" datum))))
+
+
+;;EXERCISE 2.79
+(define (equ? a b) (apply-generic 'equ a b))
+
+(define (install-equality-package)
+  (define (number=number? x y)
+    (= x y))
+  (define (number=rational? n r)
+    (= n (/ (numer r) (denom r))))
+  (define (number=complex? n c)
+    (and (= n (real-part c))
+         (= (imag-part c) 0)))
+  (define (rational=number? r n)
+    (number=rational? n r))
+  (define (rational=rational? x y)
+    (= (/ (numer x) (denom x))
+       (/ (numer y) (denom y))))
+  (define (rational=complex? r c)
+    (and (= (/ (numer r) (denom r)) (real-part c))
+         (= (imag-part c) 0)))
+  (define (complex=number? c n)
+    (number=complex? n c))
+  (define (complex=rational? c r)
+    (rational=complex? r c))
+  (define (complex=complex? x y)
+    (and (= (real-part x) (real-part y))
+         (= (imag-part x) (imag-part y))))
+
+  ;; bit of a hack -- rational package should expose these but doesn't
+  (define (numer x) (car x))
+  (define (denom x) (cdr x))
+
+  (put 'equ '(scheme-number scheme-number) number=number?)
+  (put 'equ '(scheme-number rational) number=rational?)
+  (put 'equ '(scheme-number complex) number=complex?)
+  (put 'equ '(rational scheme-number) rational=number?)
+  (put 'equ '(rational rational) rational=rational?)
+  (put 'equ '(rational complex) rational=complex?)
+  (put 'equ '(complex scheme-number) complex=number?)
+  (put 'equ '(complex rational) complex=rational?)
+  (put 'equ '(complex complex) complex=complex?))
+
+;: (install-equality-package)
+
+
+;;EXERCISE 2.80
+(define (=zero? x) (apply-generic 'zero? x))
+
+(define (install-zero-package)
+  (define (number=zero? x) (= x 0))
+  (define (rational=zero? x) (= (numer x) 0))
+  (define (complex=zero? x) (and (= (real-part x) 0) (= (imag-part x) 0)))
+
+  ;; bit of a hack -- rational package should expose this but doesn't
+  (define (numer x) (car x))
+
+  (put 'zero? '(scheme-number) number=zero?)
+  (put 'zero? '(rational) rational=zero?)
+  (put 'zero? '(complex) complex=zero?))
+
+;: (install-zero-package)
+
+; Alternately just use equ? from the previous exercise
+(define (=zero? x) (equ? x 0))
 
 
 ;;;SECTION 2.5.2
