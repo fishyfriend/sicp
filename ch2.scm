@@ -2862,7 +2862,7 @@
   (put 'deriv op (lambda (operands var)
                    (impl (list op (car operands) (cadr operands)) var))))
 
-(install-derivatives-package)
+;(install-derivatives-package)
 
 ;(deriv '(+ x 3) 'x) ; 1
 ;(deriv '(* x y) 'x) ; y
@@ -2878,7 +2878,7 @@
                   (deriv (base exp) var)))
   (register-deriv '** deriv-exponentiation))
 
-(install-deriv-exponentiation)
+;(install-deriv-exponentiation)
 
 ;(deriv '(** x 3) 'x) ; (* 3 (** x 2))
 ;(deriv '(+ (* 5 (** x 3)) (* 4 x)) 'x) ; (+ (* 5 (* 3 (** x 2))) 4)
@@ -2897,8 +2897,8 @@
   (put op 'deriv (lambda (operands var)
                    (impl (list op (car operands) (cadr operands)) var))))
 
-(install-derivatives-package)
-(install-deriv-exponentiation)
+;(install-derivatives-package)
+;(install-deriv-exponentiation)
 
 ;(deriv '(+ x 3) 'x) ; 1
 ;(deriv '(* x y) 'x) ; y

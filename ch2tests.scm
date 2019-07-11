@@ -231,12 +231,18 @@ z2
 
 ;;;SECTION 2.5.2
 
+(install-rectangular-package)
+(install-polar-package)
+(install-scheme-number-package)
+(install-rational-package)
+(install-complex-package)
+
 (define z1 (make-complex-from-real-imag 1 1))
 
 ;; Before coercion mechanism
 
 (add z1 (make-scheme-number 3))
-;Value 1: (complex rectangular 4 . 1)
+;No method for the given types (add (scheme-number complex))
 
 (add (make-scheme-number 3) z1)
 ;No method for the given types (add (scheme-number complex))
