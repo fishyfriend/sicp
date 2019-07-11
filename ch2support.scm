@@ -3,6 +3,7 @@
 
 ;;;from chapter 1
 (define (square x) (* x x))
+(define (identity x) x)
 
 ;;;from section 1.2.5, for Section 2.1.1
 (define (gcd a b)
@@ -17,7 +18,7 @@
         (else (+ (fib (- n 1))
                  (fib (- n 2))))))
 
-;;; ***not in book, but needed for code before quote is introduced*** 
+;;; ***not in book, but needed for code before quote is introduced***
 (define nil '())
 
 ;;;-----------
@@ -52,7 +53,7 @@
                       (cons (list key-1
                                   (cons key-2 value))
                             (cdr local-table)))))
-      'ok)    
+      'ok)
     (define (dispatch m)
       (cond ((eq? m 'lookup-proc) lookup)
             ((eq? m 'insert-proc!) insert!)

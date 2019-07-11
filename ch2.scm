@@ -3401,7 +3401,105 @@
               (error "No method for these types"
                      (list op type-tags)))))))
 
-                     
+
+;;EXERCISE 2.82
+; Requires the rational number procedures from section 2.1.1.
+; Requires the implementation of sets as unordered lists from section 2.3.3.
+
+; As an example of when trying to coerce all arguments to the same type is
+; inadequate, imagine we have extended the rationals package with a procedure
+; that computes the nth term in a geometric series. The parameters of the series
+; are to be supplied as rationals but n as an ordinary number. If we call
+; geom-series with an ordinary numbers as the first or second argument, we'd
+; need the dispatch mechanism to find the '(rational, rational, scheme-number)
+; implementation and coerce the other arguments accordingly. But under the
+; proposed coercion strategy, we only look for '(rational, rational, rational)
+; and '(scheme-number, scheme-number, scheme-number) implementations. This fails
+; to turn up a matching procedure and so we get an error.
+
+(define (geom-series a r n)
+  (apply-generic 'geom-series a r n))
+
+(define (install-geom-series-extension)
+  (define (geom-series a r n)
+    (if (<= n 1)
+        a
+        (geom-series (mul-rat a r) r (- n 1))))
+  (define (tag x) (attach-tag 'rational x))
+  (put 'geom-series '(rational rational scheme-number)
+     (lambda (a r n) (tag (geom-series a r n)))))
+
+;: (install-geom-series-extension)
+
+;: (put-coercion 'rational 'scheme-number (lambda (r) (/ (numer r) (denom r))))
+
+;: (geom-series (make-rational 1 2) (make-rational 1 2) 3) ; (rational 1 . 8)
+;: (geom-series 1 2 3) ; No method for these types
+;: (geom-series 1 (make-rational 2 1) 3) ; No method for these types
+
+; The following implementation of apply-generic attempts all possible coercions
+; among the types of the passed arguments. It will still fail in situations
+; where the only implementation(s) of the requested operation require a type
+; that has not been passed in the argument list but for which a coercion from
+; the passed type is available. Thus, even with the below implementation,
+; (geom-series 1 2 3) still fails but (geom-series 1 (make-rational 2 1) 3)
+; works, assuming a coercion from scheme-number to rational is available.
+
+(define (apply-generic op . args)
+  (define (possible-sigs types)
+    (define (iter unique-types len)
+      (if (< len 1)
+          (list nil)
+          (flatmap
+            (lambda (ts)
+              (map
+                (lambda (t) (cons t ts))
+                unique-types))
+            (iter unique-types (- len 1)))))
+    (iter (uniques types) (length types)))
+  (define (make-list-coercion sig1 sig2)
+    (if (or (null? sig1) (null? sig2))
+        (lambda (items) nil)
+        (let ((type1 (car sig1)) (type2 (car sig2)))
+          (let ((coerce-item (if (eq? type1 type2)
+                                 identity
+                                 (get-coercion type1 type2))))
+            (if coerce-item
+                (let ((coerce-tail
+                       (make-list-coercion (cdr sig1) (cdr sig2))))
+                  (if coerce-tail
+                      (lambda (items)
+                        (cons (coerce-item (car items))
+                              (coerce-tail (cdr items))))
+                      #f))
+                #f)))))
+  (define (iter type-tags sigs)
+    (if (null? sigs)
+        (error "No method for these types" (list op type-tags)))
+        (let ((proc (get op (car sigs)))
+              (coerce-sig (make-list-coercion type-tags (car sigs))))
+          (if (or (not proc) (not coerce-sig))
+              (iter type-tags (cdr sigs))
+              (apply proc (coerce-sig (map contents args))))))
+  (let ((type-tags (map type-tag args)))
+    (let ((sigs (cons type-tags
+                      (filter (lambda (sig) (not (equal? sig type-tags)))
+                              (possible-sigs type-tags)))))
+      (iter type-tags sigs))))
+
+(define (uniques xs)
+  (fold-left (lambda (xs x)
+               (if (element-of-set? x xs)
+               xs
+               (cons x xs)))
+             nil
+             xs))
+
+;: (geom-series (make-rational 1 2) (make-rational 1 2) 3) ; (rational 1 . 8)
+;: (geom-series 1 2 3) ; No method for these types
+;: (geom-series 1 (make-rational 2 1) 3) ; (rational 8 . 1) ; 4
+
+
 ;;;SECTION 2.5.3
 
 ;;; ALL procedures in 2.5.3 except make-polynomial
