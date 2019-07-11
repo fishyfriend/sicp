@@ -83,21 +83,84 @@
 
 
 ;; EXERCISE 3.1
+(define (make-accumulator init)
+  (let ((value init))
+    (lambda (n)
+      (set! value (+ value n))
+      value)))
+
 ;: (define A (make-accumulator 5))
-;: (A 10)
-;: (A 10)
+;: (A 10) ; 15
+;: (A 10) ; 25
 
 
 ;; EXERCISE 3.2
+(define (make-monitored f)
+  (let ((calls 0))
+    (lambda (arg)
+      (cond ((eq? arg 'how-many-calls?) calls)
+            ((eq? arg 'reset-count) (set! calls 0))
+            (else (set! calls (+ calls 1))
+                  (f arg))))))
+
 ;: (define s (make-monitored sqrt))
-;: (s 100)
-;: (s 'how-many-calls?)
+;: (s 100) ; 10
+;: (s 'how-many-calls?) ; 1
 
 
 ;; EXERCISE 3.3
+(define (make-account balance password)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        "Insufficient funds"))
+  (define (deposit amount)
+    (set! balance (+ balance amount))
+    balance)
+  (define (dispatch m)
+    (cond ((eq? m 'withdraw) withdraw)
+          ((eq? m 'deposit) deposit)
+          (else (error "unknown request -- make-account"
+                       m))))
+  (lambda (attempt m)
+    (if (eq? attempt password)
+        (dispatch m)
+        (lambda (m) "incorrect password"))))
+
 ;: (define acc (make-account 100 'secret-password))
-;: ((acc 'secret-password 'withdraw) 40)
-;: ((acc 'some-other-password 'deposit) 50)
+;: ((acc 'secret-password 'withdraw) 40) ; 60
+;: ((acc 'some-other-password 'deposit) 50) ; "Incorrect password"
+
+
+;;EXERCISE 3.4
+(define (make-account balance password)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (begin (set! balance (- balance amount))
+               balance)
+        "Insufficient funds"))
+  (define (deposit amount)
+    (set! balance (+ balance amount))
+    balance)
+  (define (dispatch m)
+    (cond ((eq? m 'withdraw) withdraw)
+          ((eq? m 'deposit) deposit)
+          (else (error "Unknown request -- MAKE-ACCOUNT"
+                       m))))
+  (let ((attempts 0))
+    (lambda (attempt m)
+      (lambda (arg)
+        (if (eq? attempt password)
+            (begin (set! attempts 0)
+                   ((dispatch m) arg))
+            (begin (set! attempts (+ attempts 1))
+                   (if (> attempts 7)
+                       (call-the-cops)
+                       "Incorrect password")))))))
+
+(define (call-the-cops)
+  (error "The police have been contacted"))
 
 
 ;;;SECTION 3.1.2
@@ -136,7 +199,7 @@
   (define (iter trials-remaining trials-passed x)
     (let ((x1 (rand-update x)))
       (let ((x2 (rand-update x1)))
-        (cond ((= trials-remaining 0)   
+        (cond ((= trials-remaining 0)
                (/ trials-passed trials))
               ((= (gcd x1 x2) 1)
                (iter (- trials-remaining 1)
@@ -153,6 +216,30 @@
 (define (random-in-range low high)
   (let ((range (- high low)))
     (+ low (random range))))
+
+(define (estimate-integral P x1 x2 y1 y2 trials)
+  (define (experiment)
+    (P (random-in-range x1 x2) (random-in-range y1 y2)))
+  (* (monte-carlo trials experiment)
+     (abs (- x1 x2))
+     (abs (- y1 y2))))
+
+(define (in-unit-circle? x y)
+  (<= (+ (square x) (square y)) 1.))
+
+(define (estimate-pi)
+  (estimate-integral in-unit-circle? -1. 1. -1. 1. 1000000.))
+
+;(estimate-pi) ; 3.141824
+
+
+;;EXERCISE 3.6
+(define rand
+  (let ((x random-init))
+    (lambda (m)
+      (cond ((eq? m 'generate) (set! x (rand-update x))
+                               x)
+            ((eq? m 'reset) (lambda (n) (set! x n)))))))
 
 
 ;;;SECTION 3.1.3
@@ -189,17 +276,17 @@
 
 ;: (define D1 (make-decrementer 25))
 ;: (define D2 (make-decrementer 25))
-;: 
+;:
 ;: (define W1 (make-simplified-withdraw 25))
 ;: (define W2 (make-simplified-withdraw 25))
-;: 
+;:
 ;: (W1 20)
 ;: (W1 20)
 ;: (W2 20)
 
 ;: (define peter-acc (make-account 100))
 ;: (define paul-acc (make-account 100))
-;: 
+;:
 ;: (define peter-acc (make-account 100))
 ;: (define paul-acc peter-acc)
 
@@ -226,8 +313,31 @@
 
 
 ;; EXERCISE 3.7
+(define (make-joint account password new-password)
+  (password-protect (lambda (m) (account password m))
+                    new-password))
+
+(define (password-protect dispatch password)
+  (lambda (attempt m)
+    (if (eq? attempt password)
+        (dispatch m)
+        (lambda (m) "Incorrect password"))))
+
+;: (define peter-acc (make-account 100 'open-sesame))
 ;: (define paul-acc
 ;:   (make-joint peter-acc 'open-sesame 'rosebud))
+;: ((paul-acc 'rosebud 'withdraw) 10) ; 90
+;: ((paul-acc 'open-sesame 'withdraw) 10) ; "Incorrect password"
+
+;;EXERCISE 3.8
+(define f
+  (let ((y 0))
+    (lambda (x)
+      (set! y (if (= y 0) 1 0))
+      (if (= x y) (/ 1 2) 0))))
+
+;: (+ (f 0) (f 1)) ; 1
+;: (+ (f 1) (f 0)) ; 0
 
 
 ;;;;SECTION 3.2
@@ -256,11 +366,21 @@
 
 
 ;; EXERCISE 3.9
-
 (define (factorial n)
   (if (= n 1)
       1
       (* n (factorial (- n 1)))))
+
+;      global env
+;          ↓
+; [...................]
+;   ↑  ↑  ↑  ↑  ↑  ↑
+;   │  │  │  │  │  └[ n: 6 ] ← E1
+;   │  │  │  │  └[ n: 5 ] ← E2
+;   │  │  │  └[ n: 4 ] ← E3
+;   │  │  └[ n: 3 ] ← E4
+;   │  └[ n: 2 ] ← E5
+;   └[ n: 1 ] ← E6
 
 (define (factorial n)
   (fact-iter 1 1 n))
@@ -271,6 +391,18 @@
       (fact-iter (* counter product)
                  (+ counter 1)
                  max-count)))
+
+;       global env
+;           ↓
+; [.....................]
+;   ↑  ↑  ↑  ↑  ↑  ↑  ↑
+;   │  │  │  │  │  │  └[ product: 1   counter: 1   max-count: 6 ] ← E1
+;   │  │  │  │  │  └[ product: 1   counter: 2   max-count: 6 ] ← E2
+;   │  │  │  │  └[ product: 2   counter: 3   max-count: 6 ] ← E3
+;   │  │  │  └[ product: 6   counter: 4   max-count: 6 ] ← E4
+;   │  │  └[ product: 24   counter: 5   max-count: 6 ] ← E5
+;   │  └[ product: 120   counter: 6   max-count: 6 ] ← E6
+;   └[ product: 720   counter: 7   max-count: 6 ] ← E7
 
 
 ;;;SECTION 3.2.3
@@ -338,10 +470,10 @@
   dispatch)
 
 ;: (define acc (make-account 50))
-;: 
+;:
 ;: ((acc 'deposit) 40)
 ;: ((acc 'withdraw) 60)
-;: 
+;:
 ;: (define acc2 (make-account 100))
 
 
@@ -376,7 +508,7 @@
 ;: (define z (append  x y))
 ;: z
 ;: (cdr x)
-;: 
+;:
 ;: (define w (append! x y))
 ;: w
 ;: (cdr x)
@@ -493,14 +625,14 @@
           (else
            (set-cdr! (rear-ptr queue) new-pair)
            (set-rear-ptr! queue new-pair)
-           queue)))) 
+           queue))))
 
 (define (delete-queue! queue)
   (cond ((empty-queue? queue)
          (error "DELETE! called with an empty queue" queue))
         (else
          (set-front-ptr! queue (cdr (front-ptr queue)))
-         queue))) 
+         queue)))
 
 
 ;; EXERCISE 3.21
@@ -584,7 +716,7 @@
                       (cons (list key-1
                                   (cons key-2 value))
                             (cdr local-table)))))
-      'ok)    
+      'ok)
     (define (dispatch m)
       (cond ((eq? m 'lookup-proc) lookup)
             ((eq? m 'insert-proc!) insert!)
@@ -627,7 +759,7 @@
 ;: (define d (make-wire))
 ;: (define e (make-wire))
 ;: (define s (make-wire))
-;: 
+;:
 ;: (or-gate a b d)
 ;: (and-gate a b c)
 ;: (inverter c e)
@@ -728,7 +860,7 @@
 
 (define (probe name wire)
   (add-action! wire
-               (lambda ()        
+               (lambda ()
                  (newline)
                  (display name)
                  (display " ")
@@ -742,19 +874,19 @@
 ;: (define inverter-delay 2)
 ;: (define and-gate-delay 3)
 ;: (define or-gate-delay 5)
-;: 
+;:
 ;: (define input-1 (make-wire))
 ;: (define input-2 (make-wire))
 ;: (define sum (make-wire))
 ;: (define carry (make-wire))
-;: 
+;:
 ;: (probe 'sum sum)
 ;: (probe 'carry carry)
-;: 
+;:
 ;: (half-adder input-1 input-2 sum carry)
 ;: (set-signal! input-1 1)
 ;: (propagate)
-;: 
+;:
 ;: (set-signal! input-2 1)
 ;: (propagate)
 
@@ -875,11 +1007,11 @@
     (forget-value! a2 me)
     (process-new-value))
   (define (me request)
-    (cond ((eq? request 'I-have-a-value)  
+    (cond ((eq? request 'I-have-a-value)
            (process-new-value))
-          ((eq? request 'I-lost-my-value) 
+          ((eq? request 'I-lost-my-value)
            (process-forget-value))
-          (else 
+          (else
            (error "Unknown request -- ADDER" request))))
   (connect a1 me)
   (connect a2 me)
@@ -975,7 +1107,7 @@
           'ignored))
     (define (connect new-constraint)
       (if (not (memq new-constraint constraints))
-          (set! constraints 
+          (set! constraints
                 (cons new-constraint constraints)))
       (if (has-value? me)
           (inform-about-value new-constraint))
@@ -1106,8 +1238,8 @@
 ;: (define x 10)
 ;: (parallel-execute (lambda () (set! x (* x x)))
 ;:                   (lambda () (set! x (* x x x))))
-;: 
-;: 
+;:
+;:
 ;: (define x 10)
 ;: (define s (make-serializer))
 ;: (parallel-execute (s (lambda () (set! x (* x x))))
@@ -1243,7 +1375,7 @@
       serialized-p)))
 
 (define (make-mutex)
-  (let ((cell (list false)))            
+  (let ((cell (list false)))
     (define (the-mutex m)
       (cond ((eq? m 'acquire)
              (if (test-and-set! cell)
@@ -1512,7 +1644,7 @@
 
 (define (euler-transform s)
   (let ((s0 (stream-ref s 0))
-        (s1 (stream-ref s 1))    
+        (s1 (stream-ref s 1))
         (s2 (stream-ref s 2)))
     (cons-stream (- s2 (/ (square (- s2 s1))
                           (+ s0 (* -2 s1) s2)))
@@ -1703,4 +1835,3 @@
    balance
    (stream-withdraw (- balance (stream-car amount-stream))
                     (stream-cdr amount-stream))))
-
