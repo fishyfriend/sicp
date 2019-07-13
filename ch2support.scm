@@ -65,3 +65,8 @@
 (define put (operation-table 'insert-proc!))
 
 ;;;-----------
+
+;;;coercion table for section 2.5.2
+(define coercion-table (make-table))
+(define get-coercion (coercion-table 'lookup-proc))
+(define put-coercion (coercion-table 'insert-proc!))

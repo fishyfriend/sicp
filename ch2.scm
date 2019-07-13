@@ -3315,10 +3315,6 @@
 (define (scheme-number->complex n)
   (make-complex-from-real-imag (contents n) 0))
 
-(define coercion-table (make-table))
-(define get-coercion (coercion-table 'lookup-proc))
-(define put-coercion (coercion-table 'insert-proc!))
-
 ;: (put-coercion 'scheme-number 'complex scheme-number->complex)
 
 
