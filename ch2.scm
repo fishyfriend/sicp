@@ -3497,6 +3497,184 @@
 ;: (geom-series 1 (make-rational 2 1) 3) ; (rational 8 . 1) ; 4
 
 
+;;EXERCISE 2.83
+; This exercise implies the availability of integer and real types in the
+; data-directed dispatch system, so I have added them. I have chosen to
+; represent them explicitly with type tags instead of modifying the type-tagging
+; procedures to piggyback on Scheme's internal type system.
+
+(define (make-integer x) ((get 'make 'integer) x))
+
+(define (install-integer-package)
+  (define (make-int x) (if (integer? x) x (error "Not an integer" x)))
+  (define (tag x) (attach-tag 'integer x))
+  (put 'add '(integer integer) (lambda (x y) (tag (+ x y))))
+  (put 'sub '(integer integer) (lambda (x y) (tag (- x y))))
+  (put 'mul '(integer integer) (lambda (x y) (tag (* x y))))
+  (put 'div '(integer integer) (lambda (x y) (tag (quotient x y))))
+  (put 'make 'integer (lambda (x) (tag (make-int x))))
+  ;; added from exercise 85
+  (put 'equ? '(integer integer) =))
+
+(define (make-real x) ((get 'make 'real) x))
+
+(define (install-real-package)
+  (define (make-real x)
+    (if (number? x)
+        (exact->inexact x)
+        (error "Not a real" x)))
+  (define (tag x) (attach-tag 'real x))
+  (put 'add '(real real) (lambda (x y) (tag (+ x y))))
+  (put 'sub '(real real) (lambda (x y) (tag (- x y))))
+  (put 'mul '(real real) (lambda (x y) (tag (* x y))))
+  (put 'div '(real real) (lambda (x y) (tag (/ x y))))
+  (put 'make 'real (lambda (x) (tag (make-real x))))
+  ;; added from exercise 85
+  (put 'equ? '(real real) =))
+
+(define (raise x) (apply-generic 'raise x))
+
+(define (install-tower-package)
+  (put 'raise '(integer) (lambda (x) (make-rational x 1)))
+  (put 'raise '(rational) (lambda (x) (make-real (/ (numer x) (denom x)))))
+  (put 'raise '(real) (lambda (x) (make-complex-from-real-imag x 0.0))))
+
+;: (install-integer-package)
+;: (install-rational-package)
+;: (install-real-package)
+;: (install-polar-package)
+;: (install-rectangular-package)
+;: (install-complex-package)
+;: (install-tower-package)
+
+;: (raise (make-integer 5)) ; (rational 5 . 1)
+;: (raise (make-rational -3 4)) ; (real . -.75)
+;: (raise (make-real 0.21)) ; (complex rectangular .21 . 0.)
+
+
+;;EXERCISE 2.84
+(define (apply-generic op . args)
+  (let ((type-tags (map type-tag args)))
+    (let ((fail
+           (lambda () (error "No method for these types"
+                             (list op type-tags)))))
+      (let ((proc (get op type-tags)))
+        (if proc
+            (apply proc (map contents args))
+            (if (= (length args) 2)
+                (let ((pair (try-raise (car args) (cadr args))))
+                  (if pair
+                      (let ((args2 (list (car pair) (cdr pair))))
+                        (let ((proc2 (get op (map type-tag args2))))
+                          (if proc2
+                              (apply proc2 (map contents args2))
+                              (fail))))
+                      (fail)))
+                (fail)))))))
+
+; Raise a to the same type as b, returning #f if this is not possible.
+(define (try-raise a b)
+  (define (iter a b)
+    (if (eq? (type-tag a) (type-tag b))
+        (cons a b)
+        (let ((proc (get 'raise (list (type-tag a)))))
+          (if proc
+              (iter (proc (contents a)) b)
+              false))))
+  (let ((pair (iter a b)))
+    (if pair
+        pair
+        (let ((pair2 (iter b a)))
+          (if pair2 (flip-pair pair2) false)))))
+
+(define (flip-pair p)
+  (cons (cdr p) (car p)))
+
+;: (define (add-imag-parts x y)
+;:   (apply-generic 'add-imag-parts x y))
+
+;: (put 'add-imag-parts
+;:      '(complex complex)
+;:      (lambda (x y) (make-real (+ (imag-part x) (imag-part y)))))
+
+;: (add-imag-parts (make-integer 5) (make-complex-from-real-imag 4 3))
+; (real . 3.)
+
+
+;;EXERCISE 2.85
+; Requires the equ? implementation from exercise 2.79. I have added
+; implementations for integers and reals.
+
+; add to install-integer-package
+;: (put 'equ? '(integer integer) =)
+
+; add to install-real-package
+;: (put 'equ? '(real real) =)
+
+(define (drop x)
+  (if (get 'project (list (type-tag x)))
+      (let ((projection (project x)))
+        (if (and (not (eq? (type-tag projection) (type-tag x)))
+                 (equ? (raise projection) x))
+            (drop projection)
+            x))
+      x))
+
+(define (project x) (apply-generic 'project x))
+
+(define (install-projection-package)
+  (define (real->rational x)
+    (let ((frac (inexact->exact x)))
+      (make-rational (numerator frac) (denominator frac))))
+
+  (define (rational->integer x)
+    (make-integer (round (/ (numer x) (denom x)))))
+
+  (put 'project '(complex) (lambda (x) (make-real (real-part x))))
+  (put 'project '(real) (lambda (x) (real->rational x)))
+  (put 'project '(rational) (lambda (x) (rational->integer x)))
+  (put 'project '(integer) (lambda (x) (make-integer x))))
+
+(define (apply-generic op . args)
+  ;; avoid infinite loops
+  (define (finalize x)
+    (if (and (not (eq? op 'project))
+             (not (eq? op 'raise)))
+        (drop x)
+        x))
+  (let ((type-tags (map type-tag args)))
+    (let ((fail
+           (lambda () (error "No method for these types"
+                             (list op type-tags)))))
+      (let ((proc (get op type-tags)))
+        (if proc
+            (finalize (apply proc (map contents args)))
+            (if (= (length args) 2)
+                (let ((pair (try-raise (car args) (cadr args))))
+                  (if pair
+                      (let ((args2 (list (car pair) (cdr pair))))
+                        (let ((proc2 (get op (map type-tag args2))))
+                          (if proc2
+                              (finalize (apply proc2 (map contents args2)))
+                              (fail))))
+                      (fail)))
+                (fail)))))))
+
+;: (install-projection-package)
+
+;: (drop (make-integer 5)) ; (integer . 5)
+;: (drop (make-real 6.7)) ; (rational 7543529375845581 . 1125899906842624)
+;: (drop (make-real 6.0)) ; (integer . 6)
+;: (drop (make-rational 3 5)) ; (rational 3 . 5)
+;: (drop (make-rational -8 4)) ; (integer . -2)
+;: (drop (make-complex-from-real-imag 8 9)) ; (complex rectangular 8 . 9)
+;: (drop (make-complex-from-real-imag 1 0)) ; (integer . 1)
+
+;: (mul (make-rational 1 4) (make-integer 4)) ; (integer . 1)
+;: (add (make-complex-from-real-imag 3 4) (make-complex-from-real-imag 2 -4))
+   ; (integer . 5)
+
+
 ;;;SECTION 2.5.3
 
 ;;; ALL procedures in 2.5.3 except make-polynomial
