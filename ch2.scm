@@ -3058,6 +3058,10 @@
        (lambda (x y) (tag (/ x y))))
   (put 'make 'scheme-number
        (lambda (x) (tag x)))
+  ;; added from exercise 79
+  (put 'equ? '(scheme-number scheme-number) =)
+  ;; added from exercise 80
+  (put 'zero? '(scheme-number) (lambda (x) (= x 0)))
   'done)
 
 (define (make-scheme-number n)
@@ -3094,9 +3098,18 @@
        (lambda (x y) (tag (mul-rat x y))))
   (put 'div '(rational rational)
        (lambda (x y) (tag (div-rat x y))))
-
   (put 'make 'rational
        (lambda (n d) (tag (make-rat n d))))
+
+   ;; added from exercise 79
+  (put 'equ? '(rational rational)
+    (lambda (x y)
+      (= (/ (numer x) (denom x))
+         (/ (numer y) (denom y)))))
+
+  ;; added from exercise 80
+  (put 'zero? '(rational) (lambda (x) (= (numer x) 0)))
+
   'done)
 
 (define (make-rational n d)
@@ -3108,6 +3121,7 @@
     ((get 'make-from-real-imag 'rectangular) x y))
   (define (make-from-mag-ang r a)
     ((get 'make-from-mag-ang 'polar) r a))
+
   ;; internal procedures
   (define (add-complex z1 z2)
     (make-from-real-imag (+ (real-part z1) (real-part z2))
@@ -3136,6 +3150,23 @@
        (lambda (x y) (tag (make-from-real-imag x y))))
   (put 'make-from-mag-ang 'complex
        (lambda (r a) (tag (make-from-mag-ang r a))))
+
+  ;; added from exercise 77
+  (put 'real-part '(complex) real-part)
+  (put 'imag-part '(complex) imag-part)
+  (put 'magnitude '(complex) magnitude)
+  (put 'angle '(complex) angle)
+
+  ;; added from exercise 79
+  (put 'equ? '(complex complex)
+    (lambda (x y)
+      (and (= (real-part x) (real-part y))
+           (= (imag-part x) (imag-part y)))))
+
+  ;; added from exercise 80
+  (put 'zero? '(complex)
+    (lambda (x) (and (= (real-part x) 0)
+                     (= (imag-part x) 0))))
   'done)
 
 (define (make-complex-from-real-imag x y)
@@ -3223,9 +3254,10 @@
         (error "Bad tagged datum -- TYPE-TAG" datum)))
 
 (define (attach-tag type-tag contents)
-  (if (and (eq? type-tag 'scheme-number)
-           (number? contents))
-      contents
+  (if (eq? type-tag 'scheme-number)
+      (if (number? contents)
+          contents
+          (error "Not a Scheme number -- ATTACH-TAG" contents))
       (cons type-tag contents)))
 
 (define (contents datum)
@@ -3235,68 +3267,37 @@
 
 
 ;;EXERCISE 2.79
-(define (equ? a b) (apply-generic 'equ a b))
+(define (equ? a b) (apply-generic 'equ? a b))
 
-(define (install-equality-package)
-  (define (number=number? x y)
-    (= x y))
-  (define (number=rational? n r)
-    (= n (/ (numer r) (denom r))))
-  (define (number=complex? n c)
-    (and (= n (real-part c))
-         (= (imag-part c) 0)))
-  (define (rational=number? r n)
-    (number=rational? n r))
-  (define (rational=rational? x y)
-    (= (/ (numer x) (denom x))
-       (/ (numer y) (denom y))))
-  (define (rational=complex? r c)
-    (and (= (/ (numer r) (denom r)) (real-part c))
-         (= (imag-part c) 0)))
-  (define (complex=number? c n)
-    (number=complex? n c))
-  (define (complex=rational? c r)
-    (rational=complex? r c))
-  (define (complex=complex? x y)
-    (and (= (real-part x) (real-part y))
-         (= (imag-part x) (imag-part y))))
+; add to install-scheme-number-package
+;: (put 'equ? '(scheme-number scheme-number) =)
 
-  ;; bit of a hack -- rational package should expose these but doesn't
-  (define (numer x) (car x))
-  (define (denom x) (cdr x))
+; add to install-rational-package
+;: (put 'equ? '(rational rational)
+;:   (lambda (x y)
+;:     (= (/ (numer x) (denom x))
+;:        (/ (numer y) (denom y)))))
 
-  (put 'equ '(scheme-number scheme-number) number=number?)
-  (put 'equ '(scheme-number rational) number=rational?)
-  (put 'equ '(scheme-number complex) number=complex?)
-  (put 'equ '(rational scheme-number) rational=number?)
-  (put 'equ '(rational rational) rational=rational?)
-  (put 'equ '(rational complex) rational=complex?)
-  (put 'equ '(complex scheme-number) complex=number?)
-  (put 'equ '(complex rational) complex=rational?)
-  (put 'equ '(complex complex) complex=complex?))
-
-;: (install-equality-package)
+; add to install-complex-package
+;: (put 'equ? '(complex complex)
+;:   (lambda (x y)
+;:     (and (= (real-part x) (real-part y))
+;:          (= (imag-part x) (imag-part y)))))
 
 
 ;;EXERCISE 2.80
 (define (=zero? x) (apply-generic 'zero? x))
 
-(define (install-zero-package)
-  (define (number=zero? x) (= x 0))
-  (define (rational=zero? x) (= (numer x) 0))
-  (define (complex=zero? x) (and (= (real-part x) 0) (= (imag-part x) 0)))
+; add to install-scheme-number-package
+;: (put 'zero? '(scheme-number) (lambda (x) (= x 0)))
 
-  ;; bit of a hack -- rational package should expose this but doesn't
-  (define (numer x) (car x))
+; add to install-rational-package
+;: (put 'zero? '(rational) (lambda (x) (= (numer x) 0)))
 
-  (put 'zero? '(scheme-number) number=zero?)
-  (put 'zero? '(rational) rational=zero?)
-  (put 'zero? '(complex) complex=zero?))
-
-;: (install-zero-package)
-
-; Alternately just use equ? from the previous exercise
-(define (=zero? x) (equ? x 0))
+; add to install-complex-package
+;: (put 'zero? '(complex)
+;:   (lambda (x) (and (= (real-part x) 0)
+;:                    (= (imag-part x) 0))))
 
 
 ;;;SECTION 2.5.2
