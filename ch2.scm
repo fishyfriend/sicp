@@ -3564,7 +3564,7 @@
 ;; The instructions imply the availability of integer and real types in the
 ;; data-directed dispatch system, so I have added them. I have chosen to
 ;; represent them explicitly with type tags instead of piggybacking on Scheme's
-;; internal type system as in exercise 2.79.
+;; internal type system as in exercise 2.78.
 
 (define (make-integer x) ((get 'make 'integer) x))
 
