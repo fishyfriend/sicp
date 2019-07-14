@@ -3399,20 +3399,20 @@
                      (list op type-tags)))))))
 
 
-;;EXERCISE 2.82
-; Requires the rational number procedures from section 2.1.1.
-; Requires the implementation of sets as unordered lists from section 2.3.3.
-
-; As an example of when trying to coerce all arguments to the same type is
-; inadequate, imagine we have extended the rationals package with a procedure
-; that computes the nth term in a geometric series. The parameters of the series
-; are to be supplied as rationals but n as an ordinary number. If we call
-; geom-series with an ordinary numbers as the first or second argument, we'd
-; need the dispatch mechanism to find the '(rational, rational, scheme-number)
-; implementation and coerce the other arguments accordingly. But under the
-; proposed coercion strategy, we only look for '(rational, rational, rational)
-; and '(scheme-number, scheme-number, scheme-number) implementations. This fails
-; to turn up a matching procedure and so we get an error.
+;; EXERCISE 2.82
+;; Requires the rational number procedures from section 2.1.1.
+;; Requires the implementation of sets as unordered lists from section 2.3.3.
+;;
+;; As an example of when trying to coerce all arguments to the same type is
+;; inadequate, imagine we have extended the rationals package with a procedure
+;; that computes the nth term in a geometric series. The parameters of the
+;; series are to be supplied as rationals but n as an ordinary number. If we
+;; call geom-series with an ordinary number as the first or second argument, we
+;; need the dispatch mechanism to find the '(rational, rational, scheme-number)
+;; implementation and coerce the arguments accordingly. But under the proposed
+;; coercion strategy, it only looks for '(rational, rational, rational) and
+;; '(scheme-number, scheme-number, scheme-number) implementations. This fails
+;; to turn up a matching procedure and so we get an error.
 
 (define (geom-series a r n)
   (apply-generic 'geom-series a r n))
@@ -3426,21 +3426,29 @@
   (put 'geom-series '(rational rational scheme-number)
      (lambda (a r n) (tag (geom-series a r n)))))
 
-;: (install-geom-series-extension)
+(define (scheme-number->rational x)
+  (let ((x2 (inexact->exact x)))
+    (make-rational (numerator x2) (denominator x2))))
 
-;: (put-coercion 'rational 'scheme-number (lambda (r) (/ (numer r) (denom r))))
+;(install-geom-series-extension)
+;(put-coercion 'scheme-number 'rational scheme-number->rational)
 
-;: (geom-series (make-rational 1 2) (make-rational 1 2) 3) ; (rational 1 . 8)
-;: (geom-series 1 2 3) ; No method for these types
-;: (geom-series 1 (make-rational 2 1) 3) ; No method for these types
+;(geom-series (make-rational 1 2) (make-rational 1 2) 3)
+;Value: (rational 1 . 8)
 
-; The following implementation of apply-generic attempts all possible coercions
-; among the types of the passed arguments. It will still fail in situations
-; where the only implementation(s) of the requested operation require a type
-; that has not been passed in the argument list but for which a coercion from
-; the passed type is available. Thus, even with the below implementation,
-; (geom-series 1 2 3) still fails but (geom-series 1 (make-rational 2 1) 3)
-; works, assuming a coercion from scheme-number to rational is available.
+;(geom-series 1 2 3)
+;No method for these types
+
+;(geom-series 1 (make-rational 2 1) 3)
+;No method for these types
+
+;; The following implementation of apply-generic attempts all possible coercions
+;; among the types of the passed arguments. It will still fail in situations
+;; where the only implementation(s) of the requested operation require a type
+;; that has not been passed in the argument list but for which a coercion from
+;; the passed type is available. Thus, even with the below implementation,
+;; (geom-series 1 2 3) still fails but (geom-series 1 (make-rational 2 1) 3)
+;; works, assuming a coercion from scheme-number to rational is available.
 
 (define (apply-generic op . args)
   (define (possible-sigs types)
@@ -3470,14 +3478,17 @@
                               (coerce-tail (cdr items))))
                       #f))
                 #f)))))
+  (define (make-apply-proc type-tags sig)
+    (let ((proc (get op sig))
+          (coerce-args (make-list-coercion type-tags sig)))
+      (if (and proc coerce-args)
+          (lambda () (apply proc (map contents (coerce-args args))))
+          false)))
   (define (iter type-tags sigs)
     (if (null? sigs)
-        (error "No method for these types" (list op type-tags)))
-        (let ((proc (get op (car sigs)))
-              (coerce-sig (make-list-coercion type-tags (car sigs))))
-          (if (or (not proc) (not coerce-sig))
-              (iter type-tags (cdr sigs))
-              (apply proc (coerce-sig (map contents args))))))
+        (error "No method for these types" (list op type-tags))
+        (let ((thunk (make-apply-proc type-tags (car sigs))))
+          (if thunk (thunk) (iter type-tags (cdr sigs))))))
   (let ((type-tags (map type-tag args)))
     (let ((sigs (cons type-tags
                       (filter (lambda (sig) (not (equal? sig type-tags)))
@@ -3492,16 +3503,21 @@
              nil
              xs))
 
-;: (geom-series (make-rational 1 2) (make-rational 1 2) 3) ; (rational 1 . 8)
-;: (geom-series 1 2 3) ; No method for these types
-;: (geom-series 1 (make-rational 2 1) 3) ; (rational 8 . 1) ; 4
+;(geom-series (make-rational 1 2) (make-rational 1 2) 3)
+;Value: (rational 1 . 8)
+
+;(geom-series 1 2 3)
+;No method for these types
+
+;(geom-series 1 (make-rational 2 1) 3)
+;Value: (rational 4 . 1)
 
 
-;;EXERCISE 2.83
-; This exercise implies the availability of integer and real types in the
-; data-directed dispatch system, so I have added them. I have chosen to
-; represent them explicitly with type tags instead of modifying the type-tagging
-; procedures to piggyback on Scheme's internal type system.
+;; EXERCISE 2.83
+;; The instructions imply the availability of integer and real types in the
+;; data-directed dispatch system, so I have added them. I have chosen to
+;; represent them explicitly with type tags instead of piggybacking on Scheme's
+;; internal type system as in exercise 2.79.
 
 (define (make-integer x) ((get 'make 'integer) x))
 
@@ -3511,7 +3527,7 @@
   (put 'add '(integer integer) (lambda (x y) (tag (+ x y))))
   (put 'sub '(integer integer) (lambda (x y) (tag (- x y))))
   (put 'mul '(integer integer) (lambda (x y) (tag (* x y))))
-  (put 'div '(integer integer) (lambda (x y) (tag (quotient x y))))
+  (put 'div '(integer integer) make-rational)
   (put 'make 'integer (lambda (x) (tag (make-int x))))
   ;; added from exercise 85
   (put 'equ? '(integer integer) =))
@@ -3539,20 +3555,8 @@
   (put 'raise '(rational) (lambda (x) (make-real (/ (numer x) (denom x)))))
   (put 'raise '(real) (lambda (x) (make-complex-from-real-imag x 0.0))))
 
-;: (install-integer-package)
-;: (install-rational-package)
-;: (install-real-package)
-;: (install-polar-package)
-;: (install-rectangular-package)
-;: (install-complex-package)
-;: (install-tower-package)
 
-;: (raise (make-integer 5)) ; (rational 5 . 1)
-;: (raise (make-rational -3 4)) ; (real . -.75)
-;: (raise (make-real 0.21)) ; (complex rectangular .21 . 0.)
-
-
-;;EXERCISE 2.84
+;; EXERCISE 2.84
 (define (apply-generic op . args)
   (let ((type-tags (map type-tag args)))
     (let ((fail
@@ -3572,7 +3576,7 @@
                       (fail)))
                 (fail)))))))
 
-; Raise a to the same type as b, returning #f if this is not possible.
+;; Raise a to the same type as b, returning #f if this is not possible.
 (define (try-raise a b)
   (define (iter a b)
     (if (eq? (type-tag a) (type-tag b))
@@ -3590,26 +3594,16 @@
 (define (flip-pair p)
   (cons (cdr p) (car p)))
 
-;: (define (add-imag-parts x y)
-;:   (apply-generic 'add-imag-parts x y))
 
-;: (put 'add-imag-parts
-;:      '(complex complex)
-;:      (lambda (x y) (make-real (+ (imag-part x) (imag-part y)))))
+;; EXERCISE 2.85
+;; Requires the equ? implementation from exercise 2.79. I have added
+;; implementations for integers and reals.
 
-;: (add-imag-parts (make-integer 5) (make-complex-from-real-imag 4 3))
-; (real . 3.)
+;; add to install-integer-package
+;(put 'equ? '(integer integer) =)
 
-
-;;EXERCISE 2.85
-; Requires the equ? implementation from exercise 2.79. I have added
-; implementations for integers and reals.
-
-; add to install-integer-package
-;: (put 'equ? '(integer integer) =)
-
-; add to install-real-package
-;: (put 'equ? '(real real) =)
+;; add to install-real-package
+;(put 'equ? '(real real) =)
 
 (define (drop x)
   (if (get 'project (list (type-tag x)))
@@ -3659,20 +3653,6 @@
                               (fail))))
                       (fail)))
                 (fail)))))))
-
-;: (install-projection-package)
-
-;: (drop (make-integer 5)) ; (integer . 5)
-;: (drop (make-real 6.7)) ; (rational 7543529375845581 . 1125899906842624)
-;: (drop (make-real 6.0)) ; (integer . 6)
-;: (drop (make-rational 3 5)) ; (rational 3 . 5)
-;: (drop (make-rational -8 4)) ; (integer . -2)
-;: (drop (make-complex-from-real-imag 8 9)) ; (complex rectangular 8 . 9)
-;: (drop (make-complex-from-real-imag 1 0)) ; (integer . 1)
-
-;: (mul (make-rational 1 4) (make-integer 4)) ; (integer . 1)
-;: (add (make-complex-from-real-imag 3 4) (make-complex-from-real-imag 2 -4))
-   ; (integer . 5)
 
 
 ;;;SECTION 2.5.3

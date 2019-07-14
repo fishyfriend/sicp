@@ -255,7 +255,62 @@ z2
 
 (add (make-scheme-number 3) z1)
 ;Value 7: (complex rectangular 4 . 1)
-
+
+;; EXERCISE 2.83
+(install-integer-package)
+(install-real-package)
+(install-tower-package)
+
+(raise (make-integer 5))
+;Value: (rational 5 . 1)
+
+(raise (make-rational -3 4))
+;Value: (real . -.75)
+
+(raise (make-real 0.21))
+;Value: (complex rectangular .21 . 0.)
+
+;;EXERCISE 2.84
+(define (add-imag-parts x y)
+  (apply-generic 'add-imag-parts x y))
+
+(put 'add-imag-parts
+     '(complex complex)
+     (lambda (x y) (make-real (+ (imag-part x) (imag-part y)))))
+
+(add-imag-parts (make-integer 5) (make-complex-from-real-imag 4 3))
+;Value: (real . 3.)
+
+;;EXERCISE 2.85
+(install-projection-package)
+
+(drop (make-integer 5))
+;Value: (integer . 5)
+
+(drop (make-real 6.7))
+;Value: (rational 7543529375845581 . 1125899906842624)
+
+(drop (make-real 6.0))
+;Value: (integer . 6)
+
+(drop (make-rational 3 5))
+;Value: (rational 3 . 5)
+
+(drop (make-rational -8 4))
+;Value: (integer . -2)
+
+(drop (make-complex-from-real-imag 8 9))
+;Value: (complex rectangular 8 . 9)
+
+(drop (make-complex-from-real-imag 1 0))
+;Value: (integer . 1)
+
+(mul (make-rational 1 4) (make-integer 4))
+;Value: (integer . 1)
+
+(add (make-complex-from-real-imag 3 4) (make-complex-from-real-imag 2 -4))
+;Value: (integer . 5)
+
 ;;;SECTION 2.5.3
 
 (define a (make-polynomial 'x '((5 1) (4 2) (2 3) (1 -2) (0 -5))))
