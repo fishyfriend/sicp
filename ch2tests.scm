@@ -311,6 +311,29 @@ z2
 (add (make-complex-from-real-imag 3 4) (make-complex-from-real-imag 2 -4))
 ;Value: (integer . 5)
 
+;EXERCISE 2.86
+(install-scheme-number-package)
+(install-rational-package)
+(install-rectangular-package)
+(install-polar-package)
+(install-complex-package)
+
+(define c1 (make-complex-from-real-imag 3 (make-rational 4 5)))
+(define c2 (make-complex-from-mag-ang 6 (make-rational 7 8)))
+
+(magnitude (div (mul c1 c2) c1))
+;Value: 6.
+
+(angle (div (mul c1 c2) c1))
+;Value: (rational 7 . 8)
+
+(real-part (div (mul c1 c2) c2))
+;Value: 3.
+
+(imag-part (div (mul c1 c2) c2))
+;Value: .8000000000000002
+
+
 ;;;SECTION 2.5.3
 
 (define a (make-polynomial 'x '((5 1) (4 2) (2 3) (1 -2) (0 -5))))
