@@ -2750,6 +2750,16 @@
        (lambda (x y) (tag (make-from-real-imag x y))))
   (put 'make-from-mag-ang 'rectangular
        (lambda (r a) (tag (make-from-mag-ang r a))))
+
+  ;; added from exercise 2.79
+  (put 'equ? '(rectangular rectangular)
+    (lambda (x y) (and (= (real-part x) (real-part y))
+                       (= (imag-part x) (imag-part y)))))
+
+  ;; added from exercise 2.80
+  (put '=zero? '(rectangular)
+    (lambda (x) (and (= (real-part x) 0)
+                     (= (imag-part x) 0))))
   'done)
 
 (define (install-polar-package)
@@ -2775,6 +2785,14 @@
        (lambda (x y) (tag (make-from-real-imag x y))))
   (put 'make-from-mag-ang 'polar
        (lambda (r a) (tag (make-from-mag-ang r a))))
+
+  ;; added from exercise 2.79
+  (put 'equ? '(polar polar)
+    (lambda (x y) (and (= (magnitude x) (magnitude y))
+                       (= (angle x) (angle y)))))
+
+  ;; added from exercise 2.80
+  (put 'zero? '(polar) (lambda (x) (= (magnitude x) 0)))
   'done)
 
 ;;footnote
@@ -3058,10 +3076,12 @@
        (lambda (x y) (tag (/ x y))))
   (put 'make 'scheme-number
        (lambda (x) (tag x)))
+
   ;; added from exercise 79
   (put 'equ? '(scheme-number scheme-number) =)
+
   ;; added from exercise 80
-  (put 'zero? '(scheme-number) (lambda (x) (= x 0)))
+  (put '=zero? '(scheme-number) (lambda (x) (= x 0)))
   'done)
 
 (define (make-scheme-number n)
@@ -3088,6 +3108,7 @@
   (define (div-rat x y)
     (make-rat (* (numer x) (denom y))
               (* (denom x) (numer y))))
+
   ;; interface to rest of the system
   (define (tag x) (attach-tag 'rational x))
   (put 'add '(rational rational)
@@ -3108,8 +3129,7 @@
          (/ (numer y) (denom y)))))
 
   ;; added from exercise 80
-  (put 'zero? '(rational) (lambda (x) (= (numer x) 0)))
-
+  (put '=zero? '(rational) (lambda (x) (= (numer x) 0)))
   'done)
 
 (define (make-rational n d)
@@ -3164,9 +3184,7 @@
            (= (imag-part x) (imag-part y)))))
 
   ;; added from exercise 80
-  (put 'zero? '(complex)
-    (lambda (x) (and (= (real-part x) 0)
-                     (= (imag-part x) 0))))
+  (put '=zero? '(complex) =zero?)
   'done)
 
 (define (make-complex-from-real-imag x y)
@@ -3278,26 +3296,41 @@
 ;:     (= (/ (numer x) (denom x))
 ;:        (/ (numer y) (denom y)))))
 
+;; add to install-rectangular-package
+;(put 'equ? '(rectangular rectangular)
+;  (lambda (x y) (and (= (real-part x) (real-part y))
+;                     (= (imag-part x) (imag-part y)))))
+
+;; add to install-polar-package
+;(put 'equ? '(polar polar)
+;  (lambda (x y) (and (= (magnitude x) (magnitude y))
+;                     (= (angle x) (angle y)))))
+
 ; add to install-complex-package
 ;: (put 'equ? '(complex complex)
 ;:   (lambda (x y)
 ;:     (and (= (real-part x) (real-part y))
 ;:          (= (imag-part x) (imag-part y)))))
 
-
 ;;EXERCISE 2.80
-(define (=zero? x) (apply-generic 'zero? x))
+(define (=zero? x) (apply-generic '=zero? x))
 
 ; add to install-scheme-number-package
-;: (put 'zero? '(scheme-number) (lambda (x) (= x 0)))
+;: (put '=zero? '(scheme-number) (lambda (x) (= x 0)))
 
 ; add to install-rational-package
-;: (put 'zero? '(rational) (lambda (x) (= (numer x) 0)))
+;: (put '=zero? '(rational) (lambda (x) (= (numer x) 0)))
+
+;; add to install-rectangular-package
+;(put '=zero? '(rectangular)
+;  (lambda (x) (and (= (real-part x) 0)
+;                   (= (imag-part x) 0))))
+
+;; add to install-polar-package
+;(put 'zero? '(polar) (lambda (x) (= (magnitude x) 0)))
 
 ; add to install-complex-package
-;: (put 'zero? '(complex)
-;:   (lambda (x) (and (= (real-part x) 0)
-;:                    (= (imag-part x) 0))))
+;: (put '=zero? '(complex) =zero?)
 
 
 ;;;SECTION 2.5.2
