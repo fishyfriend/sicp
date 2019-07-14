@@ -336,6 +336,8 @@ z2
 
 ;;;SECTION 2.5.3
 
+(install-polynomial-package)
+
 (define a (make-polynomial 'x '((5 1) (4 2) (2 3) (1 -2) (0 -5))))
 
 a
@@ -351,3 +353,57 @@ b
 
 (mul b b)
 ;Value 6: (polynomial x (200 1) (102 4) (100 2) (4 4) (2 4) (0 1))
+
+;;EXERCISE 2.87
+(=zero? a)
+;Value: #f
+
+(=zero? (make-polynomial 'x '((2 0))))
+;Value: #t
+
+;;EXERCISE 2.88
+(=zero? (sub a a))
+;Value: #t
+
+;;EXERCISE 2.89
+(adjoin-term '(3 0) '(4 5 6))
+;Value: (4 5 6)
+
+(adjoin-term '(5 2) (the-empty-termlist))
+;Value: (2 0 0 0 0 0)
+
+(adjoin-term '(5 2) '(1 2 3))
+;Value: (2 0 0 1 2 3)
+
+;;EXERCISE 2.90
+(install-sparse-termlist-package)
+(install-dense-termlist-package)
+
+(define a (make-dense-polynomial 'x '((5 1) (4 2) (2 3) (1 -2) (0 -5))))
+
+a
+;Value: (polynomial x dense-termlist 1 2 0 3 -2 -5)
+
+(add a a)
+;Value: (polynomial x dense-termlist 2 4 0 6 -4 -10)
+
+(define b (make-sparse-polynomial 'x '((100 1) (2 2) (0 1))))
+
+b
+;Value: (polynomial x sparse-termlist (100 1) (2 2) (0 1))
+
+(mul b b)
+;Value: (polynomial x sparse-termlist (200 1) (102 4) (100 2) (4 4) (2 4) (0 1))
+
+(mul a b)
+;Value: (polynomial x sparse-termlist (105 1) (104 2) (102 3) (101 -2) (100 -5)
+;                                     (7 2) (6 4) (5 1) (4 8) (3 -4) (2 -7)
+;                                     (1 -2) (0 -5))
+
+;;EXERCISE 2.91
+(install-polynomial-package)
+
+(div (make-polynomial 'x '((5 1) (0 -1)))
+     (make-polynomial 'x '((2 1) (0 -1))))
+;Value: ((polynomial x sparse-termlist (3 1) (1 1))
+;        (polynomial x sparse-termlist (1 1) (0 -1)))
