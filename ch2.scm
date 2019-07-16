@@ -3707,6 +3707,11 @@
 ;; Requires the original implementation of apply-generic from section 2.5.2.
 ;; Requires equ? from exercise 2.79.
 
+;; CAUTION: Per the exercise prompt, this implementation focuses on rational and
+;; ordinary numbers (a.k.a. Scheme numbers) and won't work with the complete
+;; numeric "tower" without additional method implementations and/or coercions.
+;; As an improvement this exercise could be redone using the tower.
+
 ;; To allow complex numbers whose components can be ordinary or rational
 ;; numbers, the low-level procedures used to implement operations on complex
 ;; numbers (square, sqrt, sin, cos atan) have to be implemented for ordinary and
