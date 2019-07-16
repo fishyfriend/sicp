@@ -2792,7 +2792,7 @@
                        (= (angle x) (angle y)))))
 
   ;; added from exercise 2.80
-  (put 'zero? '(polar) (lambda (x) (= (magnitude x) 0)))
+  (put '=zero? '(polar) (lambda (x) (= (magnitude x) 0)))
   'done)
 
 ;;footnote
@@ -3341,7 +3341,7 @@
 ;                   (= (imag-part x) 0))))
 
 ;; add to install-polar-package
-;(put 'zero? '(polar) (lambda (x) (= (magnitude x) 0)))
+;(put '=zero? '(polar) (lambda (x) (= (magnitude x) 0)))
 
 ; add to install-complex-package
 ;: (put '=zero? '(complex) =zero?)
@@ -3578,6 +3578,7 @@
   (put 'make 'integer (lambda (x) (tag (make-int x))))
   ;; added from exercise 85
   (put 'equ? '(integer integer) =))
+  (put '=zero? '(integer) (lambda (n) (= n 0)))
 
 (define (make-real x) ((get 'make 'real) x))
 
@@ -3594,6 +3595,7 @@
   (put 'make 'real (lambda (x) (tag (make-real x))))
   ;; added from exercise 85
   (put 'equ? '(real real) =))
+  (put '=zero? '(real) (lambda (n) (= n 0.)))
 
 (define (raise x) (apply-generic 'raise x))
 
@@ -3809,7 +3811,7 @@
                        (equ? (angle x) (angle y)))))
 
   ;; added from exercise 2.80
-  (put 'zero? '(polar) (lambda (x) (equ? (magnitude x) 0)))
+  (put '=zero? '(polar) (lambda (x) (equ? (magnitude x) 0)))
   'done)
 
 (define (install-complex-package)
