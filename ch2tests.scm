@@ -407,3 +407,90 @@ b
      (make-polynomial 'x '((2 1) (0 -1))))
 ;Value: ((polynomial x sparse-termlist (3 1) (1 1))
 ;        (polynomial x sparse-termlist (1 1) (0 -1)))
+
+;;EXERCISE 2.92
+(define c (make-polynomial 'y '((1 2) (0 4))))
+(define d (make-polynomial 'y '((2 -5) (1 1) (3 4))))
+(define e (make-polynomial 'x (list (list 3 c) (list 2 d))))
+(define f (make-polynomial 'y (list (list 4 a) (list 2 b))))
+
+d
+;Value: (polynomial y (3 4) (2 -5) (1 1))
+
+e
+;Value: (polynomial x (3 (polynomial y (1 2) (0 4)))
+;                     (2 (polynomial y (3 4) (2 -5) (1 1))))
+
+f
+;Value: (polynomial x (100 (polynomial y (2 1)))
+;                     (5   (polynomial y (4 1)))
+;                     (4   (polynomial y (4 2)))
+;                     (2   (polynomial y (4 3) (2 2)))
+;                     (1   (polynomial y (4 -2)))
+;                     (0   (polynomial y (4 -5) (2 1))))
+
+(add e f)
+;Value: (polynomial x (100 (polynomial y (2 1)))
+;                     (5   (polynomial y (4 1)))
+;                     (4   (polynomial y (4 2)))
+;                     (3   (polynomial y (1 2) (0 4)))
+;                     (2   (polynomial y (4 3) (3 4) (2 -3) (1 1)))
+;                     (1   (polynomial y (4 -2)))
+;                     (0   (polynomial y (4 -5) (2 1))))
+
+(mul e f)
+; (polynomial x (103 (polynomial y (3 2) (2 4)))
+;               (102 (polynomial y (5 4) (4 -5) (3 1)))
+;               (8   (polynomial y (5 2) (4 4)))
+;               (7   (polynomial y (7 4) (6 -5) (5 5) (4 8)))
+;               (6   (polynomial y (7 8) (6 -10) (5 2)))
+;               (5   (polynomial y (5 6) (4 12) (3 4) (2 8)))
+;               (4   (polynomial y (7 12) (6 -15) (5 7) (4 -18) (3 2)))
+;               (3   (polynomial y (7 -8) (6 10) (5 -12) (4 -20) (3 2) (2 4)))
+;               (2   (polynomial y (7 -20) (6 25) (5 -1) (4 -5) (3 1))))
+;Value: (polynomial x)
+
+(equ? (add e f) (add f e))
+;Value: #t
+
+(equ? (mul e f) (mul f e))
+;Value: #t
+
+;; Testing complex coefficients
+;; Use install-rectangular-package and install-polar-package from section 2.4.3
+;; Use install-rational-package and install-complex-package from section 2.5.1
+;; Use apply-generic from section 2.5.2
+(install-rectangular-package)
+(install-polar-package)
+(install-complex-package)
+(install-rational-package)
+
+(put-coercion 'rational 'scheme-number
+  (lambda (n) (/ (numer (contents n)) (denom (contents n)))))
+(put-coercion 'rational 'complex
+  (lambda (n) (make-complex-from-real-imag
+                (/ (numer (contents n)) (denom (contents n)))
+                0)))
+
+(define g (make-polynomial 'x (list
+  '(2 3)
+  (list 1 (make-complex-from-real-imag 2 3))
+  '(0 7))))
+
+(define h (make-polynomial 'x (list
+  '(4 1)
+  (list 2 (make-rational 2 3))
+  (list 0 (make-complex-from-real-imag 5 3)))))
+
+(define gh-expected (make-polynomial 'x (list
+  '(6 3)
+  (list 5 (make-complex-from-real-imag 2 3))
+  '(4 9)
+  (list 3 (make-complex-from-real-imag 4/3 2))
+  (list 2 (make-complex-from-real-imag 59/3 9))
+  (list 1 (make-complex-from-real-imag 1 21))
+  (list 0 (make-complex-from-real-imag 35 21)))))
+
+(define gh-actual (mul g h))
+
+(add gh-actual (mul -1 gh-expected)) ;; differences should be very small!

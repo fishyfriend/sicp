@@ -4113,6 +4113,163 @@
 ;; EXERCISE 2.91 see install-polynomial-package above
 
 
+;; EXERCISE 2.92
+;; The polynomials are stored in canonical form as described in the text.
+
+(define (polynomial? x) (eq? (type-tag x) 'polynomial))
+
+(define (install-polynomial-package)
+  ;; internal procedures
+  ;; representation of poly
+  (define (variable p) (car p))
+  (define (term-list p) (cdr p))
+  (define (same-variable? v1 v2)
+    (and (variable? v1) (variable? v2) (eq? v1 v2)))
+  (define (variable<? v1 v2)
+    (and (variable? v1) (variable? v2)
+         (string<? (symbol->string v1) (symbol->string v2))))
+  (define (variable>? v1 v2)
+    (and (variable? v1) (variable? v2)
+         (string>? (symbol->string v1) (symbol->string v2))))
+  (define (variable? x) (symbol? x))
+
+  ;; constructor for poly which canonicalizes the term list
+  (define (make-poly var term-list)
+    (if (empty-termlist? term-list)
+        (cons var term-list)
+        (let ((first (first-term term-list))
+              (rest (rest-terms term-list)))
+          (if (empty-termlist? rest)
+              (if (polynomial? (coeff first))
+                  (cond
+                    ((= (order first) 0) (coeff first))
+                    ((variable<? var (variable (coeff first)))
+                     (cons var term-list))
+                    ((same-variable? var (variable (coeff first)))
+                     (make-poly
+                       var
+                       (mul-term-by-all-terms (make-term (order first) 1)
+                                              (term-list (coeff first)))))
+                    (else ;; (variable>? var (variable (coeff first)))
+                      (contents
+                        (mul (coeff first)
+                             (tag (1-term-poly var
+                                               (make-term (order first) 1)))))))
+                  (cons var term-list))
+              (add-poly (1-term-poly var first)
+                        (make-poly var rest))))))
+
+  ;; avoid calling make-poly recursively when we know the term-list has already
+  ;; been converted to canonical form
+  (define (make-poly-c var term-list) (cons var term-list))
+
+  ;; convenience constructors
+  (define (1-term-list term) (adjoin-term term (the-empty-termlist)))
+  (define (1-term-poly var term) (make-poly var (1-term-list term)))
+  (define (1-term-poly-c var term) (make-poly-c var (1-term-list term)))
+
+  ;; coercion (footnote 57)
+  (put-coercion 'scheme-number 'polynomial
+    (lambda (n) (tag (1-term-poly-c 'x (make-term 0 n)))))
+
+  ;; arithmetic operations
+  (define (add-poly p1 p2)
+    (cond ((same-variable? (variable p1) (variable p2))
+            (make-poly-c (variable p1)
+                         (add-terms (term-list p1) (term-list p2))))
+          ((or (empty-termlist? (term-list p1))
+               (= (order (first-term (term-list p1))) 0))
+            (add-poly (make-poly-c (variable p2) (term-list p1))
+                      p2))
+          ((or (empty-termlist? (term-list p2))
+               (= (order (first-term (term-list p2))) 0))
+            (add-poly p1
+                      (make-poly-c (variable p1) (term-list p2))))
+          ((variable>? (variable p1) (variable p2)) (add-poly p2 p1))
+          (else ;; (variable<? (variable p1) (variable p2))
+           (make-poly-c
+             (variable p1)
+             (add-terms (term-list p1)
+                        (1-term-list (make-term 0 (tag p2))))))))
+
+  (define (add-terms L1 L2)
+    (cond ((empty-termlist? L1) L2)
+          ((empty-termlist? L2) L1)
+          (else
+           (let ((t1 (first-term L1)) (t2 (first-term L2)))
+             (cond ((> (order t1) (order t2))
+                    (adjoin-term
+                     t1 (add-terms (rest-terms L1) L2)))
+                   ((< (order t1) (order t2))
+                    (adjoin-term
+                     t2 (add-terms L1 (rest-terms L2))))
+                   (else
+                    (adjoin-term
+                     (make-term (order t1)
+                                (add (coeff t1) (coeff t2)))
+                     (add-terms (rest-terms L1)
+                                (rest-terms L2)))))))))
+
+  (define (mul-poly p1 p2)
+    (cond ((same-variable? (variable p1) (variable p2))
+           (make-poly-c (variable p1)
+                        (mul-terms (term-list p1) (term-list p2))))
+          ((or (empty-termlist? (term-list p1))
+               (= (order (first-term (term-list p1))) 0))
+            (mul-poly (make-poly-c (variable p2) (term-list p1))
+                      p2))
+          ((or (empty-termlist? (term-list p2))
+               (= (order (first-term (term-list p2))) 0))
+            (mul-poly p1
+                      (make-poly-c (variable p1) (term-list p2))))
+          ((variable>? (variable p1) (variable p2)) (mul-poly p2 p1))
+          (else ;; (variable<? (variable p1) (variable p2))
+            (let ((first (first-term (term-list p1)))
+                  (rest (rest-terms (term-list p1))))
+            (if (empty-termlist? rest)
+                (make-poly-c
+                  (variable p1)
+                  (1-term-list (make-term (order first)
+                                          (mul (coeff first) (tag p2)))))
+                (add-poly (mul-poly (1-term-poly-c (variable p1) first)
+                                    p2)
+                          (mul-poly (make-poly-c (variable p1) rest)
+                                    p2)))))))
+
+  (define (mul-terms L1 L2)
+    (if (empty-termlist? L1)
+        (the-empty-termlist)
+        (add-terms (mul-term-by-all-terms (first-term L1) L2)
+                   (mul-terms (rest-terms L1) L2))))
+
+  (define (mul-term-by-all-terms t1 L)
+    (if (empty-termlist? L)
+        (the-empty-termlist)
+        (let ((t2 (first-term L)))
+          (adjoin-term
+           (make-term (+ (order t1) (order t2))
+                      (mul (coeff t1) (coeff t2)))
+           (mul-term-by-all-terms t1 (rest-terms L))))))
+
+  (define (equ?-poly p1 p2)
+    (=zero? (add (tag p1) (mul -1 (tag p2)))))
+
+  (define (=zero?-poly p)
+    (or (empty-termlist? (term-list p))
+        (=zero? (coeff (first-term (term-list p))))))
+
+  ;; interface to rest of the system
+  (define (tag p) (attach-tag 'polynomial p))
+  (put 'add '(polynomial polynomial)
+       (lambda (p1 p2) (tag (add-poly p1 p2))))
+  (put 'mul '(polynomial polynomial)
+       (lambda (p1 p2) (tag (mul-poly p1 p2))))
+  (put 'equ? '(polynomial polynomial) equ?-poly)
+  (put '=zero? '(polynomial) =zero?-poly)
+  (put 'make 'polynomial
+       (lambda (var terms) (tag (make-poly var terms))))
+  'done)
+
 ;; EXERCISE 2.93
 ;: (define p1 (make-polynomial 'x '((2 1)(0 1))))
 ;: (define p2 (make-polynomial 'x '((3 1)(0 1))))
