@@ -3941,7 +3941,7 @@
   ;; EXERCISE 2.87
   (define (=zero?-poly p)
     (or (empty-termlist? (term-list p))
-        (= 0 (coeff (first-term (term-list p))))))
+        (=zero? (coeff (first-term (term-list p))))))
   (put '=zero? '(polynomial) =zero?-poly)
 
   ;; EXERCISE 2.88
