@@ -4396,6 +4396,34 @@
 ;;   gcd-returned(p1, p2) = -x² + x = (-1) * (gcd-by-hand(p1,p2))
 
 
+;; EXERCISE 2.95
+;; With gcd-terms instrumented to print out its arguments:
+;;
+;; (define p1 (make-polynomial 'x '((2 1) (1 -2) (0 1))))
+;; (define p2 (make-polynomial 'x '((2 11) (0 7))))
+;; (define p3 (make-polynomial 'x '((1 13) (0 5))))
+;; (define q1 (mul p1 p2))
+;; (define q2 (mul p1 p3))
+;;
+;; (greatest-common-divisor q1 q2)
+;;
+;; (gcd-terms ((4 11) (3 -22) (2 18) (1 -14) (0 7))
+;;            ((3 13) (2 -21) (1 3) (0 5)))
+;; (gcd-terms ((3 13) (2 -21) (1 3) (0 5))
+;;            ((2 1458/169) (1 -2916/169) (0 1458/169)))
+;; (gcd-terms ((2 1458/169) (1 -2916/169) (0 1458/169)) ())
+;; ;Value 296: (polynomial x (2 1458/169) (1 -2916/169) (0 1458/169))
+;;
+;; The first division step yields a polynomial with fractional coefficients that
+;; can't be divided further, so it is returned as the answer. It is a multiple
+;; of the "expected" GCD, P₁. Our current conceptualization of GCD for
+;; polynomials refers only to the degrees of the factors and not to their
+;; coefficients, so this is in a sense a valid answer, but it would be nicer if
+;; simplified to integer coefficients. Without any rules about coefficients, we
+;; can only guarantee that the answer will be a multiple of the "canonical"
+;; correct answer.
+
+
 ;; EXERCISE 2.97
 
 (define (reduce-integers n d)
