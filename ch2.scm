@@ -3089,6 +3089,13 @@
   (put 'sin '(scheme-number) sin)
   (put 'cos '(scheme-number) cos)
   (put 'atan '(scheme-number scheme-number) atan)
+
+  ;; added from exercise 94
+  (define (gcd a b)
+    (if (= b 0)
+        a
+        (gcd b (remainder a b))))
+  (put 'gcd '(scheme-number scheme-number) gcd)
   'done)
 
 (define (make-scheme-number n)
@@ -3996,6 +4003,22 @@
     (lambda (p1 p2)
       (let ((result (div-poly p1 p2)))
         (list (tag (car result)) (tag (cadr result))))))
+
+  ;; added from exercise 94
+  (define (remainder-terms a b) (cadr (div-terms a b)))
+
+  (define (gcd-terms a b)
+    (if (empty-termlist? b)
+        a
+        (gcd-terms b (remainder-terms a b))))
+
+  (define (gcd-poly a b)
+    (if (same-variable? (variable a) (variable b))
+        (make-polynomial (variable a)
+                         (gcd-terms (term-list a) (term-list b)))
+        (error "Polynomials not in the same variable -- GCD-POLY" a b)))
+
+  (put 'gcd '(polynomial polynomial) gcd-poly)
   'done)
 
 
@@ -4278,9 +4301,52 @@
   'done)
 
 ;; EXERCISE 2.93
+(define (install-rational-package)
+  ;; internal procedures
+  (define (numer x) (car x))
+  (define (denom x) (cdr x))
+  (define (make-rat n d) (cons n d))
+  (define (add-rat x y)
+    (make-rat (add (mul (numer x) (denom y))
+                   (mul (numer y) (denom x)))
+              (mul (denom x) (denom y))))
+  (define (sub-rat x y)
+    (make-rat (sub (mul (numer x) (denom y))
+                   (mul (numer y) (denom x)))
+              (mul (denom x) (denom y))))
+  (define (mul-rat x y)
+    (make-rat (mul (numer x) (numer y))
+              (mul (denom x) (denom y))))
+  (define (div-rat x y)
+    (make-rat (mul (numer x) (denom y))
+              (mul (denom x) (numer y))))
+  (define (equ?-rat x y)
+    (equ? (div (numer x) (denom x))
+          (div (numer y) (denom y))))
+ (define (=zero?-rat x) (=zero? (numer x)))
+
+  ;; interface to rest of the system
+  (define (tag x) (attach-tag 'rational x))
+  (put 'add '(rational rational)
+       (lambda (x y) (tag (add-rat x y))))
+  (put 'sub '(rational rational)
+       (lambda (x y) (tag (sub-rat x y))))
+  (put 'mul '(rational rational)
+       (lambda (x y) (tag (mul-rat x y))))
+  (put 'div '(rational rational)
+       (lambda (x y) (tag (div-rat x y))))
+  (put 'make 'rational
+       (lambda (n d) (tag (make-rat n d))))
+  (put 'equ? '(rational rational) equ?-rat)
+  (put '=zero? '(rational) =zero?-rat))
+
 ;: (define p1 (make-polynomial 'x '((2 1)(0 1))))
 ;: (define p2 (make-polynomial 'x '((3 1)(0 1))))
 ;: (define rf (make-rational p2 p1))
+
+;(add rf rf)
+;Value: (rational (polynomial x (5 2) (3 2) (2 2) (0 2))
+;                  polynomial x (4 1) (2 2) (0 1))
 
 
 ;; Rational functions
@@ -4297,9 +4363,37 @@
 
 
 ;; EXERCISE 2.94
+;; Requires the original definition of install-polynomial-package from section
+;; 2.5.3, including the division operation from exercise 2.91.
+
+;; add to install-polynomial-package
+;(define (remainder-terms a b) (cadr (div-terms a b)))
+;
+;(define (gcd-poly a b)
+;  (if (same-variable? (variable a) (variable b))
+;      (make-polynomial (variable a)
+;                       (gcd-terms (term-list a) (term-list b)))
+;      (error "Polynomials not in the same variable -- GCD-POLY" a b)))
+;
+;(put 'gcd '(polynomial polynomial) gcd-poly)
+
+;; add to install-scheme-number-package
+;(put 'gcd '(scheme-number scheme-number) gcd)
+
+(define (greatest-common-divisor a b) (apply-generic 'gcd a b))
+
 ;: (define p1 (make-polynomial 'x '((4 1) (3 -1) (2 -2) (1 2))))
 ;: (define p2 (make-polynomial 'x '((3 1) (1 -1))))
 ;: (greatest-common-divisor p1 p2)
+;Value: (polynomial x (2 -1) (1 1))
+
+;; The result obtained by hand is -1 the result returned, which is acceptable
+;; for purposes of polynomial operations.
+;;
+;;   p1 = x⁴ - x³ + 2x²	+ 2 = (x² - 2)(x - 1)(x)
+;;   p2 = x³ - x = (x + 1)(x - 1)(x)
+;;   gcd-by-hand(p1, p2) = (x - 1)(x) = x² - x
+;;   gcd-returned(p1, p2) = -x² + x = (-1) * (gcd-by-hand(p1,p2))
 
 
 ;; EXERCISE 2.97
