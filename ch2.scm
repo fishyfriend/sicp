@@ -4042,6 +4042,13 @@
 ;; EXERCISE 2.88
 (define (sub-poly p1 p2)
   (add-poly p1 (neg-poly p2)))
+
+;(if (defined? 'sub-poly)
+;    (put 'sub '(polynomial polynomial)
+;      (lambda (p1 p2) (tag (sub-poly p1 p2)))))
+
+(define (neg x) (apply-generic 'neg x))
+
 (define (neg-poly p)
   (if (=zero?-poly p)
       p
@@ -4050,10 +4057,6 @@
 ;; add to install-polynomial-package
 ;(if (defined? 'neg-poly)
 ;    (put 'neg '(polynomial) (lambda (p) (tag (neg-poly p)))))
-;(if (defined? 'sub-poly)
-;    (put 'sub '(polynomial polynomial)
-;      (lambda (p1 p2) (tag (sub-poly p1 p2)))))
-
 
 ;; EXERCISE 2.89
 ;; Representation of individual terms (make-term, order, coeff) is unchanged.
