@@ -3097,6 +3097,10 @@
   ;; from exercise 94
   (if (defined? 'gcd)
     (put 'gcd '(scheme-number scheme-number) gcd))
+
+  ;; from exercise 97
+  (if (defined? 'reduce-integers)
+    (put 'reduce '(scheme-number scheme-number) reduce-integers))
   'done)
 
 (define (make-scheme-number n)
@@ -3972,6 +3976,10 @@
   ;; from exercise 94
   (if (defined? 'gcd-poly)
     (put 'gcd '(polynomial polynomial) gcd-poly))
+
+  ;; from exercise 97
+  (if (defined? 'reduce-poly)
+      (put 'reduce '(polynomial polynomial) reduce-poly))
   'done)
 
 (define (add-terms L1 L2)
@@ -4299,11 +4307,11 @@
 ;    (put 'equ? '(polynomial polynomial) equ?-poly))
 
 ;; EXERCISE 2.93
+;; Definitions of make-rat, numer, and denom are kept external to the procedure
+;; to make modification easier (e.g. exercise 2.97).
 (define (install-rational-package)
   ;; internal procedures
-  (define (numer x) (car x))
-  (define (denom x) (cdr x))
-  (define (make-rat n d) (cons n d))
+  ;;[numer, denom, and make-rat from section 2.1.1]
   (define (add-rat x y)
     (make-rat (add (mul (numer x) (denom y))
                    (mul (numer y) (denom x)))
@@ -4428,11 +4436,104 @@
 ;; correct answer.
 
 
+;; EXERCISE 2.96
+;; a.
+(define (pseudoremainder-terms a b)
+  (cadr (div-terms
+          (mul-term-by-all-terms (make-term 0 (integerizing-factor a b))
+                                 a)
+          b)))
+
+(define (order-termlist termlist)
+  (if (empty-termlist? termlist)
+      0
+      (order (first-term termlist))))
+
+(define (integerizing-factor P Q)
+  (let ((O1 (order-termlist P))
+        (O2 (order-termlist Q))
+        (c (coeff (first-term Q))))
+    (expt c (+ 1 O1 (* -1 O2)))))
+
+(define (gcd-terms a b)
+  (if (empty-termlist? b)
+      a
+      (gcd-terms b (pseudoremainder-terms a b))))
+
+;(greatest-common-divisor q1 q2)
+;Value: (polynomial x sparse-termlist (2 1458) (1 -2916) (0 1458))
+
+;; b.
+(define (gcd-terms a b)
+  (let ((unreduced-terms (if (empty-termlist? b)
+                             a
+                             (gcd-terms b (pseudoremainder-terms a b)))))
+    (if (empty-termlist? unreduced-terms)
+        unreduced-terms
+        (let ((coeffs-gcd (gcd-of-coeffs unreduced-terms)))
+          (fold-left-termlist
+            (lambda (reduced-terms term)
+              (adjoin-term (make-term (order term)
+                                      (div (coeff term) coeffs-gcd))
+                           reduced-terms))
+            (the-empty-termlist)
+            unreduced-terms)))))
+
+(define (gcd-of-coeffs termlist)
+              (fold-left-termlist
+                (lambda (gcd term) (greatest-common-divisor gcd (coeff term)))
+                (coeff (first-term termlist))
+                (rest-terms termlist)))
+
+(define (fold-left-termlist op init termlist)
+  (if (empty-termlist? termlist)
+      init
+      (fold-left-termlist op
+                          (op init (first-term termlist))
+                          (rest-terms termlist))))
+
+;(greatest-common-divisor q1 q2)
+;Value: (polynomial x sparse-termlist (2 1) (1 -2) (0 1))
+
+
 ;; EXERCISE 2.97
+;; a.
+(define (reduce-terms n d)
+  (let ((gcd (gcd-terms n d))
+        (larger (if (> (order-termlist n) (order-termlist d)) n d)))
+    (let ((i (make-term 0 (integerizing-factor larger gcd))))
+      (let ((n*i*gcd (car (div-terms (mul-term-by-all-terms i n) gcd)))
+            (d*i*gcd (car (div-terms (mul-term-by-all-terms i d) gcd))))
+        (let ((coeffs-gcd (greatest-common-divisor (gcd-of-coeffs n*i*gcd)
+                                                   (gcd-of-coeffs d*i*gcd))))
+          (let ((divisor (adjoin-term (make-term 0 coeffs-gcd)
+                                      (the-empty-termlist))))
+            (list (car (div-terms n*i*gcd divisor))
+                  (car (div-terms d*i*gcd divisor)))))))))
+
+(define (reduce-poly n d)
+  (if (same-variable? (variable n) (variable d))
+      (let ((pair (reduce-terms (term-list n) (term-list d))))
+        (list (tag-poly (make-poly (variable n) (car pair)))
+              (tag-poly (make-poly (variable n) (cadr pair)))))
+      (error "Polys not in same var -- REDUCE-POLY"
+             (list p1 p2))))
 
 (define (reduce-integers n d)
   (let ((g (gcd n d)))
     (list (/ n g) (/ d g))))
+
+(define (reduce n d) (apply-generic 'reduce n d))
+
+;; add to install-polynomial-package
+;(if (defined? 'reduce-poly)
+;    (put 'reduce '(polynomial polynomial) reduce-poly))
+
+;; add to install-scheme-number-package
+;(if (defined? 'reduce-integers)
+;    (put 'reduce '(scheme-number scheme-number) reduce-integers))
+
+(define (make-rat n d) (apply cons (apply-generic 'reduce n d)))
 
 ;: (define p1 (make-polynomial 'x '((1 1)(0 1))))
 ;: (define p2 (make-polynomial 'x '((3 1)(0 -1))))
@@ -4443,3 +4544,13 @@
 ;: (define rf2 (make-rational p3 p4))
 
 ;: (add rf1 rf2)
+;Value: (rational (polynomial x sparse-termlist (3 -1) (2 -2) (1 -3) (0 -1))
+;                  polynomial x sparse-termlist (4 -1) (3 -1) (1 1) (0 1))
+
+;; The result is correct, although somewhat awkward: the reduction process has
+;; flipped the signs of the numerators and denominators of rf1 and rf2, leading
+;; to a result where the leading terms of both the numerator and denominator are
+;; negative. This could be fixed by adding a sign normalization step to the
+;; reduction process, but it'd probably better to do it as part of the rational
+;; numbers implementation, since there are many ways to arrive at a "double
+;; negative" fraction and we'd presumably care to eliminate all of them.
