@@ -3077,25 +3077,26 @@
   (put 'make 'scheme-number
        (lambda (x) (tag x)))
 
-  ;; added from exercise 79
+  ;; procedures from later exercises
+  (define (defined? x)
+    (environment-bound? (nearest-repl/environment) x))
+
+  ;; from exercise 79
   (put 'equ? '(scheme-number scheme-number) =)
 
-  ;; added from exercise 80
+  ;; from exercise 80
   (put '=zero? '(scheme-number) (lambda (x) (= x 0)))
 
-  ;; added from exercise 86
+  ;; from exercise 86
   (put 'square '(scheme-number) square)
   (put 'sqrt '(scheme-number) sqrt)
   (put 'sin '(scheme-number) sin)
   (put 'cos '(scheme-number) cos)
   (put 'atan '(scheme-number scheme-number) atan)
 
-  ;; added from exercise 94
-  (define (gcd a b)
-    (if (= b 0)
-        a
-        (gcd b (remainder a b))))
-  (put 'gcd '(scheme-number scheme-number) gcd)
+  ;; from exercise 94
+  (if (defined? 'gcd)
+    (put 'gcd '(scheme-number scheme-number) gcd))
   'done)
 
 (define (make-scheme-number n)
