@@ -3879,46 +3879,23 @@
   'done)
 
 
-;;;SECTION 2.5.3
+;;; SECTION 2.5.3
+;;; Contrary to the suggestion from the authors, I have opted to keep many of
+;;; the "internal" implementations of polynomial procedures outside
+;;; install-polynomial-package so that the install procedure does not have to be
+;;; updated whenever one of the internal methods changes. I have left the
+;;; original placeholders inside install-polynomial-package to indicate where
+;;; the internal procedures would be placed. I also include a mechanism to
+;;; conditionally install generic procedures from later exercises only when
+;;; they are defined.
 
-;; Representation of terms and term lists is kept external to this procedure
-;; so it can be reimplemented independently.
-(define (install-polynomial-package)
-  ;; internal procedures
-  ;; representation of poly
-  (define (make-poly variable term-list)
-    (cons variable term-list))
-  (define (variable p) (car p))
-  (define (term-list p) (cdr p))
-  (define (same-variable? v1 v2)
-    (and (variable? v1) (variable? v2) (eq? v1 v2)))
-  (define (variable? x) (symbol? x))
-
-  (define (add-poly p1 p2)
-    (if (same-variable? (variable p1) (variable p2))
-        (make-poly (variable p1)
-                   (add-terms (term-list p1)
-                              (term-list p2)))
-        (error "Polys not in same var -- ADD-POLY"
-               (list p1 p2))))
-
-  (define (add-terms L1 L2)
-    (cond ((empty-termlist? L1) L2)
-          ((empty-termlist? L2) L1)
-          (else
-           (let ((t1 (first-term L1)) (t2 (first-term L2)))
-             (cond ((> (order t1) (order t2))
-                    (adjoin-term
-                     t1 (add-terms (rest-terms L1) L2)))
-                   ((< (order t1) (order t2))
-                    (adjoin-term
-                     t2 (add-terms L1 (rest-terms L2))))
-                   (else
-                    (adjoin-term
-                     (make-term (order t1)
-                                (add (coeff t1) (coeff t2)))
-                     (add-terms (rest-terms L1)
-                                (rest-terms L2)))))))))
+(define (add-poly p1 p2)
+  (if (same-variable? (variable p1) (variable p2))
+      (make-poly (variable p1)
+                 (add-terms (term-list p1)
+                            (term-list p2)))
+      (error "Polys not in same var -- ADD-POLY"
+             (list p1 p2))))
 
   (define (mul-poly p1 p2)
     (if (same-variable? (variable p1) (variable p2))
@@ -3928,20 +3905,29 @@
         (error "Polys not in same var -- MUL-POLY"
                (list p1 p2))))
 
-  (define (mul-terms L1 L2)
-    (if (empty-termlist? L1)
-        (the-empty-termlist)
-        (add-terms (mul-term-by-all-terms (first-term L1) L2)
-                   (mul-terms (rest-terms L1) L2))))
+(define (make-poly variable term-list)
+  (cons variable term-list))
+(define (variable p) (car p))
+(define (term-list p) (cdr p))
+(define (same-variable? v1 v2)
+  (and (variable? v1) (variable? v2) (eq? v1 v2)))
+(define (variable? x) (symbol? x))
 
-  (define (mul-term-by-all-terms t1 L)
-    (if (empty-termlist? L)
-        (the-empty-termlist)
-        (let ((t2 (first-term L)))
-          (adjoin-term
-           (make-term (+ (order t1) (order t2))
-                      (mul (coeff t1) (coeff t2)))
-           (mul-term-by-all-terms t1 (rest-terms L))))))
+(define (install-polynomial-package)
+  ;; internal procedures
+  ;; representation of poly
+  ;;[procedures above]
+
+  ;;[procedures same-variable? and variable? from section 2.3.2]
+
+  ;; representation of terms and term lists
+  ;;[procedures adjoin-term ... coeff from text below]
+
+  ;;(define (add-poly p1 p2) ... )
+  ;;[procedures used by add-poly]
+
+  ;;(define (mul-poly p1 p2) ... )
+  ;;[procedures used by mul-poly]
 
   ;; interface to rest of the system
   (define (tag p) (attach-tag 'polynomial p))
@@ -3949,77 +3935,76 @@
        (lambda (p1 p2) (tag (add-poly p1 p2))))
   (put 'mul '(polynomial polynomial)
        (lambda (p1 p2) (tag (mul-poly p1 p2))))
+
   (put 'make 'polynomial
        (lambda (var terms) (tag (make-poly var terms))))
 
-  ;; EXERCISE 2.87
-  (define (=zero?-poly p)
-    (or (empty-termlist? (term-list p))
-        (=zero? (coeff (first-term (term-list p))))))
-  (put '=zero? '(polynomial) =zero?-poly)
+  ;; procedures from later exercises
+  (define (defined? x)
+    (environment-bound? (nearest-repl/environment) x))
 
-  ;; EXERCISE 2.88
-  (define (sub-poly p1 p2)
-    (add-poly p1 (neg-poly p2)))
-  (define (neg-poly p)
-    (if (=zero?-poly p)
-        p
-        (mul-poly p (make-poly (variable p) '((0 -1))))))
-  (put 'neg '(polynomial) (lambda (p) (tag (neg-poly p))))
-  (put 'sub '(polynomial polynomial) (lambda (p1 p2) (tag (sub-poly p1 p2))))
+  ;; from exercise 87
+  (if (defined? '=zero?-poly)
+      (put '=zero? '(polynomial) =zero?-poly))
 
-  ;; EXERCISE 2.91
-  (define (div-poly p1 p2)
-    (if (same-variable? (variable p1) (variable p2))
-        (let ((result (div-terms (term-list p1) (term-list p2))))
-          (list (make-poly (variable p1) (car result))
-                (make-poly (variable p1) (cadr result))))
-        (error "Polys not in same var -- DIV-POLY"
-               (list p1 p2))))
+  ;; from exercise 88
+  (if (defined? 'neg-poly)
+      (put 'neg '(polynomial) (lambda (p) (tag (neg-poly p)))))
+  (if (defined? 'sub-poly)
+      (put 'sub '(polynomial polynomial)
+        (lambda (p1 p2) (tag (sub-poly p1 p2)))))
 
-  (define (div-terms L1 L2)
-    (if (empty-termlist? L1)
-        (list (the-empty-termlist) (the-empty-termlist))
-        (let ((t1 (first-term L1))
-              (t2 (first-term L2)))
-          (if (> (order t2) (order t1))
-              (list (the-empty-termlist) L1)
-              (let ((new-c (div (coeff t1) (coeff t2)))
-                    (new-o (- (order t1) (order t2))))
-                (let ((rest-of-result
-                       (div-terms
-                         (add-terms
-                           L1
-                           (mul-term-by-all-terms
-                             (make-term 0 -1)
-                             (mul-term-by-all-terms (make-term new-o new-c)
-                                                    L2)))
-                         L2)))
-                  (list (adjoin-term (make-term new-o new-c)
-                                     (car rest-of-result))
-                        (cadr rest-of-result))))))))
+  ;; from exercise 91
+  (if (defined? 'div-poly)
+    (put 'div '(polynomial polynomial)
+      (lambda (p1 p2)
+        (let ((result (div-poly p1 p2)))
+          (list (tag (car result)) (tag (cadr result)))))))
 
-  (put 'div '(polynomial polynomial)
-    (lambda (p1 p2)
-      (let ((result (div-poly p1 p2)))
-        (list (tag (car result)) (tag (cadr result))))))
+  ;; from exercise 92
+  (if (defined? '1-term-poly-c)
+      (put-coercion 'scheme-number 'polynomial
+        (lambda (n) (tag (1-term-poly-c 'x (make-term 0 n))))))
+  (if (defined? 'equ?-poly)
+      (put 'equ? '(polynomial polynomial) equ?-poly))
 
-  ;; added from exercise 94
-  (define (remainder-terms a b) (cadr (div-terms a b)))
-
-  (define (gcd-terms a b)
-    (if (empty-termlist? b)
-        a
-        (gcd-terms b (remainder-terms a b))))
-
-  (define (gcd-poly a b)
-    (if (same-variable? (variable a) (variable b))
-        (make-polynomial (variable a)
-                         (gcd-terms (term-list a) (term-list b)))
-        (error "Polynomials not in the same variable -- GCD-POLY" a b)))
-
-  (put 'gcd '(polynomial polynomial) gcd-poly)
+  ;; from exercise 94
+  (if (defined? 'gcd-poly)
+    (put 'gcd '(polynomial polynomial) gcd-poly))
   'done)
+
+(define (add-terms L1 L2)
+  (cond ((empty-termlist? L1) L2)
+        ((empty-termlist? L2) L1)
+        (else
+         (let ((t1 (first-term L1)) (t2 (first-term L2)))
+           (cond ((> (order t1) (order t2))
+                  (adjoin-term
+                   t1 (add-terms (rest-terms L1) L2)))
+                 ((< (order t1) (order t2))
+                  (adjoin-term
+                   t2 (add-terms L1 (rest-terms L2))))
+                 (else
+                  (adjoin-term
+                   (make-term (order t1)
+                              (add (coeff t1) (coeff t2)))
+                   (add-terms (rest-terms L1)
+                              (rest-terms L2)))))))))
+
+(define (mul-terms L1 L2)
+  (if (empty-termlist? L1)
+      (the-empty-termlist)
+      (add-terms (mul-term-by-all-terms (first-term L1) L2)
+                 (mul-terms (rest-terms L1) L2))))
+
+(define (mul-term-by-all-terms t1 L)
+  (if (empty-termlist? L)
+      (the-empty-termlist)
+      (let ((t2 (first-term L)))
+        (adjoin-term
+         (make-term (+ (order t1) (order t2))
+                    (mul (coeff t1) (coeff t2)))
+         (mul-term-by-all-terms t1 (rest-terms L))))))
 
 
 ;; Representing term lists
@@ -4044,7 +4029,29 @@
   ((get 'make 'polynomial) var terms))
 
 
-;; EXERCISES 2.87-88 see install-polynomial-package above
+;; EXERCISE 2.87
+(define (=zero?-poly p)
+  (or (empty-termlist? (term-list p))
+      (=zero? (coeff (first-term (term-list p))))))
+
+;; add to install-polynomial-package
+;(if (defined? '=zero?-poly)
+;  (put '=zero? '(polynomial) =zero?-poly))
+
+;; EXERCISE 2.88
+(define (sub-poly p1 p2)
+  (add-poly p1 (neg-poly p2)))
+(define (neg-poly p)
+  (if (=zero?-poly p)
+      p
+      (mul-poly p (make-poly (variable p) '((0 -1))))))
+
+;; add to install-polynomial-package
+;(if (defined? 'neg-poly)
+;    (put 'neg '(polynomial) (lambda (p) (tag (neg-poly p)))))
+;(if (defined? 'sub-poly)
+;    (put 'sub '(polynomial polynomial)
+;      (lambda (p1 p2) (tag (sub-poly p1 p2)))))
 
 
 ;; EXERCISE 2.89
@@ -4140,7 +4147,43 @@
     (lambda (terms) (tag (make-termlist-dense terms)))))
 
 
-;; EXERCISE 2.91 see install-polynomial-package above
+;; EXERCISE 2.91
+(define (div-poly p1 p2)
+  (if (same-variable? (variable p1) (variable p2))
+      (let ((result (div-terms (term-list p1) (term-list p2))))
+        (list (make-poly (variable p1) (car result))
+              (make-poly (variable p1) (cadr result))))
+      (error "Polys not in same var -- DIV-POLY"
+             (list p1 p2))))
+
+(define (div-terms L1 L2)
+  (if (empty-termlist? L1)
+      (list (the-empty-termlist) (the-empty-termlist))
+      (let ((t1 (first-term L1))
+            (t2 (first-term L2)))
+        (if (> (order t2) (order t1))
+            (list (the-empty-termlist) L1)
+            (let ((new-c (div (coeff t1) (coeff t2)))
+                  (new-o (- (order t1) (order t2))))
+              (let ((rest-of-result
+                     (div-terms
+                       (add-terms
+                         L1
+                         (mul-term-by-all-terms
+                           (make-term 0 -1)
+                           (mul-term-by-all-terms (make-term new-o new-c)
+                                                  L2)))
+                       L2)))
+                (list (adjoin-term (make-term new-o new-c)
+                                   (car rest-of-result))
+                      (cadr rest-of-result))))))))
+
+;; add to install-polynomial-package
+;(if (defined? 'div-poly)
+;  (put 'div '(polynomial polynomial)
+;    (lambda (p1 p2)
+;      (let ((result (div-poly p1 p2)))
+;        (list (tag (car result)) (tag (cadr result)))))))
 
 
 ;; EXERCISE 2.92
@@ -4148,157 +4191,108 @@
 
 (define (polynomial? x) (eq? (type-tag x) 'polynomial))
 
-(define (install-polynomial-package)
-  ;; internal procedures
-  ;; representation of poly
-  (define (variable p) (car p))
-  (define (term-list p) (cdr p))
-  (define (same-variable? v1 v2)
-    (and (variable? v1) (variable? v2) (eq? v1 v2)))
-  (define (variable<? v1 v2)
-    (and (variable? v1) (variable? v2)
-         (string<? (symbol->string v1) (symbol->string v2))))
-  (define (variable>? v1 v2)
-    (and (variable? v1) (variable? v2)
-         (string>? (symbol->string v1) (symbol->string v2))))
-  (define (variable? x) (symbol? x))
+(define (variable<? v1 v2)
+  (and (variable? v1) (variable? v2)
+       (string<? (symbol->string v1) (symbol->string v2))))
 
-  ;; constructor for poly which canonicalizes the term list
-  (define (make-poly var term-list)
-    (if (empty-termlist? term-list)
-        (cons var term-list)
-        (let ((first (first-term term-list))
-              (rest (rest-terms term-list)))
+(define (variable>? v1 v2)
+  (and (variable? v1) (variable? v2)
+       (string>? (symbol->string v1) (symbol->string v2))))
+
+;; constructor for poly which canonicalizes the term list
+(define (make-poly var term-list)
+  (if (empty-termlist? term-list)
+      (cons var term-list)
+      (let ((first (first-term term-list))
+            (rest (rest-terms term-list)))
+        (if (empty-termlist? rest)
+            (if (polynomial? (coeff first))
+                (cond
+                  ((= (order first) 0) (coeff first))
+                  ((variable<? var (variable (coeff first)))
+                   (cons var term-list))
+                  ((same-variable? var (variable (coeff first)))
+                   (make-poly
+                     var
+                     (mul-term-by-all-terms (make-term (order first) 1)
+                                            (term-list (coeff first)))))
+                  (else ;; (variable>? var (variable (coeff first)))
+                    (contents
+                      (mul (coeff first)
+                           (tag-poly
+                             (1-term-poly var (make-term (order first) 1)))))))
+                (cons var term-list))
+            (add-poly (1-term-poly var first)
+                      (make-poly var rest))))))
+
+;; avoid calling make-poly recursively when we know the term-list has already
+;; been converted to canonical form
+(define (make-poly-c var term-list) (cons var term-list))
+
+;; convenience constructors
+(define (1-term-list term) (adjoin-term term (the-empty-termlist)))
+(define (1-term-poly var term) (make-poly var (1-term-list term)))
+(define (1-term-poly-c var term) (make-poly-c var (1-term-list term)))
+(define (tag-poly p) (attach-tag 'polynomial p))
+
+;; coercion from footnote 57
+;; add to install-polynomial-package
+;(if (defined? '1-term-poly-c)
+;    (put-coercion 'scheme-number 'polynomial
+;      (lambda (n) (tag (1-term-poly-c 'x (make-term 0 n))))))
+
+;; arithmetic operations
+(define (add-poly p1 p2)
+  (cond ((same-variable? (variable p1) (variable p2))
+          (make-poly-c (variable p1)
+                       (add-terms (term-list p1) (term-list p2))))
+        ((or (empty-termlist? (term-list p1))
+             (= (order (first-term (term-list p1))) 0))
+          (add-poly (make-poly-c (variable p2) (term-list p1))
+                    p2))
+        ((or (empty-termlist? (term-list p2))
+             (= (order (first-term (term-list p2))) 0))
+          (add-poly p1
+                    (make-poly-c (variable p1) (term-list p2))))
+        ((variable>? (variable p1) (variable p2)) (add-poly p2 p1))
+        (else ;; (variable<? (variable p1) (variable p2))
+         (make-poly-c
+           (variable p1)
+           (add-terms (term-list p1)
+                      (1-term-list (make-term 0 (tag-poly p2))))))))
+
+(define (mul-poly p1 p2)
+  (cond ((same-variable? (variable p1) (variable p2))
+         (make-poly-c (variable p1)
+                      (mul-terms (term-list p1) (term-list p2))))
+        ((or (empty-termlist? (term-list p1))
+             (= (order (first-term (term-list p1))) 0))
+          (mul-poly (make-poly-c (variable p2) (term-list p1))
+                    p2))
+        ((or (empty-termlist? (term-list p2))
+             (= (order (first-term (term-list p2))) 0))
+          (mul-poly p1
+                    (make-poly-c (variable p1) (term-list p2))))
+        ((variable>? (variable p1) (variable p2)) (mul-poly p2 p1))
+        (else ;; (variable<? (variable p1) (variable p2))
+          (let ((first (first-term (term-list p1)))
+                (rest (rest-terms (term-list p1))))
           (if (empty-termlist? rest)
-              (if (polynomial? (coeff first))
-                  (cond
-                    ((= (order first) 0) (coeff first))
-                    ((variable<? var (variable (coeff first)))
-                     (cons var term-list))
-                    ((same-variable? var (variable (coeff first)))
-                     (make-poly
-                       var
-                       (mul-term-by-all-terms (make-term (order first) 1)
-                                              (term-list (coeff first)))))
-                    (else ;; (variable>? var (variable (coeff first)))
-                      (contents
-                        (mul (coeff first)
-                             (tag (1-term-poly var
-                                               (make-term (order first) 1)))))))
-                  (cons var term-list))
-              (add-poly (1-term-poly var first)
-                        (make-poly var rest))))))
+              (make-poly-c
+                (variable p1)
+                (1-term-list (make-term (order first)
+                                        (mul (coeff first) (tag-poly p2)))))
+              (add-poly (mul-poly (1-term-poly-c (variable p1) first)
+                                  p2)
+                        (mul-poly (make-poly-c (variable p1) rest)
+                                  p2)))))))
 
-  ;; avoid calling make-poly recursively when we know the term-list has already
-  ;; been converted to canonical form
-  (define (make-poly-c var term-list) (cons var term-list))
+(define (equ?-poly p1 p2)
+  (=zero? (add (tag-poly p1) (mul -1 (tag-poly p2)))))
 
-  ;; convenience constructors
-  (define (1-term-list term) (adjoin-term term (the-empty-termlist)))
-  (define (1-term-poly var term) (make-poly var (1-term-list term)))
-  (define (1-term-poly-c var term) (make-poly-c var (1-term-list term)))
-
-  ;; coercion (footnote 57)
-  (put-coercion 'scheme-number 'polynomial
-    (lambda (n) (tag (1-term-poly-c 'x (make-term 0 n)))))
-
-  ;; arithmetic operations
-  (define (add-poly p1 p2)
-    (cond ((same-variable? (variable p1) (variable p2))
-            (make-poly-c (variable p1)
-                         (add-terms (term-list p1) (term-list p2))))
-          ((or (empty-termlist? (term-list p1))
-               (= (order (first-term (term-list p1))) 0))
-            (add-poly (make-poly-c (variable p2) (term-list p1))
-                      p2))
-          ((or (empty-termlist? (term-list p2))
-               (= (order (first-term (term-list p2))) 0))
-            (add-poly p1
-                      (make-poly-c (variable p1) (term-list p2))))
-          ((variable>? (variable p1) (variable p2)) (add-poly p2 p1))
-          (else ;; (variable<? (variable p1) (variable p2))
-           (make-poly-c
-             (variable p1)
-             (add-terms (term-list p1)
-                        (1-term-list (make-term 0 (tag p2))))))))
-
-  (define (add-terms L1 L2)
-    (cond ((empty-termlist? L1) L2)
-          ((empty-termlist? L2) L1)
-          (else
-           (let ((t1 (first-term L1)) (t2 (first-term L2)))
-             (cond ((> (order t1) (order t2))
-                    (adjoin-term
-                     t1 (add-terms (rest-terms L1) L2)))
-                   ((< (order t1) (order t2))
-                    (adjoin-term
-                     t2 (add-terms L1 (rest-terms L2))))
-                   (else
-                    (adjoin-term
-                     (make-term (order t1)
-                                (add (coeff t1) (coeff t2)))
-                     (add-terms (rest-terms L1)
-                                (rest-terms L2)))))))))
-
-  (define (mul-poly p1 p2)
-    (cond ((same-variable? (variable p1) (variable p2))
-           (make-poly-c (variable p1)
-                        (mul-terms (term-list p1) (term-list p2))))
-          ((or (empty-termlist? (term-list p1))
-               (= (order (first-term (term-list p1))) 0))
-            (mul-poly (make-poly-c (variable p2) (term-list p1))
-                      p2))
-          ((or (empty-termlist? (term-list p2))
-               (= (order (first-term (term-list p2))) 0))
-            (mul-poly p1
-                      (make-poly-c (variable p1) (term-list p2))))
-          ((variable>? (variable p1) (variable p2)) (mul-poly p2 p1))
-          (else ;; (variable<? (variable p1) (variable p2))
-            (let ((first (first-term (term-list p1)))
-                  (rest (rest-terms (term-list p1))))
-            (if (empty-termlist? rest)
-                (make-poly-c
-                  (variable p1)
-                  (1-term-list (make-term (order first)
-                                          (mul (coeff first) (tag p2)))))
-                (add-poly (mul-poly (1-term-poly-c (variable p1) first)
-                                    p2)
-                          (mul-poly (make-poly-c (variable p1) rest)
-                                    p2)))))))
-
-  (define (mul-terms L1 L2)
-    (if (empty-termlist? L1)
-        (the-empty-termlist)
-        (add-terms (mul-term-by-all-terms (first-term L1) L2)
-                   (mul-terms (rest-terms L1) L2))))
-
-  (define (mul-term-by-all-terms t1 L)
-    (if (empty-termlist? L)
-        (the-empty-termlist)
-        (let ((t2 (first-term L)))
-          (adjoin-term
-           (make-term (+ (order t1) (order t2))
-                      (mul (coeff t1) (coeff t2)))
-           (mul-term-by-all-terms t1 (rest-terms L))))))
-
-  (define (equ?-poly p1 p2)
-    (=zero? (add (tag p1) (mul -1 (tag p2)))))
-
-  (define (=zero?-poly p)
-    (or (empty-termlist? (term-list p))
-        (=zero? (coeff (first-term (term-list p))))))
-
-  ;; interface to rest of the system
-  (define (tag p) (attach-tag 'polynomial p))
-  (put 'add '(polynomial polynomial)
-       (lambda (p1 p2) (tag (add-poly p1 p2))))
-  (put 'mul '(polynomial polynomial)
-       (lambda (p1 p2) (tag (mul-poly p1 p2))))
-  (put 'equ? '(polynomial polynomial) equ?-poly)
-  (put '=zero? '(polynomial) =zero?-poly)
-  (put 'make 'polynomial
-       (lambda (var terms) (tag (make-poly var terms))))
-  'done)
+;; add to install-polynomial-package
+;(if (defined? 'equ?-poly)
+;    (put 'equ? '(polynomial polynomial) equ?-poly))
 
 ;; EXERCISE 2.93
 (define (install-rational-package)
@@ -4363,31 +4357,37 @@
 
 
 ;; EXERCISE 2.94
-;; Requires the original definition of install-polynomial-package from section
+;; Requires the original definitions of polynomials from section
 ;; 2.5.3, including the division operation from exercise 2.91.
 
+(define (remainder-terms a b) (cadr (div-terms a b)))
+
+(define (gcd-terms a b)
+  (if (empty-termlist? b)
+      a
+      (gcd-terms b (remainder-terms a b))))
+
+(define (gcd-poly a b)
+  (if (same-variable? (variable a) (variable b))
+      (tag-poly (make-poly (variable a)
+                           (gcd-terms (term-list a) (term-list b))))
+      (error "Polynomials not in the same variable -- GCD-POLY" a b)))
+
+(define (greatest-common-divisor a b) (apply-generic 'gcd a b))
+
 ;; add to install-polynomial-package
-;(define (remainder-terms a b) (cadr (div-terms a b)))
-;
-;(define (gcd-poly a b)
-;  (if (same-variable? (variable a) (variable b))
-;      (make-polynomial (variable a)
-;                       (gcd-terms (term-list a) (term-list b)))
-;      (error "Polynomials not in the same variable -- GCD-POLY" a b)))
-;
-;(put 'gcd '(polynomial polynomial) gcd-poly)
+;(if (defined? 'gcd-poly)
+;    (put 'gcd '(polynomial polynomial) gcd-poly))
 
 ;; add to install-scheme-number-package
 ;(put 'gcd '(scheme-number scheme-number) gcd)
-
-(define (greatest-common-divisor a b) (apply-generic 'gcd a b))
 
 ;: (define p1 (make-polynomial 'x '((4 1) (3 -1) (2 -2) (1 2))))
 ;: (define p2 (make-polynomial 'x '((3 1) (1 -1))))
 ;: (greatest-common-divisor p1 p2)
 ;Value: (polynomial x (2 -1) (1 1))
 
-;; The result obtained by hand is -1 the result returned, which is acceptable
+;; The result obtained by hand is -1 times the result returned, which is acceptable
 ;; for purposes of polynomial operations.
 ;;
 ;;   p1 = x⁴ - x³ + 2x²	+ 2 = (x² - 2)(x - 1)(x)

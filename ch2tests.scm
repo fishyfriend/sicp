@@ -457,14 +457,17 @@ f
 ;Value: #t
 
 ;; Testing complex coefficients
-;; Use install-rectangular-package and install-polar-package from section 2.4.3
-;; Use install-rational-package and install-complex-package from section 2.5.1
-;; Use apply-generic from section 2.5.2
+;; Use install-rectangular-package, install-polar-package, and generic selcetors
+;; (angle, etc.) from section 2.4.3.
+;; Use install-rational-package and install-complex-package from section 2.5.1.
+;; Use apply-generic from section 2.5.2.
 (install-rectangular-package)
 (install-polar-package)
 (install-complex-package)
 (install-rational-package)
 
+(put-coercion 'scheme-number 'complex
+  (lambda (n) (make-complex-from-real-imag (contents n) 0)))
 (put-coercion 'rational 'scheme-number
   (lambda (n) (/ (numer (contents n)) (denom (contents n)))))
 (put-coercion 'rational 'complex
