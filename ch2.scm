@@ -511,8 +511,8 @@
 ; produce inconsistent results when the same inputs are used in positions that
 ; affect the final result differently. For example:
 ;
-  ; par1(r1,r2) = (a*b)/(c+d) where a=r1 b=r2 c=r1 d=r2
-  ; par2(r1,r2) = 1/(1/a+1/b) where a=r1 b=r2
+;   par1(r1,r2) = (a*b)/(c+d) where a=r1 b=r2 c=r1 d=r2
+;   par2(r1,r2) = 1/(1/a+1/b) where a=r1 b=r2
 ;
 ; In par1, input r1 is used in terms (a, c) that affect the final result in
 ; opposite directions whereas only one direction in par2. For the same input
@@ -615,8 +615,245 @@
 ; one! Using an uncertainty-carrying variable only once inside a formula avoids
 ; this problem.
 
-;;EXERCISE 2.16
-; TODO
+;; EXERCISE 2.16
+;; Equivalent algebraic expressions of intervals may produce different results
+;; because the ordinary rules of algebra do not hold for intervals. Our
+;; expectations about algebraic equivalency are based on ordinary numbers. While
+;; intervals are conceptually and representionally pairs of ordinary numbers --
+;; bounds -- the intervallic primitives mul-interval etc. are mostly not
+;; equivalent to performing the corresponding numeric operations on those
+;; bounds. Thus, one may write expressions of intervallic primitives that appear
+;; algebraically equivalent but translate into numeric operations that are
+;; inequivalent.
+;;
+;; To recover algebraic soundness, we have to build the system in such a way
+;; that the mathematical meaning of a given expression is not lost as it is
+;; manipulated, used in formulas, etc. This requires, first of all, that we make
+;; a distinction between pure quantities and variables. (The inaccuracies
+;; introduced by "double-counting" variables as in exercise 2.15 can be said to
+;; be a result of treating variables erroneously as pure quantities.) So we'll
+;; need a way to represent expressions symbolically. This should be
+;; straightforward -- e.g. '((x + (* 3 y)).
+;;
+;; Now we can rethink the problem in terms of the actual mathematical meaning of
+;; expressions. An expression is essentially a function of multiple variables.
+;; When we evaluate an expression, the input intervals represent the domain of
+;; a partial function that is equivalent to the original expression but only
+;; defined for these values. So the problem we are facing can be conceptualized
+;; as, what are the minimum and maximum values of this partial function?
+;;
+;; We know that minima and maxima must occur at a critical point of the function
+;; (where its gradient is zero) or at the edge of the domain (where at least one
+;; of the variables' values is equal to the lower or upper bound of its
+;; interval in the domain). To catch possible minima or maxima at the
+;; edge, we can just hold each of the input variables constant in our expression
+;; and then find the minima and maxima of the resulting expression. Thus, if we
+;; can devise a general way to find the critical points of a function in
+;; multiple variables, we'll be able to find the min and max values of
+;; expressions.
+;;
+;; Doing this in a precise way would require building a symbolic differentiation
+;; system to get an expression for the gradient of a function, then a
+;; zero-finding algorithm to find the critical points. The former should be
+;; possible; the text implements symbolic differentiation with respect to one
+;; variable in section 2.3.2, and this could be extended. Finding zeroes is
+;; problematic, as there are expressions representable in this system for which
+;; no algebraic solution for the roots exists, per the Abel-Ruffini theorem.
+;; (See Wikipedia, "Algebraic solution," accessed 2019-07-23.) Therefore, we are
+;; forced to use approximation.
+;;
+;; Since we can't get an exact answer, there's little use in taking a symbolic
+;; approach for any part of the problem, and thus we might as well avoid the
+;; difficulty of building a differentiation system and just approximate the
+;; minimum and maximum values by sampling. We can let the user specify a "grid
+;; spacing" over the input domain and evaluate the expression at all points on
+;; the grid, taking the smallest and largest results as the lower and upper
+;; bounds of our result interval. That could get computationally expensive for
+;; equations of many variables or when the grid is dense relative to the
+;; interval sizes. Another approach would be a search that starts with a coarse
+;; grid and iteratively "zooms in" on local minima and maxima until reaching
+;; some stop condition (such as % change falling below a certain threshold).
+;; However, as this exercise is defined as a proof of concept, I will stick with
+;; the grid approach to keep things simple.
+;;
+;; Below I implement a system for evaluating algebraic expressions with interval
+;; inputs. It uses a form of normal-order evaluation. The expression to be
+;; evaluated is expanded maximally using placeholders for its inputs. Then the
+;; expanded expression is evaluated at each point in a grid of configurable
+;; density spanning the input domain. The minimum and maximum values obtained
+;; are returned the bounds of the result interval.
+;;
+;; USAGE
+;; Formulas are represented as nested lists. The operations + - * / are
+;; supported; they must be quoted. Within a formula, use exact numbers rather
+;; than intervals. (Intervals can only be used to set the value ranges of
+;; parameters when evaluating.) A formula's parameters are defined implicitly by
+;; the set of symbols appearing inside it (other than '+, '-, '*, or '/).
+;;
+;; A formula may invoke an external formula; to do so, write
+;;
+;;   (list formula (list name1 value1) (list name2 value2) ... )
+;;
+;; where formula is the name of the external formula (not quoted) and the
+;; name/value pairs set the values of parameters name1, name2, etc.
+;;
+;; To evaluate a formula, just do
+;;
+;;   (eval formula grid-spacing (list name1 value1) (list name2 value2) ... )
+;;
+;; where name1, name2, etc. are parameter names and value1, value2, etc. are
+;; intervals. Grid-spacing is the sample grid spacing. The return value is an
+;; interval giving the maximum and minimum possible results.
+;;
+;; EXAMPLES
+;; Here is an example which ties together most of the above rules.
+;;
+;;   (define avg '(/ (+ a b) 2))
+;;   (define f '(* (+ a 2) (- b 4)))
+;;   (define g (list avg (list 'a (list f '(a a) '(b b)))
+;;                       (list 'b (list f '(a b) '(b a)))))
+;;
+;;   (eval g 1/10 (list 'a (make-interval 8 10))
+;;                (list 'b (make-interval 6 12)))
+;;   ;Value: (26 . 90)
+;;
+;; The next example shows the system's ability to find a maximum or minimum
+;; inside the input domain, not just at its extreme points. This is
+;; (x - 5)² + (y - 3)² for x ∈ [0, 10], y ∈ [0, 10] with the minimum occurring
+;; at (5,3).
+;;
+;;   (define f '(+ (* (- x 5) (- x 5)) (* (- y 3) (- y 3))))
+;;   (eval f 1 (list 'x (make-interval 0 10)) (list 'y (make-interval 0 10)))
+;;   ;Value: (0 . 74)
+;;
+;; Here are the parallel resistors procedures from earlier translated into the
+;; new system. The accompanying test procedure is used to show that the new
+;; system provides reasonably correct results, as well as identical results for
+;; algebraically-equivalent expressions. (Compare the lowest-error results from
+;; exercise 2.15.)
+;;
+;;   (define (test expr r1-center r1-width r2-center r2-width)
+;;     (let ((r1 (make-center-width r1-center r1-width))
+;;           (r2 (make-center-width r2-center r2-width)))
+;;       (let ((result (eval expr 1/10 (list 'r1 r1) (list 'r2 r2))))
+;;         (let ((result-center (center result))
+;;               (result-width (width result)))
+;;           (display "; c=") (display result-center)
+;;           (display " w=") (display result-width) (newline)))))
+;;
+;;   (define par1 '(/ (* r1 r2) (+ r1 r2)))
+;;   (define par2 '(/ 1 (+ (/ 1 r1) (/ 1 r2))))
+;;
+;;   (test par1 100 1 100 1)  ; c=50 w=1/2
+;;   (test par2 100 1 100 1)  ; c=50 w=1/2
+;;   (test par1 150 5 300 10) ; c=100 w=10/3
+;;   (test par2 150 5 300 10) ; c=100 w=10/3
+
+;; IMPLEMENTATION
+;; representation of variable bindings
+(define (var b) (car b))
+(define (val b) (cadr b))
+(define (make-binding var val) (list var val))
+
+;; representation of expressions
+(define (primitive? expr)
+  (if (memq expr '(+ - * /)) true false))
+(define (apply-primitive op args)
+  (apply (lookup op (list (list '+ +) (list '- -) (list '* *) (list '/ /))
+         args)))
+(define (var? expr)
+  (and (symbol? expr) (not (primitive? expr))))
+(define (compound? expr) (pair? expr))
+(define (op comp-expr) (car comp-expr))
+(define (args comp-expr) (cdr comp-expr))
+(define (make-compound op args) (cons op args))
+
+;; calculate the max and min possible values of expr over domain
+(define (eval expr grid-spacing . domain)
+  (let ((self-bindings
+         (map (lambda (binding) (list (var binding) (var binding)))
+              domain)))
+    (let ((expanded-expr (expand expr self-bindings)))
+      (fold-grid (lambda (min-max incr-bindings)
+                   (let ((result (eval-exact expanded-expr incr-bindings)))
+                     (let ((min-val (car min-max))
+                           (max-val (cdr min-max)))
+                     (cons (if min-val (min result min-val) result)
+                           (if max-val (max result max-val) result))))
+                 (cons #f #f)
+                 domain
+                 grid-spacing))))
+
+;; fully expand an expression with specified variable bindings
+(define (expand expr bindings)
+  (cond (or ((number? expr) (primitive? expr)) expr)
+        ((var? expr) (lookup expr bindings))
+        ((compound? expr)
+         (if (primitive? (op expr))
+             (make-compound (op expr)
+                            (map (lambda (arg) (expand arg bindings))
+                                 (args expr)))
+             (expand (op expr)
+                     (map (lambda (arg)
+                            (make-binding (var arg)
+                                          (expand (val arg) bindings)))
+                          (args expr)))))
+        (else (error "Invalid expression -- EXPAND" expr))))
+
+;; evaluate an expression with its variables bound to discrete values
+(define (eval-exact expr bindings)
+  (cond ((number? expr) expr)
+        ((var? expr) (lookup expr bindings))
+        ((compound? expr)
+          (if (primitive? (op expr))
+              (apply-primitive op
+                               (map (lambda (arg) (eval-exact arg bindings))
+                                    (args expr)))
+              (eval-exact
+                (op expr)
+                (map (lambda (arg)
+                       (make-binding (var arg)
+                                     (eval-exact (val arg) bindings)))
+                     (args expr)))))
+        (else (error "Invalid expression -- EVAL" expr))))
+
+;; fold over all grid points within the domain
+(define (fold-grid f init domain grid-spacing)
+  (define (iter acc outer-bindings inner-domain inner-bindings)
+    (cond ((null? inner-bindings) (f acc outer-bindings))
+          ;; include upper bounds even if they do not fall on the grid
+          ((>= (val (car inner-bindings))
+               (upper-bound (val (car inner-domain))))
+           (iter acc
+                 (cons (make-binding (var (car inner-bindings))
+                                     (upper-bound (val (car inner-domain))))
+                       outer-bindings)
+                 (cdr inner-domain)
+                 (cdr inner-bindings)))
+          (else
+           (let ((result (iter acc
+                               (cons (car inner-bindings) outer-bindings)
+                               (cdr inner-domain)
+                               (cdr inner-bindings))))
+             (iter result
+                   outer-bindings
+                   inner-domain
+                   (cons (make-binding (var (car inner-bindings))
+                                       (+ (val (car inner-bindings))
+                                          grid-spacing))
+                         (cdr inner-bindings)))))))
+  (iter init
+        '()
+        domain
+        (map (lambda (binding) (list (var binding)
+                                     (lower-bound (val binding))))
+             domain)))
+
+;; look up a value in a list of items of the form (list key value)
+(define (lookup key assoc-list)
+  (cond ((null? assoc-list) #f)
+        ((eq? (car (car assoc-list)) key) (cadr (car assoc-list)))
+        (else (lookup key (cdr assoc-list)))))
 
 
 ;;;SECTION 2.2.1
