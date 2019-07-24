@@ -665,7 +665,20 @@
   x)
 
 ;: (define z (make-cycle (list 'a 'b 'c)))
-
+;;
+;;        ┌───────────────────────────┐
+;;        ▼                           │
+;;      ┌───┬───┐   ┌───┬───┐   ┌───┬───┐
+;; z ──▶│ ● │ ● │──▶│ ● │ ● │──▶│ ● │ ● │
+;;      └───┴───┘   └───┴───┘   └───┴───┘
+;;        │           │           │
+;;        ▼           ▼           ▼
+;;      ┌───┐       ┌───┐       ┌───┐
+;;      │ a │       │ b │       | c │
+;;      └───┘       └───┘       └───┘
+;;
+;; Attempting to compute (last-pair z) results in an infinite loop since the
+;; stopping condition (null? (cdr x)) is never reached.
 
 ;; EXERCISE 3.14
 (define (mystery x)
