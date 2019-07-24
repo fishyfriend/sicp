@@ -552,11 +552,42 @@
   dispatch)
 
 ;: (define acc (make-account 50))
-;:
 ;: ((acc 'deposit) 40)
 ;: ((acc 'withdraw) 60)
+;;
+;;          ┌───────────────────────────────┐
+;;  global  │ make-account: ─┐              │
+;;  env ───▶│ acc: ─┐        │              │
+;;          └────── │ ────── │ ─────────────┘        E1
+;;                  │        ▼   ▲      ▲            │
+;;      ┌──────────────────[•I•]─┘      │            ▼
+;;      ▼           │          ┌─────────────────────────────────────────┐
+;;  params:         │ ┌───────▶│ balance: 50                             │
+;;   balance        │ │ ┌─────▶│ withdraw: ───────────────────────┐      │
+;;  body:           │ │ │ ┌───▶│ deposit: ─────────────┐          │      │
+;;   (define        │ │ │ │ ┌─▶│ dispatch: ─┐          │          │      │
+;;     (withdraw …  │ │ │ │ │  └─────────── │ ──────── │ ──────── │ ─────┘
+;;                  └─|─|─|─|───────┐       │   ▲      │   ▲      │   ▲
+;;   ┌──────────────┐ │ │ │ │       │       ▼   │      ▼   │      ▼   │
+;;   │ m: 'withdraw │─┘ │ │ │       └────▶[•I•]─┘    [•I•]─┘    [•I•]─┘
+;;   └──────────────┘   │ │ │                │          │          │
+;;   ┌──────────────┐   │ │ │                ▼          ▼          ▼
+;;   │ amount: 60   │───┘ │ │              params:    params:    params:
+;;   └──────────────┘     │ │               m:         amount     amount
+;;   ┌──────────────┐     │ │              body:      body:      body:
+;;   │ m: 'deposit  │─────┘ │               (cond …    (set! …    (if (>= …
+;;   └──────────────┘       │
+;;   ┌──────────────┐       │
+;;   │ amount: 40   │───────┘
+;;   └──────────────┘
+;;
+;; The local state for acc is kept in frame E1.
 ;:
 ;: (define acc2 (make-account 100))
+;;
+;; Only the global environment is shared between acc and acc2. The local state
+;; of acc2 will be stored in a separate frame identical to, but entirely
+;; separate from, E1.
 
 
 ;;;;SECTION 3.3
