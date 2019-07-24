@@ -432,9 +432,91 @@
 
 
 ;: (define W1 (make-withdraw 100))
+;;
+;;         ┌────────────────────────────────────────────────┐
+;; global  │ make-withdraw: ──────────────────────────┐     │
+;; env ───▶│ W1: ─┐                                   │     │
+;;         └───── │ ───────────────────────────────── │ ────┘
+;;                │                ▲                  │   ▲
+;;                │                │                  │   │
+;;                │        ┌─────────────────────┐    ▼   │
+;;                │  E1 ──▶│ initial-amount: 100 │  [•I•]─┘
+;;                │        └─────────────────────┘   │
+;;                │             ▲             ▲      │
+;;                │             │             │      ▼
+;;                │        ┌──────────────┐   │    params: initial-amount
+;;                │  E2 ──▶│ balance: 100 │   │    body: (let ((balance ...
+;;                │        └──────────────┘   │
+;;                ▼            ▲            [•I•] ◀── lambda from let-binding
+;;              [•I•]──────────┘             │
+;;               │                           │
+;;               ▼                           ▼
+;;             params: amount              params: balance
+;;             body: (if (>= ...           body: (lambda (amount) ...
+;;
 ;: (W1 50)
+;;
+;;         ┌────────────────────────────┐
+;; global  │ make-withdraw: ...         │
+;; env ───▶│ W1: ─┐                     │
+;;         └───── │ ────────────────────┘
+;;                │                ▲
+;;                │                │
+;;                │        ┌─────────────────────┐
+;;                │  E1 ──▶│ initial-amount: 100 │
+;;                │        └─────────────────────┘
+;;                │             ▲
+;;                │             │
+;;                │        ┌──────────────┐  Here is the balance
+;;                │  E2 ──▶│ balance: 100 │  that will be changed
+;;                │        └──────────────┘  by the set!.
+;;                ▼            ▲      ▲
+;;              [•I•]──────────┘      │      ┌──────────────┐
+;;               │                    └──────│ amount: 50   │
+;;               ▼                           └──────────────┘
+;;             params: amount
+;;             body: (if (>= ...
+;;
 ;: (define W2 (make-withdraw 100))
-
+;;
+;;         ┌─────────────────────────────────────────────────┐
+;; global  │ make-withdraw: ...                              │
+;; env ───▶│ W2: ────────────────────────────────┐           │
+;;         │ W1: ─┐                              │           │
+;;         └───── │ ──────────────────────────── │ ──────────┘
+;;                │         ▲                    │         ▲
+;;                │         │                    │         │
+;;                │      ┌─────────────────────┐ │      ┌─────────────────────┐
+;;                │ E1 ─▶│ initial-amount: 100 │ │ E3 ─▶│ initial-amount: 100 │
+;;                │      └─────────────────────┘ │      └─────────────────────┘
+;;                │           ▲            ▲     │           ▲            ▲
+;;                │           │            │     │           │            │
+;;                │      ┌──────────────┐  │     │      ┌──────────────┐  │
+;;                │ E2 ─▶│ balance: 100 │  │     │ E4 ─▶│ balance: 100 │  │
+;;                │      └──────────────┘  │     │      └──────────────┘  │
+;;                ▼          ▲         * [•I•]   ▼          ▲         * [•I•]
+;;              [•I•]────────┘            │    [•I•]────────┘            │
+;;               │                        │     │                        │
+;;               ▼                        │     ▼                        │
+;;             params: amount             │   params: amount             │
+;;             body: (if (>= ...          │   body: (if (>= ...          │
+;;                                        ▼                              ▼
+;;                              params: balance             params: balance
+;; * = lambdas from             body:                       body:
+;;     let-bindings               (lambda (amount)            (lambda (amount)
+;;                                 ...                         ...
+;;
+;; Both versions of make-withdraw return lambdas that can be called to withdraw
+;; from a private balance. Different lambdas created by make-withdraw do not
+;; have access to other lambdas' balances; each individual lambda's balance is
+;; hidden inside a frame that only that lambda can access.
+;;
+;; Whereas the first version of make-withdraw creates a single additional frame
+;; for each lambda it returns, the second version creates two frames. This is
+;; arguably less efficient since the outer frame is simply used to set up the
+;; lambda and is no longer needed after the initial call to make-withdraw.
+;; The inner frame is equivalent to the single frame used in the first version;
+;; it simply stores the balance.
 
 ;;;SECTION 3.2.4
 
