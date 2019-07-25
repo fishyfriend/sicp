@@ -771,6 +771,102 @@
          (count-pairs (cdr x))
          1)))
 
+;; (count-pairs '(1 2 3))
+;; ;Value: 3
+;;
+;; ┌───┬───┐   ┌───┬───┐   ┌───┬───┐
+;; │ ● │ ● │──▶│ ● │ ● │──▶│ ● │ / │
+;; └─┼─┴───┘   └─┼─┴───┘   └─┼─┴───┘
+;;   ▼           ▼           ▼
+;; ┌───┐       ┌───┐       ┌───┐
+;; │ 1 │       │ 2 │       │ 3 │
+;; └───┘       └───┘       └───┘
+;;
+;; (define x (list 'a))
+;; (define y (list x x))
+;; (count-pairs y)
+;; ;Value: 4
+;;
+;;      ┌───┬───┐   ┌───┬───┐
+;; y ──▶│ ● │ ● │──▶│ ● │ / │
+;;      └─┼─┴───┘   └─┼─┴───┘
+;;        ▼           │
+;;      ┌───┬───┐     │
+;; x ──▶│ ● │ / │◀────┘
+;;      └─┼─┴───┘
+;;        ▼
+;;      ┌───┐
+;;      │ a │
+;;      └───┘
+;;
+;; (define x (cons 'a 'a))
+;; (define y (cons x x))
+;; (define z (cons y y))
+;; (count-pairs z)
+;; ;Value: 7
+;;
+;;      ┌───┬───┐
+;; z ──▶│ ● │ ● │
+;;      └─┼─┴─┼─┘
+;;        ▼   ▼
+;;      ┌───┬───┐
+;; y ──▶│ ● │ ● │
+;;      └─┼─┴─┼─┘
+;;        ▼   ▼
+;;      ┌───┬───┐
+;; x ──▶│ ● │ ● │
+;;      └─┼─┴─┼─┘
+;;        ▼   ▼
+;;        ┌───┐
+;;        │ a │
+;;        └───┘
+;;
+;; (define x '(1 2 3))
+;; (set-cdr! (cdr (cdr x)) x)
+;; (count-pairs x)
+;; ;Aborting!: maximum recursion depth exceeded
+;;
+;;          ┌─────────────────────────┐
+;;          ▼                         │
+;;      ┌───┬───┐   ┌───┬───┐   ┌───┬─┼─┐
+;; x ──▶│ ● │ ●─┼──▶│ ● │ ●─┼──▶│ ● │ ● │
+;;      └─┼─┴───┘   └─┼─┴───┘   └─┼─┴───┘
+;;        ▼           ▼           ▼
+;;      ┌───┐       ┌───┐       ┌───┐
+;;      │ 1 │       │ 2 │       | 3 │
+;;      └───┘       └───┘       └───┘
+
+;; EXERCISE 3.17
+(define (count-pairs x)
+  (define pairs '())
+  (define (iter x)
+    (if (or (not (pair? x))
+            (memq x pairs))
+        0
+        (begin (set! pairs (cons x pairs))
+               (+ (iter (car x))
+                  (iter (cdr x))
+                  1))))
+  (iter x))
+
+;; EXERCISE 3.18
+(define (cycle? x)
+  (define pairs '())
+  (define (iter x)
+    (cond ((null? x) false)
+          ((memq (cdr x) pairs) true)
+          (else (set! pairs (cons (cdr x) pairs))
+                (iter (cdr x)))))
+  (iter x))
+
+;; EXERCISE 3.19
+(define (cycle? x)
+  (define (iter ys)
+    (cond ((null? ys) false)
+          ((eq? (cdr ys) x) true)
+          (else (iter (cdr ys)))))
+  (iter x))
+
 
 ;;;Mutation as assignment
 
