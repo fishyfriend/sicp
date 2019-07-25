@@ -1015,10 +1015,104 @@
 
 ;; EXERCISE 3.21
 ;: (define q1 (make-queue))
+;;
 ;: (insert-queue! q1 'a)
+;; ;Value: ((a) a)
+;;
 ;: (insert-queue! q1 'b)
+;; ;Value: ((a b) b)
+;;
 ;: (delete-queue! q1)
+;: ;Value: ((b) b)
+;;
 ;: (delete-queue! q1)
+;; ;Value: (() b)
+
+;; Even after deleting the last item in the queue, the rear pointer remains
+;; pointed at that item because there is no need to update it. The rear pointer
+;; is meaningless in an empty queue per the implementation. Since queues are
+;; represented as list structures, the REPL prints them as such, and so the
+;; contents of the rear pointer remain "visible" even though they are (from the
+;; perspective of queue logic) purely vestigial.
+
+(define (print-queue q)
+  (display (front-ptr q)))
+
+;; EXERCISE 3.22
+(define (make-queue)
+  (let ((front-ptr '())
+        (rear-ptr '()))
+    (define (empty?) (null? front-ptr))
+    (define (front)
+      (if (empty?)
+          (error "FRONT called with an empty queue")
+          (car front-ptr)))
+    (define (insert! x)
+      (if (empty?)
+          (begin (set! front-ptr (list x))
+                 (set! rear-ptr front-ptr))
+          (begin (set-cdr! rear-ptr (list x))
+                 (set! rear-ptr (cdr rear-ptr))))
+      dispatch)
+    (define (delete!)
+      (if (empty?)
+          (error "DELETE! called with an empty queue")
+          (let ((x (front)))
+            (set! front-ptr (cdr front-ptr))
+            x)))
+    (define (dispatch m)
+      (cond ((eq? m 'empty?) empty?)
+            ((eq? m 'front) front)
+            ((eq? m 'insert!) insert!)
+            ((eq? m 'delete!) delete!)
+            (else (error "Undefined operation -- MAKE-QUEUE" m))))
+    dispatch))
+
+(define (empty-queue? q) ((q 'empty?)))
+(define (front-queue q) ((q 'front)))
+(define (insert-queue! q x) ((q 'insert!) x))
+(define (delete-queue! q) ((q 'delete!)))
+
+;; EXERCISE 2.23
+;; We can reuse front-ptr, rear-ptr, set-front-ptr!, and set-rear-ptr!
+(define (make-deque) (cons '() '()))
+(define (empty-deque? d) (null? (front-ptr d)))
+(define (front-deque d) (car (front-ptr d)))
+(define (rear-deque d) (car (rear-ptr d)))
+
+(define (front-insert-deque! d x)
+  (let ((ptr (cons x (front-ptr d))))
+    (if (empty-deque? d)
+        (set-rear-ptr! d ptr))
+    (set-front-ptr! d ptr)
+    d))
+
+(define (rear-insert-deque! d x)
+  (let ((ptr (cons x (rear-ptr d))))
+    (if (empty-deque? d)
+        (set-front-ptr! d ptr))
+    (set-rear-ptr! d ptr)
+    d))
+
+(define (front-delete-deque! d)
+  (if (empty-deque? d)
+      (error "DELETE! called with an empty deque" d)
+      (let ((value (front-deque d))
+            (ptr (front-ptr d)))
+        (set-front-ptr! d (cdr ptr))
+        (if (eq? ptr (rear-ptr d))
+            (set-rear-ptr! d (cdr ptr)))
+        value)))
+
+(define (rear-delete-deque! d)
+  (if (empty-deque? d)
+      (error "DELETE! called with an empty deque" d)
+      (let ((value (rear-deque d))
+            (ptr (rear-ptr d)))
+        (set-rear-ptr! d (cdr ptr))
+        (if (eq? ptr (front-ptr d))
+            (set-front-ptr! d (cdr ptr)))
+        value)))
 
 
 ;;;SECTION 3.3.3
