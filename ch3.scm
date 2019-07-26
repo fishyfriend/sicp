@@ -1200,6 +1200,184 @@
 (define put (operation-table 'insert-proc!))
 
 
+;; EXERCISE 3.24
+(define (make-table same-key?)
+  (let ((local-table (list '*table*)))
+    (define (lookup key)
+      (display (list 'lookup key)) (newline)
+      (let ((record (lookup-full key)))
+        (if record (cdr record) false)))
+    (define (lookup-full key)
+      (display (list 'lookup-full key)) (newline)
+      (define (iter entries)
+        (cond ((null? entries) false)
+              ((same-key? key (caar entries)) (car entries))
+              (else (iter (cdr entries)))))
+      (iter (cdr local-table)))
+    (define (insert! key value)
+      (display (list 'insert! key value)) (newline)
+      (let ((record (lookup-full key)))
+        ;; only replace record when key is an exact match
+        (if (and record (equal? (car record) key))
+            (set-cdr! record value)
+            (set-cdr! local-table
+                      (cons (cons key value) (cdr local-table)))))
+      'ok)
+    (define (dispatch m)
+      (cond ((eq? m 'lookup-proc) lookup)
+            ((eq? m 'insert-proc!) insert!)
+            (else (error "Unknown operation -- TABLE" m))))
+    dispatch))
+
+;; EXERCISE 3.25
+;; I provide two implementations of multidimensional tables. The first is based
+;; on the text's implementation of two-dimensional tables, using nested
+;; subtables. The second is simply a one-dimensional table that forces the use
+;; of lists as keys -- i.e., compound keys.
+;;
+;; The first version is more memory-efficient as it only stores each key once.
+;; It has the property that subtables are treated as values: for example, if I
+;; have a subtable under the compound key '(a b), then:
+;;
+;;   - (get '(a b)) returns the list of all key-value pairs in the subtable.
+;;   - (put '(a b) 4) makes (get '(a b)) return 4; the prior contents of the
+;;     subtable under '(a b) are lost.
+;;   - (put '(a b) (list (cons 'c 5))) makes (get '(a b c)) return 5. The
+;;     inserted key-value pair is treated as a subtable.
+;;
+;; The second version does not have this property, and permits storing values
+;; under keys that could be prefixes of other keys. For example, after doing
+;;
+;;   (put '(a b) 4)
+;;   (put '(a b c) 5)
+;;
+;; I can look up either of these key-value pairs in the table.
+;;
+;; These implementations address different interpretations of the exercise
+;; prompt. It could be that a given application wishes to preserve the nested
+;; tables approach for memory efficiency, while using the behavioral semantics
+;; of the second version. To achieve this we could add some additional fields to
+;; the data structures to differentiate between subtables (which, in this
+;; application, may not be returned as lookup results) and values (which may).
+;; Whether the resulting implementation is actually more memory-efficient than
+;; simply using the second version would depend on the size of typical keys and
+;; the number of keys in a typical compound key.
+
+(define (make-table)
+  (let ((local-table (list '*table*)))
+    (define (lookup keys)
+      (define (iter keys table)
+        (if (null? keys)
+            (cdr table)
+            (let ((subtable (assoc (car keys) (cdr table))))
+              (if subtable
+                (iter (cdr keys) subtable)
+                false))))
+      (iter keys local-table))
+    (define (insert! keys value)
+      (define (iter keys table)
+        (if (null? keys)
+            (set-cdr! table value)
+            (let ((record (assoc (car keys) (cdr table))))
+              (let ((subtable
+                     (if record
+                         record
+                         (let ((new-subtable (cons (car keys) '())))
+                           (set-cdr! table (cons new-subtable (cdr table)))
+                           new-subtable))))
+                    (iter (cdr keys) subtable)))))
+      (iter keys local-table))
+    (define (dispatch m)
+      (cond ((eq? m 'lookup-proc) lookup)
+            ((eq? m 'insert-proc!) insert!)
+            (else (error "Unknown operation -- TABLE" m))))
+    dispatch))
+
+(define (make-table)
+  (let ((local-table (list '*table*)))
+    (define (lookup keys table)
+      (if (list? keys)
+          (let ((record (assoc keys (cdr table))))
+            (if record
+                (cdr record)
+                false)))
+          (error "List of keys is required -- LOOKUP"))
+    (define (insert! keys value table)
+      (if (list? keys)
+          (let ((record (assoc keys (cdr table))))
+            (if record
+                (set-cdr! record value)
+                (set-cdr! table
+                          (cons (cons keys value) (cdr table)))))
+          'ok)
+          (error "List of keys is required -- INSERT!"))
+    (define (dispatch m)
+      (cond ((eq? m 'lookup-proc) lookup)
+            ((eq? m 'insert-proc!) insert!)
+            (else (error "Unknown operation -- TABLE" m))))
+    dispatch))
+
+;; EXERCISE 3.26
+;; To implement a multidimensional table using binary trees, we can use a
+;; one-dimensional key-value representation with lists as compound keys, as in
+;; the second implementation from exercise 25. The user would specify a
+;; comparator for individual keys (e.g. numeric or alphabetic comparison), and
+;; we would use this to create a compound key comparator which first compares
+;; the size of the compound keys (i.e. list length) and then the individual
+;; subkeys in front-to-back order. This compound key comparator would be used to
+;; implement the binary tree lookup and insertion operations. I implement such a
+;; table below. (Keys must be equal?-comparable.)
+(define (make-table key-less-than?)
+  ;; tree representation
+  (define (empty-tree) (cons '() '()))
+  (define (empty-tree? tree) (null? (car tree)))
+  (define (key tree) (caar tree))
+  (define (value tree) (cdar tree))
+  (define (left tree) (cadr tree))
+  (define (right tree) (cddr tree))
+  ;; tree operations
+  (define (lookup k tree)
+    (if (list? k)
+        (if (empty-tree? tree)
+            false
+            (let ((comp (compare-compound-keys k (key tree))))
+              (cond ((eq? comp '<) (lookup k (left tree)))
+                    ((eq? comp '>) (lookup k (right tree)))
+                    (else (value tree)))))
+        (error "Key must be a list -- LOOKUP" k)))
+  (define (insert! k v tree)
+    (if (list? k)
+        (if (empty-tree? tree)
+            (begin (set-car! tree (cons k v))
+                   (set-cdr! tree (cons (empty-tree) (empty-tree))))
+            (let ((comp (compare-compound-keys k (key tree))))
+              (cond ((eq? comp '<) (insert! k v (left tree)))
+                    ((eq? comp '>) (insert! k v (right tree)))
+                    (else (set-cdr! (car tree) v)))))
+        (error "Key must be a list -- INSERT!")))
+  ;; key comparison
+  (define (compare-keys k1 k2)
+    (cond ((equal? k1 k2) '=)
+          ((key-less-than? k1 k2) '<)
+          (else '>)))
+  (define (compare-compound-keys ck1 ck2)
+    (let ((l1 (length ck1))
+          (l2 (length ck2)))
+    (cond ((< l1 l2) '<)
+          ((> l1 l2 '>)
+          ((null? ck1) '=)
+          (else
+            (let ((head-comp (compare-keys (car ck1) (car ck2))))
+              (if (eq? head-comp '=)
+                  (compare-compound-keys (cdr ck1) (cdr ck2))
+                  head-comp)))))))
+  (define local-table (empty-tree))
+  (define (dispatch m)
+    (cond ((eq? m 'lookup-proc) (lambda (k) (lookup k local-table)))
+          ((eq? m 'insert-proc!) (lambda (k v) (insert! k v local-table)))
+          (else (error "Unknown operation -- TABLE" m))))
+  dispatch)
+
 ;; EXERCISE 3.27
 (define (fib n)
   (cond ((= n 0) 0)
