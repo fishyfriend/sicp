@@ -1515,6 +1515,71 @@
   'ok)
 
 
+;; EXERCISE 3.28
+(define (or-gate o1 o2 output)
+  (define (or-action-procedure)
+    (let ((new-value
+           (logical-or (get-signal o1) (get-signal o2))))
+      (after-delay or-gate-delay
+                   (lambda ()
+                     (set-signal! output new-value)))))
+  (add-action! o1 or-action-procedure)
+  (add-action! o2 or-action-procedure)
+  'ok)
+
+(define (logical-or s1 s2)
+  (let ((sigs (list s1 s2)))
+    (cond ((equal? sigs '(0 0)) 0)
+          ((or (equal? sigs '(0 1))
+               (equal? sigs '(1 0))
+               (equal? sigs '(1 1))) 1)
+          (else (error "Invalid signal(s)" s1 s2)))))
+
+;; EXERCISE 3.29
+;; The delay time of this or-gate is equal to two inverter delays plus one
+;; and-gate delay.
+(define (or-gate o1 o2 output)
+  (let ((a (make-wire))
+        (b (make-wire))
+        (c (make-wire)))
+    (inverter o1 a)
+    (inverter o2 b)
+    (and-gate a b c)
+    (inverter c output)
+    'ok))
+
+;; EXERCISE 3.30
+(define (ripple-carry-adder as bs ss c)
+  (if (null? as)
+      'ok
+      (let ((c-in (make-wire)))
+        (full-adder (car as) (car bs) c-in (car ss) c)
+        (ripple-carry-adder (cdr as) (cdr bs) (cdr ss) c-in))))
+
+;; Derivation of the delay for a ripple-carry adder of n bits:
+;;
+;;   D(x) := delay for output from function box x
+;;   rₙ   := ripple-carry adder of n bits
+;;   f    := full adder
+;;   h    := half-adder
+;;   a    := and-gate
+;;   o    := or-gate
+;;   i    := inverter
+;;
+;;   D(h) = D(a) + max(D(o), D(a) + D(i))
+;;   D(f) = 2 * D(h) + D(o)
+;;   D(rₙ) = n * D(f)
+;;         = n * (2 * D(h)                            + D(o))
+;;         = n * (2 * (D(a) + max(D(o), D(a) + D(i))) + D(o))
+;;
+;;         = / n * (2 * (D(a) + D(o))        + D(o)) if D(o) > D(a) + D(i)
+;;           \ n * (2 * (D(a) + D(a) + D(i)) + D(o)) otherwise
+;;
+;;         = / n * (2 * D(a) + 3 * D(o))             if D(o) > D(a) + D(i)
+;;           \ n * (4 * D(a) + 2 * D(i) + D(o))      otherwise
+
+
+;;;SECTION 3.3.4 again
 (define (make-wire)
   (let ((signal-value 0) (action-procedures '()))
     (define (set-my-signal! new-value)
@@ -1597,6 +1662,40 @@
 ;; EXERCISE 3.31
 ;: (define (accept-action-procedure! proc)
 ;:   (set! action-procedures (cons proc action-procedures)))
+;;
+;; The initial trigger of each action procedure is necessary because some wires
+;; should have an initial state of 1 rather than the default initial state 0.
+;; For example, the output of an inverter whose input is 0 should initially be
+;; 1. With accept-action-procedure! defined as above, those non-default initial
+;; states won't be set, and so when the simulation runs, any actions that are
+;; registered for those wires will fail to trigger as expected when some other
+;; action sets the value of the wire to 0, or trigger inappropriately when some
+;; other action sets the value to 1. In the half-adder example above, the
+;; responses change as follows:
+;;
+;;   (probe 'sum sum)
+;;   (probe 'carry carry)
+;;   ;; No diagnostics output.
+;;
+;;   (half-adder input-1 input-2 sum carry)
+;;   ;Value: ok
+;;   ;; Note that wire E inside the half-adder (fig. 25) is now 0, should be 1.
+;;
+;;   (set-signal! input-1 1)
+;;   ;Value: done
+;;
+;;   (propagate)
+;;   ;Value: done
+;;   ;; No diagnostics output as output values did not change.
+;;   ;; Time is now 5 (should be 8) as the D-E-S and-gate failed to trigger.
+;;   ;; sum is now 0 (should be 1).
+;;
+;;   (set-signal! input-2 1)
+;;   (propagate)
+;;   ;Output: carry 8  New-value = 1
+;;   ;; carry is correct; wire E does not affect carry.
+;;   ;; Wire E was set to 0 (correct but unchanged) & does not trigger actions.
+;;   ;; No output for sum as it remains at 0 (correct).
 
 
 ;;;Implementing agenda
@@ -1660,6 +1759,46 @@
       (let ((first-seg (first-segment agenda)))
         (set-current-time! agenda (segment-time first-seg))
         (front-queue (segment-queue first-seg)))))
+
+
+;; EXERCISE 3.32
+;; The prompt asks why actions that occur within a segment must be executed in
+;; the order they were triggered and added to the agenda.
+;;
+;; Actions that are triggered during the course of a time segment may carry
+;; state that depends on the ordering of state changes within that segment. If
+;; two or more actions are scheduled with the same delay, then they must be
+;; executed in the order triggered to ensure that the states that they each
+;; "see" are consistent with respect to that ordering, and properly reflect the
+;; effects of other actions triggered by prior state changes in the originating
+;; time segment.
+;;
+;; To think about it another way: the ordering of state changes within a time
+;; segment effectively divides that segment into smaller time "ticks" which
+;; are infinitesimal but have an ordering with respect to one another. Consider
+;; two consecutive ticks where the first one happens at time t0 and the second
+;; at time t0 + dt. If each tick triggers an action with delay d, then we expect
+;; the first-triggered action to execute at t0 + d and the second at
+;; t0 + dt + d. This ordering is only possible if we execute triggered actions
+;; in FIFO fashion.
+;;
+;; In the case of an and-gate whose inputs change from (0,1) to (1,0) within a
+;; segment, there are two relevant state changes within that segment. Input a1
+;; is updated from 0 to 1, and input a2 is updated from 1 to 0. Each of these
+;; updates triggers an action (and-action-procedure) which calculates the new
+;; output value and schedules a further action to update the output wire after
+;; a delay equal to and-gate-delay.
+;;
+;; Now, if it so happens that the first input to be updated is a1, the new
+;; output value computed by the first update procedure will be 1, since at the
+;; time it is calculated, the values of a1 and a2 are momentarily both 1. Then
+;; a2 is updated from 0 to 1, its own triggered action calculates the new value
+;; as 0. If we execute the delayed update actions in FIFO order then all is
+;; well; the output is momentarily changed to 1 by the first update, then
+;; immediately back to 0 by the second. If we do it in LIFO order, as we might
+;; do if we stored scheduled procedures in a list, then we end up with the
+;; output set to 1, which is incorrect. This illustrates why FIFO order is
+;; correct.
 
 
 ;;;SECTION 3.3.5
