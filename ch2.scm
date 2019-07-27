@@ -1616,9 +1616,8 @@
 ; In the second version, the total number of recursive calls for board size n
 ; (again ignoring k=0) is
 ;
-;            / 1                if n = 1
-;   R₂(n) = {
-;            \ 1 + n * R(n - 1) otherwise
+;   R₂(n) = / 1                if n = 1
+;           \ 1 + n * R(n - 1) otherwise
 ;
 ; since the outermost call (1) invokes itself with n-1 inside a loop that
 ; repeats n times. This definition is equivalent to

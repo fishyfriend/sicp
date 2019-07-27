@@ -468,9 +468,8 @@
 ; The last answer uses Knuth up-arrow notation. It is equivalent to saying that
 ; (h n) computes P(n) where
 ;
-;          / 2          if n = 1
-;  P(n) = {
-;          \ 2^P(n-1)   otherwise.
+;  P(n) = / 2          if n = 1
+;         \ 2^P(n-1)   otherwise.
 
 (define (k n) (* 5 n n))
 
