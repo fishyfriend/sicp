@@ -1400,6 +1400,59 @@
                    ((= n 1) 1)
                    (else (+ (memo-fib (- n 1))
                             (memo-fib (- n 2))))))))
+
+;; note: p-c-r = previously-computed-result
+;;
+;;        ┌───────────────────────────────────────────────────────────┐
+;; global │ memoize: ────────────────────────────────────┐            │
+;; env ──▶│ memo-fib: ─────────────────────┐             │            │
+;;        └────────────────────────────────┼─────────────┼────────────┘
+;;           ▲         ▲         ▲   ▲     ▼   ▲   ▲     ▼   ▲   ▲
+;;           │   ┌─────┼──▶(•I•)─┘   │   (•I•)─┘   │   (•I•)─┘   │
+;;           │   │     │    │        │    │        │    │        │
+;;           │   │     │    ▼        │    ▼        │    ▼        │
+;;           │   │     │ params: n   │ params: x   │ params: f   │
+;;           │   │     │ body:       │ body:       │ body:       │
+;;        ┌──┴───┼──┐  │  (cond      │  (let       │  (let       │
+;;        │ f: ──┘  │  │   ((= n 0)  │   ((p-c-r   │   ((table   │
+;;        └─────────┘  │    …        │     …       │    …        │
+;;             ▲       │             │             │             │
+;;        ┌────┴────┐◀─┼─────────────┼─────────────┼─────────────┼──────┐
+;;        │table: … │◀─┼─────────────┼─────────────┼──────┐      │      │
+;;        │         │◀─┼─────────────┼──────┐      │      │      │      │
+;;        └─────────┘◀─┼──────┐      │      │      │      │      │      │
+;;             ▲       │      │      │      │      │      │      │      │
+;;        ┌────┴────┐  │ ┌────┴────┐ │ ┌────┴────┐ │ ┌────┴────┐ │ ┌────┴────┐
+;;        │ x: 3    │  │ │ x: 2    │ │ │ x: 1    │ │ │ x: 0    │ │ │ x: 1    │
+;;        └─────────┘  │ └─────────┘ │ └─────────┘ │ └─────────┘ │ └─────────┘
+;;             ▲       │      ▲      │      ▲      │      ▲      │      ▲
+;;        ┌────┴────┐  │ ┌────┴────┐ │ ┌────┴────┐ │ ┌────┴────┐ │ ┌────┴────┐
+;;        │p-c-r: #f│  │ │p-c-r: #f│ │ │p-c-r: #f│ │ │p-c-r: #f│ │ │p-c-r: 1 │
+;;        └─────────┘  │ └─────────┘ │ └─────────┘ │ └─────────┘ │ └─────────┘
+;;             ▲       │      ▲      │      ▲      │      ▲      │
+;;        ┌────┴────┐  │ ┌────┴────┐ │ ┌────┴────┐ │ ┌────┴────┐ │
+;;        │result: 2│  │ │result: 1│ │ │result: 1│ │ │result: 0│ │
+;;        └─────────┘  │ └─────────┘ │ └─────────┘ │ └─────────┘ │
+;;        ┌───────┐    │ ┌───────┐   │ ┌───────┐   │ ┌───────┐   │
+;;        │ n: 3  │────┘ │ n: 2  │───┘ │ n: 1  │───┘ │ n: 0  │───┘
+;;        └───────┘      └───────┘     └───────┘     └───────┘
+;;
+;; memo-fib computes the nth Fibonacci term in a number of steps proportional to
+;; n because it executes the memoized procedure exactly n times and each one
+;; adds the same amount of work:
+;;
+;;   - one execution of the memoized procedure's mathematical logic
+;;   - one recursive call resulting in a lookup in the result table (which we
+;;     assume is constant-time)
+;;   - one recursive call to memo-fib which kicks off the next iteration (i.e.,
+;;     for which a memoized result is not available).
+;;
+;; Defining memo-fib to be (memoize fib) would not accrue the same performance
+;; benefit since fib is still calling its old, non-memoized self internally. We
+;; would still get the benefit of caching if memo-fib were being called multiple
+;; times over the course of a program, but the first call for any given n would
+;; not benefit from memoization.
+
 
 ;;;SECTION 3.3.4
 
