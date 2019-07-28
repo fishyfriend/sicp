@@ -1989,11 +1989,44 @@
   ((connector 'connect) new-constraint))
 
 
-;; EXERCISE 3.34
+;; EXERCISE 3.33
+(define (averager a b c)
+  (let ((x (make-connector))
+        (y (make-connector)))
+    (adder a b x)
+    (constant 2 y)
+    (multiplier y c x)
+    'ok))
 
+
+;; EXERCISE 3.34
+;; The problem is that multiplier requires two values in order to solve for the
+;; third. If a is known the solution works fine, b is calculated as a * a. But
+;; if only b is known then a can't be inferred since only one term is known.
 (define (squarer a b)
   (multiplier a a b))
 
+
+;; EXERCISE 3.35
+(define (squarer a b)
+  (define (process-new-value)
+    (if (has-value? b)
+        (if (< (get-value b) 0)
+            (error "square less than 0 -- SQUARER" (get-value b))
+            (set-value! a (sqrt (get-value b)) me))
+        (if (has-value? a)
+            (set-value! b (square (get-value a)) me))))
+  (define (process-forget-value)
+    (forget-value! a me)
+    (forget-value! b me)
+    (process-new-value))
+  (define (me request)
+    (cond ((eq? request 'I-have-a-value) (process-new-value))
+          ((eq? request 'I-lost-my-value) (process-forget-value))
+          (else (error "Unknown request -- SQUARER" request))))
+  (connect a me)
+  (connect b me)
+  me)
 
 
 ;; EXERCISE 3.36
