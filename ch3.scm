@@ -2066,7 +2066,6 @@
 
 
 ;; EXERCISE 3.37
-
 (define (celsius-fahrenheit-converter x)
   (c+ (c* (c/ (cv 9) (cv 5))
           x)
@@ -2079,8 +2078,28 @@
   (let ((z (make-connector)))
     (adder x y z)
     z))
-
 
+(define (c- x y)
+  (let ((z (make-connector)))
+    (adder y z x)
+    z))
+
+(define (c* x y)
+  (let ((z (make-connector)))
+    (multiplier x y z)
+    z))
+
+(define (c/ x y)
+  (let ((z (make-connector)))
+    (multiplier y z x)
+    z))
+
+(define (cv k)
+  (let ((x (make-connector)))
+    (constant k x)
+    x))
+
+    
 ;;;SECTION 3.4
 ;;;**Need parallel-execute, available for MIT Scheme
 
