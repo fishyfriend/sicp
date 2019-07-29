@@ -2099,7 +2099,7 @@
     (constant k x)
     x))
 
-    
+
 ;;;SECTION 3.4
 ;;;**Need parallel-execute, available for MIT Scheme
 
@@ -2116,6 +2116,87 @@
 ;: (set! balance (+ balance 10))
 ;: (set! balance (- balance 20))
 ;: (set! balance (- balance (/ balance 2)))
+;;
+;; a. Possible final values for balance: 35 40 45 50
+;; b. Some possible final values if interleaving is allowed: 55 80 110
+;;
+;;  │   Bank            Peter           Paul            Mary
+;;  │
+;;  │   $100 ─────────────┬───────────────┬───────────────┐
+;;  │                     ▼               ▼               ▼
+;;  │                   Access          Access          Access
+;;  │                   balance:        balance:        balance:
+;;  │                   $100            $100            $100
+;;  │                     │               │               │
+;;  │                     ▼               ▼               ▼
+;;  │                   new value:      new value:      new value:
+;;  │                   100+10=110      100-20=80       100/2=50
+;;  │                     │               │               │
+;;  │                     ▼               │               │
+;;  │                   set! balance      │               │
+;;  │                   to $110           │               ▼
+;;  │   $110 ◀────────────┘               │             set! balance
+;;  │                                     │             to $50
+;;  │    $50 ◀────────────────────────────┼───────────────┘
+;;  │                                     ▼
+;;  │                                   set! balance
+;;  │                                   to $80
+;;  V    $80 ◀────────────────────────────┘
+;; time
+;;
+;;  │   Bank            Peter           Paul            Mary
+;;  │
+;;  │   $100 ─────────────┬───────────────┬───────────────┐
+;;  │                     ▼               │               │
+;;  │                   Access            │               │
+;;  │                   balance:          │               │
+;;  │                   $100              │               │
+;;  │                     │               │               │
+;;  │                     ▼               │               │
+;;  │                   new value:        │               │
+;;  │                   100+10=110        │               │
+;;  │                     │               │               │
+;;  │                     ▼               │               │
+;;  │                   set! balance      │               │
+;;  │                   to $110           │               │
+;;  │   $110 ◀────────────┘             Access          Access
+;;  │                                   balance:        balance:
+;;  │                                   $110            $110
+;;  │                                     │               │
+;;  │                                     ▼               ▼
+;;  │                                   new value:      new value:
+;;  │                                   110-20=90       110/2=55
+;;  │                                     │               │
+;;  │                                     ▼               │
+;;  │                                   set! balance      │
+;;  │                                   to $90            ▼
+;;  │    $90 ◀────────────────────────────┘             set! balance
+;;  │                                                   to $55
+;;  V    $55 ◀────────────────────────────────────────────┘
+;; time
+;;
+;;  │   Bank            Peter           Paul            Mary
+;;  │
+;;  │   $100 ─────────────┬───────────────┬───────────────┐
+;;  │                     ▼               ▼               ▼
+;;  │                   Access          Access          Access
+;;  │                   balance:        balance:        balance:
+;;  │                   $100            $100            $100
+;;  │                     │               │               │
+;;  │                     ▼               ▼               ▼
+;;  │                   new value:      new value:      new value:
+;;  │                   100+10=110      100-20=80       100/2=50
+;;  │                     │               │               │
+;;  │                     │             set! balance      │
+;;  │                     │             to $80            ▼
+;;  │    $80 ◀────────────┼───────────────┘             set! balance
+;;  │                     │                             to $50
+;;  │    $50 ◀────────────┼───────────────────────────────┘
+;;  │                     ▼
+;;  │                   set! balance
+;;  │                   to $110
+;;  V   $110 ◀────────────┘
+;; time
 
 
 ;;;SECTION 3.4.2
@@ -2150,28 +2231,31 @@
 
 
 ;; EXERCISE 3.39
-
 ;: (define x 10)
 ;: (define s (make-serializer))
 ;: (parallel-execute (lambda () (set! x ((s (lambda () (* x x))))))
 ;:                   (s (lambda () (set! x (+ x 1)))))
+;;
+;; Four of the five original possible values of x are still possible: 11, 100,
+;; 101, and 121.
 
 
 ;; EXERCISE 3.40
-
 ;: (define x 10)
 ;: (parallel-execute (lambda () (set! x (* x x)))
 ;:                   (lambda () (set! x (* x x x))))
 ;:
+;; The possible values of x are 10², 10³, 10⁴, 10⁵, and 10⁶.
 ;:
 ;: (define x 10)
 ;: (define s (make-serializer))
 ;: (parallel-execute (s (lambda () (set! x (* x x))))
 ;:                   (s (lambda () (set! x (* x x x)))))
+;;
+;; The only possible value of x is 10⁶.
 
 
 ;; EXERCISE 3.41
-
 (define (make-account balance)
   (define (withdraw amount)
     (if (>= balance amount)
@@ -2191,8 +2275,53 @@
                          m))))
     dispatch))
 
-;; EXERCISE 3.42
+;; There is some merit to Ben's concerns, but the proposed solution is
+;; misguided. The meritorious part is that external logic that relies on bank
+;; balance information could potentially be tripped up by withdrawals or
+;; deposits that occur during the execution of that logic. For example:
+;;
+;;   (define (withdraw-half account)
+;;     (let ((current-balance (account 'balance)))
+;;       ((account 'withdraw) (quotient current-balance 2))))
+;;
+;; Imagine that another withdrawal is in progress when we call withdraw-half,
+;; but that it doesn't update the account balance until immediately after
+;; current-balance is calculated. When our withdrawal executes, it will take
+;; more than half the remaining balance since the balance is now smaller than
+;; expected. If balance were serialized along with withdraw and deposit, this
+;; problem would be avoided because the calculation of current-balance would be
+;; forced to wait until the other withdrawal finished.
+;;
+;; However, other withdrawals and deposits can still interleave with any part of
+;; our procedure that's not included in the serializer, so simply adding balance
+;; to the serializer does not really protect us from this class of problem. For
+;; example, if the external withdrawal took place after calculating
+;; current-balance but before calculating our withdrawal amount (the quotient),
+;; we'd again withdraw too much. Without adding additional concurrency control
+;; to the system, there is no way around this issue.
+;;
+;; Considering also that the original purpose of the serializer in make-account
+;; was to ensure that concurrent deposits and withdrawals cannot generate
+;; inconsistent behavior (i.e., money being created or destroyed) -- a purpose
+;; it succeeds at entirely -- there is no reason to modify it. Instead,
+;; procedures that use accounts should be responsible for the implications of
+;; their own concurrency, defining their own serializers or other mechanisms as
+;; as necessary to ensure logical consistency in whatever sense that is
+;; meaningful to them. In this case, for each account we wish to modify, we
+;; could place withdraw-half in a lambda specialized for that account and ensure
+;; that it and any other procedures that might access that account are
+;; serialized together.
+;;
+;; (This answer assumes as an unalterable design choice that the responsibility
+;; of managing concurrent balance accesses is kept internal to make-account. If
+;; we were to reassign this responsibility to the users of the account object,
+;; and accordingly open up the internal concurrency mechanism, we would have
+;; some other options for how to solve issues like the example given. I have
+;; avoided discussing this option because it is explored at length later, and
+;; the exercise seems geared towards the present design.)
 
+
+;; EXERCISE 3.42
 (define (make-account balance)
   (define (withdraw amount)
     (if (>= balance amount)
@@ -2212,6 +2341,15 @@
 	      (else (error "Unknown request -- MAKE-ACCOUNT"
 			   m))))
       dispatch)))
+
+;; The proposed change is safe, and does not change the behavior of the object
+;; returned by make-account. In both versions, there is only one serializer,
+;; protected. Any procedures that are added to it will be serialized with
+;; respect to one other. Thus it does not matter whether dispatch returns a
+;; fresh protected version of withdraw/deposit each time, or the same one. The
+;; behavior of those methods has not changed and their concurrency restrictions
+;; are the same.
+
 
 ;;;Multiple shared resources
 
