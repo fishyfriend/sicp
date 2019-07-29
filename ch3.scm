@@ -2392,8 +2392,101 @@
      account2)))
 
 
-;; EXERCISE 3.44
+;; EXERCISE 3.43
+;; Although we're running multiple exchange processes in parallel, the exchanges
+;; are serialized, and therefore we can reason about the effects of exchanges as
+;; though they occur sequentially within a single process. Thus, the first part
+;; of the prompt can be generalized as follows: We are to show that, given a
+;; list of accounts, if we perform an arbitrary number of exchanges on those
+;; accounts sequentially, the final balances will be equal to some ordering of
+;; the starting balances. We know that if we only perform one exchange, this
+;; condition holds true, since swapping any two balances is effectively just
+;; changing the ordering. Thus, it follows inductively that the condition must
+;; also hold for arbitrary numbers of exchanges, since it holds at each step.
+;;
+;; The stated condition does not hold if we revert to the original definition of
+;; exchange. Below, we attempt to exchange the first and second accounts (proc.
+;; 1) and the first and third accounts (proc. 2) concurrently. The final
+;; balances ($40 $10 $10) are not a reordering of the starting balances ($10 $20
+;; $30).
+;;
+;;   │   proc. 1         proc. 2         acc. a          acc. b          acc. c
+;;   │
+;;   │       ┌───────────────┬────────── $10             $20             $30
+;;   │       ▼               ▼                            │               │
+;;   │   Read a: 10      Read a: 10                       │               │
+;;   │      │ ┌─────────────┼─────────────────────────────┘               │
+;;   │      │ │             │ ┌───────────────────────────────────────────┘
+;;   │      ▼ ▼             ▼ ▼
+;;   │   Read b: 20      Read c: 30
+;;   │       │               │
+;;   │       ▼               ▼
+;;   │   Calculate       Calculate
+;;   │   diff.: -10      diff.: -20
+;;   │       │               │
+;;   │       ▼               │
+;;   │   Withdraw ───────────┼─────────▶ $20
+;;   │   from a: -10         ▼
+;;   │       │           Withdraw ─────▶ $40
+;;   │       │           from a: -20
+;;   │       ▼               │
+;;   │   Deposit ────────────┼─────────────────────────▶ $10
+;;   │   into b: -10         ▼
+;;   │                   Deposit ──────────────────────────────────────▶ $10
+;;   V                   into c: -20
+;; time
+;;
+;; The sum of the balances is still preserved in the above example because, even
+;; though parts of the exchange operations are interleaved, the deposits and
+;; withdrawals are still serialized. As money is conserved by deposits and
+;; withdrawals, and all modification of balances takes place by means of
+;; deposits and withdrawals, it follows that money is also conserved over any
+;; other group of operations (such as exchanges) regardless of how those
+;; operations interleave.
+;;
+;; If we remove the serialization of deposits and withdrawals, then interleaved
+;; exchanges can result in interleaved deposits and withdrawals, leading to a
+;; loss of conservation of money. Below, the total starting money
+;; ($10 + $20 + $30 = $60) and final sum ($30 + $10 + $10 = $50) do not match.
+;;
+;;   │   proc. 1         proc. 2         acc. a          acc. b          acc. c
+;;   │
+;;   │       ┌───────────────┬────────── $10             $20             $30
+;;   │       ▼               ▼                            │               │
+;;   │   Read a: 10      Read a: 10                       │               │
+;;   │      │ ┌─────────────┼─────────────────────────────┘               │
+;;   │      │ │             │ ┌───────────────────────────────────────────┘
+;;   │      ▼ ▼             ▼ ▼
+;;   │   Read b: 20      Read c: 30
+;;   │       │               │
+;;   │       ▼               ▼
+;;   │   Calculate       Calculate
+;;   │   diff.: -10      diff.: -20
+;;   │       │               │
+;;   │       │               ▼
+;;   │       │           Call
+;;   │       │           (withdraw a -20)
+;;   │       │  inside       │
+;;   │       │  withdraw     │
+;;   │       │     :  .....  ▼
+;;   │       │     :  :  Read a: 10
+;;   │       │     :  :      │
+;;   │       │     :  :      ▼
+;;   │       │     :..:  Calculate new
+;;   │       │        :  balance: 30
+;;   │       ▼        :      │
+;;   │   Withdraw ────:──────┼─────────▶ $20
+;;   │   from a: -10  :      ▼
+;;   │       │        :  Set a: 30 ────▶ $30
+;;   │       ▼        :....  │
+;;   │   Deposit ────────────┼─────────────────────────▶ $10
+;;   │   into b: -10         ▼
+;;   │                   Deposit ──────────────────────────────────────▶ $10
+;;   V                   into c: -20
+;; time
 
+
+;; EXERCISE 3.44
 (define (transfer from-account to-account amount)
   ((from-account 'withdraw) amount)
   ((to-account 'deposit) amount))
