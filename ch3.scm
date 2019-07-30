@@ -2588,7 +2588,109 @@
          true
          (begin (set-car! cell true)
                 false)))))
-
+
+
+;; EXERCISE 3.46
+;;
+;;  │    mutex           proc. 1         proc. 2
+;;  │
+;;  │    #f ──┬────────────────────────▶ check cell: #f
+;;  │         │                                │
+;;  │         └────────▶ check cell: #f        │
+;;  │                          │               │
+;;  │                          ▼               │
+;;  │    #t ◀─────────── set cell: #t          │
+;;  │                          │               │
+;;  │                          ▼               │
+;;  │                    mutex acquired!       │
+;;  │                                          ▼
+;;  │    #t ◀─────────────────────────── set cell: #t
+;;  │                                          │
+;;  V                                          ▼
+;; time                                  mutex acquired!
+
+
+;; EXERCISE 3.47
+;; a. semaphore implemented with mutex
+(define (make-semaphore n)
+  (let ((mutex (make-mutex))
+        (count 0))
+    (define (the-semaphore m)
+      (cond
+        ((eq? m 'acquire)
+          (mutex 'acquire)
+          (if (< count n)
+              (begin (set! count (+ count 1))
+                     (mutex 'release))
+              (begin (mutex 'release)
+                     (the-semaphore 'acquire))))
+        ((eq? m 'release)
+          (mutex 'acquire)
+          (set! count (- count 1))
+          (mutex 'release))))
+    the-semaphore))
+
+;; b. semaphore implemented with atomic test-and-set!
+(define (make-semaphore n)
+  (define (make-slots n)
+    (if (= n 0)
+        '()
+        (cons (cons false true)
+              (make-slots (- n 1)))))
+  ;; (#f . #t) means slot available, (#t . #f) means slot occupied
+  (let ((the-slots (make-slots)))
+    (define (acquire slots)
+      (cond ((null? slots) (acquire the-slots))
+            ((test-and-set! (caar slots)) (acquire (cdr slots)))
+            (else (clear! (cdar slots)))))
+    (define (release slots)
+      (cond ((null? slots) (release the-slots))
+            ((test-and-set! (cdar slots)) (release (cdr slots)))
+            (else (clear! (caar slots)))))
+    (define (the-semaphore m)
+      (cond ((eq? m 'acquire) (acquire the-slots))
+            ((eq? m 'release) (release the-slots))))
+    the-semaphore))
+
+
+;; EXERCISE 3.48
+;; Numbering the accounts and acquiring the smaller-numbered account first
+;; avoids deadlock when (serialized-exchange a b) and (serialized-exchange b a)
+;; run concurrently because in each process, the serialized procedure
+;; (serializer1 (serializer2 (exchange)) now belongs to the same serialization
+;; group as in the other process (i.e., the serialization group for the
+;; lower-numbered account). The second process to reach the serialized procedure
+;; cannot proceed until the first process has finished evaluating it entirely.
+;; So there is no way for the evaluations of the serialized procedure
+;; to interleave.
+
+(define (serialized-exchange account1 account2)
+  (let ((number1 (account1 'number))
+        (number2 (account2 'number)))
+    (cond ((> number1 number2)
+           (serialized-exchange account2 account1))
+          ((< number1 number2)
+           (let ((serializer1 (account1 'serializer))
+                 (serializer2 (account2 'serializer)))
+             ((serializer1 (serializer2 exchange))
+               account1
+               account2))))))
+
+(define make-numbered-account-and-serializer
+  (let ((next-number 0)
+        (mutex (make-mutex))) ;; let's go ahead and make this thread-safe!
+    (lambda (balance)
+      (let ((account (make-account-and-serializer balance)))
+        (mutex 'acquire)
+        (let ((number (next-number)))
+          (set! next-number (+ next-number 1))
+          (mutex 'release)
+          (lambda (m)
+            (if (eq? m 'number)
+                number
+                (account m))))))))
+
+
 ;;;SECTION 3.5
 
 ;;;SECTION 3.5.1
