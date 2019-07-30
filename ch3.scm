@@ -2488,9 +2488,36 @@
   ((from-account 'withdraw) amount)
   ((to-account 'deposit) amount))
 
+;; Assuming we don't permit transferring a negative amount, there is no problem
+;; with this implementation. During evaluation, another concurrently-running
+;; transfer could empty out from-account, but this would have to occur strictly
+;; before or after our withdrawal due to serialization. If it occurred before,
+;; our withdrawal would just fail with insufficient funds and the whole transfer
+;; would be aborted (which is reasonable). If it occurred after, there would be
+;; no issue, as we would already have withdrawn the money. Other withdrawals or
+;; deposits on to-account can occur at any time, they won't interfere with our
+;; transfer since we are transferring the same amount regardless how much is in
+;; the receiving account.
+;;
+;; The essential difference between transfer and exchange is that exchange's
+;; effect depends on a temporary value it calculates from volatile information.
+;; If other processes change that information after the temporary value is
+;; calculated, but before the effect that depends on it has completed, the
+;; effect could be rendered logically unsound. Transfer does not set any
+;; internal state and is thus not vulnerable to this issue.
+;;
+;; It is possible that someone may write a procedure that depends on the
+;; balances in two accounts, and try to run this concurrently with a transfer
+;; between the accounts. This could cause a problem if the procedure checks
+;; account state after transfer withdraws from from-account but before it
+;; deposits into to-account. The money being transferred will effectively be
+;; invisible to the procedure. In cases like this, we could indeed benefit from
+;; a more sophisticated concurrency mechanism, or (similar to the suggestion in
+;; ex. 41) we could introduce another serializer around transfer and the other
+;; procedure to ensure that they can't interfere with each other.
+
 
 ;; EXERCISE 3.45
-
 (define (make-account-and-serializer balance)
   (define (withdraw amount)
     (if (>= balance amount)
@@ -2512,6 +2539,15 @@
 
 (define (deposit account amount)
  ((account 'deposit) amount))
+
+;; The problem with this implementation is that procedures which use the
+;; serializer will hang indefinitely when they attempt to call one another. When
+;; serialized-exchange is called on two accounts, it wraps exchange inside both
+;; of those accounts' serializers and calls the resulting procedure, which then
+;; attempts to withdraw from the first account. Because withdraw is in a
+;; serialized set alongside the currently-executing procedure, it is forced to
+;; wait for the currently-executing procedure to finish. But that can't happen
+;; until after withdraw finishes, so execution pauses and never continues.
 
 
 ;;;Implementing serializers
