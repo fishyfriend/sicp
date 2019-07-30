@@ -2315,7 +2315,7 @@
 ;; (This answer assumes as an unalterable design choice that the responsibility
 ;; of managing concurrent balance accesses is kept internal to make-account. If
 ;; we were to reassign this responsibility to the users of the account object,
-;; and accordingly open up the internal concurrency mechanism, we would have
+;; and accordingly expose the internal concurrency mechanism, we would have
 ;; some other options for how to solve issues like the example given. I have
 ;; avoided discussing this option because it is explored at length later, and
 ;; the exercise seems geared towards the present design.)
@@ -2393,10 +2393,7 @@
 
 
 ;; EXERCISE 3.43
-;; Although we're running multiple exchange processes in parallel, the exchanges
-;; are serialized, and therefore we can reason about the effects of exchanges as
-;; though they occur sequentially within a single process. Thus, the first part
-;; of the prompt can be generalized as follows: We are to show that, given a
+;; The first part of the prompt can be generalized. We are to show that, given a
 ;; list of accounts, if we perform an arbitrary number of exchanges on those
 ;; accounts sequentially, the final balances will be equal to some ordering of
 ;; the starting balances. We know that if we only perform one exchange, this
