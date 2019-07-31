@@ -2691,6 +2691,73 @@
                 (account m))))))))
 
 
+;; EXERCISE 3.49
+;; Here is a situation where the deadlock-avoidance strategy above does not
+;; work. Imagine we are running an online game and we have a system that matches
+;; buyers and sellers for virtual items. Players may list items for sale in a
+;; central marketplace, and may also submit bids for purchase. A bid is matched
+;; when the system locates a seller of the requested item at the bid price or
+;; better. Then the sale price is transferred from buyer to seller account
+;; and the item is transferred from the seller's inventory to the buyer's.
+;;
+;; To represent players, we use the account system from the text plus some
+;; additional operations to support purchase transactions. Before adding any
+;; deadlock prevention, the bidding might be implemented as below. The
+;; procedure acquires a lock on the buyer's account, then tries to complete the
+;; requested purchase from each available seller account in turn.
+
+(define (bid-for-item bid item-id buyer sellers)
+  (define (attempt-purchase seller)
+    (let ((price (seller 'get-price item-id)))
+      (if (<= price bid)
+          (begin ((buyer 'withdraw) price)
+                 ((seller 'remove-inventory) item-id 1)
+                 ((seller 'deposit) price)
+                 ((buyer-account 'add-inventory) item-id 1)
+                 price)
+          false)))
+  (define (go sellers)
+    (if (null? sellers)
+        false
+        (let ((seller (car sellers)))
+          (let ((price ((seller 'serializer) (attempt-purchase seller))))
+            (if price
+                price
+                (go (cdr sellers)))))))
+  (((buyer 'serializer)
+    (lambda ()
+      (if (< (buyer-account 'balance) bid)
+          false
+          (go sellers))))))
+
+;; Now imagine player A bids for apples while selling oranges, and player B bids
+;; for oranges while selling apples. If the two instances of bid-for-item run
+;; concurrently, and if A attempts to purchase from B while B is attempting to
+;; purchase from A, they will deadlock. The solution with numbered accounts used
+;; in ex. 48 is not feasible here without changes, as we are always required to
+;; enter the buyer's serializer first.
+;;
+;; A couple modifications are possible which would permit the numbered-account
+;; strategy, but both have drawbacks.
+;;
+;; First, we could rewrite the procedure so that it enters the serializers for
+;; *all* sellers plus the buyer in account-number order at the very beginning,
+;; then releases the sellers as we try each of them in turn. However, this
+;; would require locking many sellers unnecessarily, which could have
+;; performance implications, e.g., if checking an individual seller takes a long
+;; time, or if we have many concurrent bids. It also makes the code a lot more
+;; complicated. So it's not a great solution.
+;;
+;; Second, we could choose not to lock the buyer account for the duration of the
+;; bid, instead locking it separately along with the seller for each seller
+;; account we try. The problem here is that concurrently-running bids from the
+;; same player would compete. It wouldn't be deterministic which bid succeeded
+;; first, which could matter if we (for gameplay reaosns) want bids to be
+;; serviced in the order submitted. To preserve bid ordering we could build a
+;; per-player bid queue. It would add complexity to the system but should allow
+;; us to do deadlock prevention.
+
+
 ;;;SECTION 3.5
 
 ;;;SECTION 3.5.1
