@@ -2845,32 +2845,85 @@
           result))))
 
 
-;; EXERCISE 3.51
+;; EXERCISE 3.50
+(define (stream-map proc . argstreams)
+  (if (empty-stream? (car argstreams))
+      the-empty-stream
+      (cons-stream
+        (apply proc (map stream-car argstreams))
+        (apply stream-map
+               (cons proc (map stream-cdr argstreams))))))
 
+
+;; EXERCISE 3.51
 (define (show x)
   (display-line x)
   x)
 
 ;: (define x (stream-map show (stream-enumerate-interval 0 10)))
+;0
+;Value: x
+
 ;: (stream-ref x 5)
+;1
+;2
+;3
+;4
+;5
+;Value: 5
+
 ;: (stream-ref x 7)
+;6
+;7
+;Value: 7
 
 
 ;; EXERCISE 3.52
+;:(define sum 0)
+;; sum = 0
 
-(define sum 0)
-
-(define (accum x)
-  (set! sum (+ x sum))
-  sum)
+;:(define (accum x)
+;:  (set! sum (+ x sum))
+;:  sum)
+;; sum = 0
 
 ;: (define seq (stream-map accum (stream-enumerate-interval 1 20)))
+;; sum = 1
+
 ;: (define y (stream-filter even? seq))
+;; sum = 6
+
 ;: (define z (stream-filter (lambda (x) (= (remainder x 5) 0))
 ;:                          seq))
+;; sum = 10
 
 ;: (stream-ref y 7)
+;Value: 136
+;; sum = 136
+
 ;: (display-stream z)
+;10
+;15
+;45
+;55
+;105
+;120
+;190
+;210
+;; sum = 210
+
+;; If (delay <exp>) is implemented as (lambda () <expr>), the responses to the
+;; last two expressions will differ. Without memoization, stream elements that
+;; have already been computed once will be computed again each time they are
+;; reached via stream-cdr. (The exception is the first element of a stream,
+;; which is an actual value rather than a delayed computation and as such never
+;; recomputed.) Recomputing an element of seq in the above example involves an
+;; extra call to accum, which increases the value of sum. Thus, the value of a
+;; given element of seq will appear to be larger and larger each time it is
+;; recomputed. Since the behavior of each of the last two expressions depends on
+;; elements of seq that have already been used in prior expressions,
+;; recomputation is relevant here, and the results displayed by each expression
+;; will be larger than would be expected with memoization.
 
 
 ;;;SECTION 3.5.2
