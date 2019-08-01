@@ -2994,6 +2994,22 @@
 
 ;; EXERCISE 3.53
 ;: (define s (cons-stream 1 (add-streams s s)))
+;; This stream generates the powers of two: 1, 2, 4, 8, etc.
+
+
+;; EXERCISE 3.54
+(define (mul-streams s1 s2)
+  (stream-map * s1 s2))
+
+(define factorials
+  (cons-stream 1 (mul-streams (integers-starting-from 2)
+                              factorials)))
+
+;; EXERCISE 3.55
+(define (partial-sums s)
+  (cons-stream (stream-car s)
+               (add-streams (stream-cdr s)
+                            (partial-sums s))))
 
 
 ;; EXERCISE 3.56
@@ -3012,12 +3028,46 @@
                                (merge (stream-cdr s1)
                                       (stream-cdr s2)))))))))
 
+(define S (cons-stream 1 (merge (scale-stream S 2)
+                                (merge (scale-stream S 3)
+                                       (scale-stream S 5)))))
+
+
+;; EXERCISE 3.57
+;; The number of additions A(n) performed when computing the nth term of fibs
+;; without memoization is given by
+;;
+;;   A(n) = / 0                       if n < 2
+;;          \ 1 + A(n-1) + A(n-2)     otherwise.
+;;
+;; Examining the definition of fibs, we see that n < 2 requires no additions as
+;; the first two elements are literals. For n >= 2 there is a single addition
+;; performed by add-streams, plus however many additions are required to get
+;; the (n-2)th term of each of its arguments. The second argument is just fibs
+;; so it obviously requires A(n-2) additions. The first argument is the tail of
+;; fibs, meaning only the first element is constant, so it requires one extra
+;; addition, or A(n-1). Summing it all together gives us 1 + A(n-1) + A(n-2).
+;; This is equivalent to 1 + Fib(n) for high values of n, which grows as Fib(n),
+;; that is to say, exponentially. (Recall that Fib(n) is the nearest integer
+;; to ϕⁿ/√5.)
+
 
 ;; EXERCISE 3.58
 (define (expand num den radix)
   (cons-stream
    (quotient (* num radix) den)
    (expand (remainder (* num radix) den) den radix)))
+;; The procedure calculates the digits of the fractional portion of (num/den) in
+;; the numeral system with the specified radix. (expand 1 7 10) produces the
+;; sequence of digits 1 4 2 8 5 7 repeated indefinitely (1/7 = 0.142857142857…).
+;; (expand 3 8 10) produces 3 5 7 followed by an infinite sequence of zeros
+;; (3/8 = 0.375).
+;;
+;; Note that if abs(num/den) is greater than 1, the whole-number portion will be
+;; included in the first place of the result, and must be removed in order
+;; to get the purely fractional part. For example, (expand 27 4 10) produces
+;; 67 5 0 0 0…. The whole number portion of the first place is 6*10=60. Removing
+;; this gets us 7 5 0 0 0…, the expected result (as 27/4=6.75).
 
 
 ;; EXERCISE 3.59
