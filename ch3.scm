@@ -3096,6 +3096,27 @@
                  (mul-series (stream-cdr s1) s2))))
 
 
+;; EXERCISE 3.61
+(define (invert-unit-series S)
+  (if (not (= (stream-car S) 1))
+      (error "First term is not 1" (stream-car S))
+      (cons-stream 1
+                   (scale-stream (mul-series (stream-cdr S)
+                                             (invert-unit-series S))
+                                 -1))))
+
+
+;; EXERCISE 3.62
+(define (div-series numer denom)
+  (if (= (stream-car denom) 0)
+      (error "Constant term of denominator is 0")
+      (mul-series
+        (scale-stream numer (/ 1 (stream-car denom)))
+        (invert-unit-series (scale-stream denom (/ 1 (stream-car denom)))))))
+
+(define tan-series (div-series sine-series cosine-series))
+
+
 ;;;SECTION 3.5.3
 
 (define (sqrt-improve guess x)
