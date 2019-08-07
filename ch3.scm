@@ -3174,10 +3174,80 @@
                (stream-map (lambda (guess)
                              (sqrt-improve guess x))
                            (sqrt-stream x))))
+;; This version of sqrt-stream creates a nesting of distinct streams, with each
+;; stream wrapped in "layers" of stream-map according to its nesting depth. Each
+;; time we take the cdr of the outermost stream, we have to execute the mapped
+;; operation once for each of the layers:
+;;
+;;   (define s (sqrt-stream 5))
+;;   (trace sqrt-improve)
+;;   (set! s (stream-cdr s)) ; called 1 time
+;;   (set! s (stream-cdr s)) ; called 2 times
+;;   (set! s (stream-cdr s)) ; called 3 times
+;;
+;; With the original version, each element of the outermost stream is simply the
+;; previous element wrapped in *one* additional layer of stream-map. Thus, each
+;; time we take the cdr, we only have to execute the mapped operation once:
+;;
+;;   (define s (sqrt-stream 5))
+;;   (trace sqrt-improve)
+;;   (set! s (stream-cdr s)) ; called 1 time
+;;   (set! s (stream-cdr s)) ; called 1 time
+;;   (set! s (stream-cdr s)) ; called 1 time
+;;
+;; The difference persists even if memoization is turned off. In both versions,
+;; the calculation of successive elements is carried out on distinct streams
+;; (the cdr of any given stream is never requested twice) so there is no benefit
+;; from memoization in either version. (Of course, this is only true for the
+;; first iteration over a given portion of a stream. Once stream elements have
+;; been calculated the first time, they are cached and so the two versions
+;; perform equivalently from that point forward.)
+
 
 ;; EXERCISE 3.64
+(define (stream-limit s tolerance)
+  (let ((tail (stream-cdr s)))
+    (if (> (abs (- (stream-car s)
+                   (stream-car tail)))
+           tolerance)
+        (stream-limit tail tolerance)
+        (stream-car tail))))
+
 (define (sqrt x tolerance)
   (stream-limit (sqrt-stream x) tolerance))
+
+
+;; EXERCISE 3.65
+(define (ln2-summands n)
+  (cons-stream (/ 1.0 n)
+               (stream-map - (ln2-summands (+ n 1)))))
+
+(define ln2-stream (partial-sums (ln2-summands 1.0)))
+
+(define (first-matching pred stream)
+  (define (iter stream n)
+    (if (pred (stream-car stream))
+        n
+        (iter (stream-cdr stream) (+ n 1))))
+  (iter stream 0))
+
+(define (accurate-to-n-decimal-places n expected)
+  (lambda (actual) (<= (abs (- expected actual)) (expt 10. (- n)))))
+
+;; Plain series. Running with n > 4 hits the maximum recursion depth!
+;; (first-matching (accurate-to-n-decimal-places 4 (log 2))
+;;                 ln2-stream)
+;; ;Value: 4999
+;;
+;; Using the Euler transformation
+;; (first-matching (accurate-to-n-decimal-places 10 (log 2))
+;;                 (euler-transform ln2-stream))
+;; ;Value: 1075
+;;
+;; Multiply-accelerated using the Euler transformation
+;; (first-matching (accurate-to-n-decimal-places 10 (log 2))
+;;                 (accelerated-sequence euler-transform ln2-stream))
+;; ;Value: 6
 
 
 ;;; Infinite streams of pairs
@@ -3211,13 +3281,79 @@
     (pairs (stream-cdr s) (stream-cdr t)))))
 
 
-;; EXERCISE 3.68
+;; EXERCISE 3.66
+;; For pair (i,j) in (pairs integers integers), the position in the stream grows
+;; as 2ⁱ * j. I count around 200 = 100 * 2¹ pairs before (1,100), so we can
+;; expect roughly 100 * 2⁹⁹ pairs before (99,100) and around 100 * 2¹⁰⁰ pairs
+;; before (100,100).
 
+
+;; EXERCISE 3.67
+(define (all-pairs s t)
+  (cons-stream
+    (list (stream-car s) (stream-car t))
+    (interleave (stream-map (lambda (x) (list (stream-car s) x))
+                            (stream-cdr t))
+                (interleave (stream-map (lambda (x) (list x (stream-car t)))
+                                        (stream-cdr s))
+                            (pairs (stream-cdr s) (stream-cdr t))))))
+
+
+;; EXERCISE 3.68
 (define (pairs s t)
   (interleave
    (stream-map (lambda (x) (list (stream-car s) x))
                t)
    (pairs (stream-cdr s) (stream-cdr t))))
+;; This doesn't work. The evaluation of the recursive call to pairs is no longer
+;; delayed, so evaluating (pairs integers integers), or pairs with any other
+;; arguments, leads to infinite recursion.
+
+
+;; EXERCISE 3.69
+(define (triples s t u)
+  (cons-stream
+    (list (stream-car s) (stream-car t) (stream-car u))
+    (interleave
+      (stream-map (lambda (pair) (cons (stream-car s) pair))
+                  (stream-cdr (pairs t u)))
+      (triples (stream-cdr s) (stream-cdr t) (stream-cdr u)))))
+
+(define pythagorean-triples
+  (stream-filter
+    (lambda (triple)
+      (= (+ (square (car triple)) (square (cadr triple)))
+         (square (caddr triple))))
+    (triples integers integers integers)))
+
+
+;; EXERCISE 3.70
+(define (merge-weighted s t weight)
+  (define (weight-pair p) (weight (car p) (cadr p)))
+  (define (weighted-interleave pairs1 pairs2)
+    (if (<= (weight-pair (stream-car pairs1))
+            (weight-pair (stream-car pairs2)))
+        (cons-stream (stream-car pairs1)
+                     (weighted-interleave (stream-cdr pairs1) pairs2))
+        (weighted-interleave pairs2 pairs1)))
+  (cons-stream
+    (list (stream-car s) (stream-car t))
+    (weighted-interleave
+      (stream-map (lambda (x) (list (stream-car s) x))
+                  (stream-cdr t))
+      (merge-weighted (stream-cdr s) (stream-cdr t) weight))))
+
+(define a (merge-weighted integers integers +))
+
+(define b
+  (let ((weighting
+         (lambda (i j) (+ (* 2 i) (* 3 j) (* 5 i j))))
+        (filtered-ints
+         (stream-filter (lambda (n) (not (or (= (remainder n 2) 0)
+                                             (= (remainder n 3) 0)
+                                             (= (remainder n 5) 0))))
+                        integers)))
+  (merge-weighted filtered-ints filtered-ints weighting)))
 
 
 ;;; Streams as signals
