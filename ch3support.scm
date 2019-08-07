@@ -48,3 +48,8 @@
   (if (= n 0)
       '()
       (cons (stream-car s) (first-n-of-series (stream-cdr s) (- n 1)))))
+
+
+;;For Section 3.5.3
+(define (average x y)
+  (/ (+ x y) 2))
