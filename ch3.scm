@@ -3356,6 +3356,28 @@
   (merge-weighted filtered-ints filtered-ints weighting)))
 
 
+;; EXERCISE 3.71
+(define ramanujan-numbers
+  (dups (stream-map (lambda (pair) (apply sum-cubes pair))
+        (merge-weighted integers integers sum-cubes))))
+
+(define (sum-cubes i j) (+ (* i i i) (* j j j)))
+
+(define (dups s)
+  (define (drop-all x s)
+    (if (= x (stream-car s))
+        (drop-all x (stream-cdr s))
+        s))
+  (if (= (stream-car s) (stream-car (stream-cdr s)))
+      (cons-stream (stream-car s)
+                   (dups (drop-all (stream-car s)
+                                   (stream-cdr s))))
+      (dups (stream-cdr s))))
+
+;(first-n-of-series ramanujan-numbers 6)
+;Value: (1729 4104 13832 20683 32832 39312)
+
+
 ;;; Streams as signals
 
 (define (integral integrand initial-value dt)
