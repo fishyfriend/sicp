@@ -3359,7 +3359,7 @@
 ;; EXERCISE 3.71
 (define ramanujan-numbers
   (dups (stream-map (lambda (pair) (apply sum-cubes pair))
-        (merge-weighted integers integers sum-cubes))))
+                    (merge-weighted integers integers sum-cubes))))
 
 (define (sum-cubes i j) (+ (* i i i) (* j j j)))
 
@@ -3376,6 +3376,37 @@
 
 ;(first-n-of-series ramanujan-numbers 6)
 ;Value: (1729 4104 13832 20683 32832 39312)
+
+
+;; EXERCISE 3.72
+;; The solution, sum-two-squares-three-ways, is a stream of lists
+;; (n ((a b) (c d) (e f))) where n = a² + b² = c² + d² = e² + f². Only the first
+;; three ways to express each n as the sum of two squares are given; any
+;; additional ways are ignored.
+
+(define (sum-squares i j) (+ (square i) (square j)))
+
+(define (trips-by-weight s weight)
+  (define (weight-pair pair) (weight (car pair) (cadr pair)))
+  (define (drop-while pred s)
+    (if (pred (stream-car s))
+        (drop-while pred (stream-cdr s))
+        s))
+  (let ((abc (first-n-of-series s 3)))
+    (let ((a (car abc)) (b (cadr abc)) (c (caddr abc)))
+      (if (= (weight-pair a) (weight-pair b) (weight-pair c))
+          (cons-stream
+            abc
+            (trips-by-weight
+              (drop-while (lambda (pair) (= (weight-pair pair) (weight-pair a)))
+                          (stream-cdr s))
+              weight))
+          (trips-by-weight (stream-cdr s) weight)))))
+
+(define sum-two-squares-three-ways
+  (stream-map (lambda (x) (list (apply sum-squares (car x)) x))
+              (trips-by-weight (merge-weighted integers integers sum-squares)
+                               sum-squares)))
 
 
 ;;; Streams as signals
