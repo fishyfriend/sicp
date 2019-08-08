@@ -3358,55 +3358,48 @@
 
 ;; EXERCISE 3.71
 (define ramanujan-numbers
-  (dups (stream-map (lambda (pair) (apply sum-cubes pair))
-                    (merge-weighted integers integers sum-cubes))))
+  (let ((nums (stream-map (lambda (pair) (apply sum-cubes pair))
+                          (merge-weighted integers integers sum-cubes))))
+    (let ((num-streams (make-tableau stream-cdr nums)))
+      (let ((matching-num-streams
+             (stream-filter
+               (lambda (ns)
+                 (and (= (stream-ref ns 0) (stream-ref ns 1))
+                      ;; avoid double-counting
+                      (not (= (stream-ref ns 1) (stream-ref ns 2)))))
+               num-streams)))
+        (stream-map stream-car matching-num-streams)))))
 
 (define (sum-cubes i j) (+ (* i i i) (* j j j)))
-
-(define (dups s)
-  (define (drop-all x s)
-    (if (= x (stream-car s))
-        (drop-all x (stream-cdr s))
-        s))
-  (if (= (stream-car s) (stream-car (stream-cdr s)))
-      (cons-stream (stream-car s)
-                   (dups (drop-all (stream-car s)
-                                   (stream-cdr s))))
-      (dups (stream-cdr s))))
 
 ;(first-n-of-series ramanujan-numbers 6)
 ;Value: (1729 4104 13832 20683 32832 39312)
 
 
 ;; EXERCISE 3.72
-;; The solution, sum-two-squares-three-ways, is a stream of lists
+;; The solution, sum-2-squares-3-ways, is a stream of lists
 ;; (n ((a b) (c d) (e f))) where n = a² + b² = c² + d² = e² + f². Only the first
 ;; three ways to express each n as the sum of two squares are given; any
 ;; additional ways are ignored.
 
 (define (sum-squares i j) (+ (square i) (square j)))
 
-(define (trips-by-weight s weight)
-  (define (weight-pair pair) (weight (car pair) (cadr pair)))
-  (define (drop-while pred s)
-    (if (pred (stream-car s))
-        (drop-while pred (stream-cdr s))
-        s))
-  (let ((abc (first-n-of-series s 3)))
-    (let ((a (car abc)) (b (cadr abc)) (c (caddr abc)))
-      (if (= (weight-pair a) (weight-pair b) (weight-pair c))
-          (cons-stream
-            abc
-            (trips-by-weight
-              (drop-while (lambda (pair) (= (weight-pair pair) (weight-pair a)))
-                          (stream-cdr s))
-              weight))
-          (trips-by-weight (stream-cdr s) weight)))))
-
-(define sum-two-squares-three-ways
-  (stream-map (lambda (x) (list (apply sum-squares (car x)) x))
-              (trips-by-weight (merge-weighted integers integers sum-squares)
-                               sum-squares)))
+(define sum-2-squares-3-ways
+  (let ((weight (lambda (pair) (sum-squares (car pair) (cadr pair))))
+        (pairs (merge-weighted integers integers sum-squares)))
+    (let ((pair-streams (make-tableau stream-cdr pairs)))
+      (let ((matching-pair-streams
+             (stream-filter
+               (lambda (ps) (and (= (weight (stream-ref ps 0))
+                                    (weight (stream-ref ps 1))
+                                    (weight (stream-ref ps 2)))
+                                 ;; avoid double-counting
+                                 (not (= (weight (stream-ref ps 2))
+                                         (weight (stream-ref ps 3))))))
+               pair-streams)))
+        (stream-map (lambda (pt) (cons (weight (car pt))
+                                       (first-n-of-series pt 3)))
+                    matching-pair-streams)))))
 
 
 ;;; Streams as signals
