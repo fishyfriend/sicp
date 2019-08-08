@@ -3517,6 +3517,38 @@
                     dt)))))
 
 
+;; EXERCISE 3.78
+(define (solve-2nd a b dt y0 dy0)
+  (define y (integral (delay dy) y0 dt))
+  (define dy (integral (delay ddy) dy0 dt))
+  (define ddy
+    (add-streams (scale-stream dy a)
+                 (scale-stream y b)))
+  y)
+
+
+;; EXERCISE 3.79
+(define (solve-2nd f y0 dy0 dt)
+  (define y (integral (delay dy) y0 dt))
+  (define dy (integral (delay ddy) dy0 dt))
+  (define ddy (stream-map f dy y))
+  y)
+
+
+;; EXERCISE 3.80
+(define (RLC R L C dt)
+  (lambda (vC0 iL0)
+    (define iL (integral (delay diL) iL0 dt))
+    (define vC (integral (delay dvC) vC0 dt))
+    (define dvC (scale-stream iL (/ -1. C)))
+    (define diL
+      (add-streams (scale-stream vC (/ 1. L))
+                   (scale-stream iL (- (/ R L)))))
+    (cons vC iL)))
+
+(define RLC1 ((RLC 1. 1. 0.2 0.1) 10. 0.))
+
+
 ;;;SECTION 3.5.5
 
 ;; same as in section 3.1.2
