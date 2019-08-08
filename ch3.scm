@@ -3412,8 +3412,21 @@
   int)
 
 
-;; EXERCISE 3.74
+;; EXERCISE 3.73
+(define (RC R C dt)
+  (lambda (i v0)
+    (add-streams (scale-stream i R)
+                 (integral (scale-stream i (/ 1.0 C))
+                           v0
+                           dt))))
 
+(define RC1 (RC 5 1 0.5))
+
+;(first-n-of-series (RC1 primes 5.0) 5)
+;Value: (15. 21. 32.5 45. 68.5)
+
+
+;; EXERCISE 3.74
 (define (make-zero-crossings input-stream last-value)
   (cons-stream
    (sign-change-detector (stream-car input-stream) last-value)
@@ -3422,15 +3435,40 @@
 
 ;: (define zero-crossings (make-zero-crossings sense-data 0))
 
+(define zero-crossings
+    (stream-map sign-change-detector sense-data (cons-stream 0 sense-data)))
 
 
 ;; EXERCISE 3.75
+;: (define (make-zero-crossings input-stream last-value)
+;:   (let ((avpt (/ (+ (stream-car input-stream) last-value) 2)))
+;:     (cons-stream (sign-change-detector avpt last-value)
+;:                  (make-zero-crossings (stream-cdr input-stream)
+;:                                       avpt))))
 
-(define (make-zero-crossings input-stream last-value)
+(define (make-zero-crossings input-stream last-value last-avpt)
   (let ((avpt (/ (+ (stream-car input-stream) last-value) 2)))
-    (cons-stream (sign-change-detector avpt last-value)
+    (cons-stream (sign-change-detector avpt last-avpt)
                  (make-zero-crossings (stream-cdr input-stream)
+                                      (stream-car input-stream)
                                       avpt))))
+
+(define zero-crossings
+  (make-zero-crossings sense-data 0. (* 0.5 (stream-car sense-data))))
+
+
+;; EXERCISE 3.76
+(define (smooth s)
+  (scale-stream (add-streams s (stream-cdr s)) 0.5))
+
+(define (make-zero-crossings input-stream initial-value smoother)
+  (let ((smoothed-input-stream
+         (smoother (cons-stream initial-value input-stream))))
+    (stream-map sign-change-detector
+                smoothed-input-stream
+                (cons-stream initial-value smoothed-input-stream))))
+
+(define zero-crossings (make-zero-crossings sense-data 0. smooth))
 
 
 ;;;SECTION 3.5.4
