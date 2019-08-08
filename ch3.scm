@@ -3589,6 +3589,55 @@
 ;:               (monte-carlo cesaro-stream 0 0)))
 
 
+;; EXERCISE 3.81
+;; A request is a list of the command followed by any arguments:
+;; '(generate) '(reset 7).
+(define (make-random-stream request-stream)
+  (define (invalid request) (error "Invalid request" r))
+  (define (make-numbers-stream init)
+    (define the-stream (stream-map rand-update (cons-stream init the-stream)))
+    the-stream)
+  (define (make-result-stream request-stream numbers-stream)
+    (if (empty-stream? request-stream)
+        the-empty-stream
+        (let ((request (stream-car request-stream)))
+          (if (pair? request)
+              (cond ((eq? (car request) 'generate)
+                     (cons-stream
+                       (stream-car numbers-stream)
+                       (make-result-stream (stream-cdr request-stream)
+                                           (stream-cdr numbers-stream))))
+                    ((eq? (car request) 'reset)
+                     (make-result-stream (stream-cdr request-stream)
+                                         (make-numbers-stream (cadr request))))
+                    (else (invalid request)))
+              (invalid request)))))
+  (make-result-stream request-stream (make-numbers-stream random-init)))
+
+
+;; EXERCISE 3.82
+(define (estimate-integral P x1 x2 y1 y2)
+  (define (rand-xy)
+    (cons (random-in-range x1 x2)
+          (random-in-range y1 y2)))
+  (define (inputs)
+    (cons-stream (rand-xy) (inputs)))
+  (define experiments
+    (stream-map (lambda (xy) (P (car xy) (cdr xy)))
+                (inputs)))
+  (scale-stream (monte-carlo experiments 0. 0.)
+                (* (abs (- x1 x2)) (abs (- y1 y2)))))
+
+(define estimate-pi
+  (estimate-integral
+    (lambda (x y)
+      (<= (+ (square x) (square y)) 1.))
+    -1. 1. -1. 1.))
+
+;(stream-ref estimate-pi 1000000)
+;Value: 3.144609
+
+
 ;; same as in section 3.1.3
 (define (make-simplified-withdraw balance)
   (lambda (amount)
