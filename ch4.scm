@@ -42,6 +42,9 @@
         ;; from exercise 6
         ((let? exp) (eval (let->combination exp) env))
 
+        ;; from exercise 7
+        ((let*? exp) (eval (let*->nested-lets exp) env))
+
         ((application? exp)
          (apply (eval (operator exp) env)
                 (list-of-values (operands exp) env)))
@@ -386,13 +389,37 @@
 
 
 ;; EXERCISE 4.7
+;: (let* ((x 3)
+;:        (y (+ x 2))
+;:        (z (+ x y 5)))
+;:   (* x z))
 
-(let* ((x 3)
-       (y (+ x 2))
-       (z (+ x y 5)))
-  (* x z))
+;; let* can be implemented as a nesting of let expressions where the outermost
+;; let binds the first variable in the let*, the next-outermost binds the second
+;; variable, etc.
 
-;; (eval (let*->nested-lets exp) env)
+(define (let*? exp) (tagged-list? exp 'let*))
+(define (let*-assignments exp) (let-assignments exp))
+(define (let*-body exp) (let-body exp))
+(define (let*-variables exp) (let-variables exp))
+(define (let*-values exp) (let-values exp))
+(define (make-let* assignments body) (cons 'let* (cons assignments body)))
+
+(define (let*->nested-lets exp)
+  (define (iter assignments)
+    (if (null? assignments)
+        (sequence->exp (let*-body exp))
+        (make-let (list (car assignments))
+                  (list (iter (cdr assignments))))))
+  (iter (let*-assignments exp)))
+
+;; It is sufficient to add the following clause to eval, as the evaluation of
+;; the nested lets will recursively call eval on the underlying non-derived
+;; expressions.
+
+;; add to eval
+;((let*? exp) (eval (let*->nested-lets exp) env))
+
 
 ;; EXERCISE 4.8
 (define (fib n)
