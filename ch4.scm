@@ -34,6 +34,11 @@
         ((begin? exp)
          (eval-sequence (begin-actions exp) env))
         ((cond? exp) (eval (cond->if exp) env))
+
+        ;; from exercise 4
+        ((and? exp) (eval-and exp env))
+        ((or? exp) (eval-or exp env))
+
         ((application? exp)
          (apply (eval (operator exp) env)
                 (list-of-values (operands exp) env)))
@@ -277,6 +282,40 @@
 ;; the operator is not recognized. The two procedures are similar in that they
 ;; both have a couple of special cases for variables and literal values, which
 ;; are handled outside of the type-based dispatch system.
+
+
+;; EXERCISE 4.4
+(define (and? exp) (tagged-list? exp 'and))
+(define (and-operands exp) (cdr exp))
+(define (make-and operands) (cons 'and operands))
+
+(define (eval-and exp env)
+  (let ((ops (and-operands exp)))
+    (if (no-operands? ops)
+        true
+        (let ((first-value (eval (first-operand ops) env)))
+          (if (true? first-value)
+              (if (no-operands? (rest-operands ops))
+                  first-value
+                  (eval-and (make-and (rest-operands ops)) env))
+              false)))))
+
+(define (or? exp) (tagged-list? exp 'or))
+(define (or-operands exp) (cdr exp))
+(define (make-or operands) (cons 'or operands))
+
+(define (eval-or exp env)
+  (let ((ops (or-operands exp)))
+    (if (no-operands? ops)
+        false
+        (let ((first-value (eval (first-operand ops) env)))
+          (if (true? first-value)
+              first-value
+              (eval-or (make-or (rest-operands ops)) env))))))
+
+;; add to eval
+;((and? exp) (eval-and exp env))
+;((or? exp) (eval-or exp env))
 
 
 ;; EXERCISE 4.5

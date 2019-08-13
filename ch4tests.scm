@@ -44,3 +44,17 @@
 
 (eval '(fun false) the-global-environment)
 ;Value: eyo
+
+
+;;EXERCISE 4.4
+(eval '(and true false 5) the-global-environment)
+;Value: #f
+
+(eval '(and true 5) the-global-environment)
+;Value: 5
+
+(eval '(or false 4 5) the-global-environment)
+;Value: 4
+
+(eval '(or false false) the-global-environment)
+;Value: #f
