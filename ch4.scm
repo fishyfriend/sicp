@@ -31,7 +31,7 @@
          (make-procedure (lambda-parameters exp)
                          (lambda-body exp)
                          env))
-        ((begin? exp) 
+        ((begin? exp)
          (eval-sequence (begin-actions exp) env))
         ((cond? exp) (eval (cond->if exp) env))
         ((application? exp)
@@ -510,7 +510,7 @@
   ((analyze exp) env))
 
 (define (analyze exp)
-  (cond ((self-evaluating? exp) 
+  (cond ((self-evaluating? exp)
          (analyze-self-evaluating exp))
         ((quoted? exp) (analyze-quoted exp))
         ((variable? exp) (analyze-variable exp))
@@ -646,7 +646,7 @@
          (make-procedure (lambda-parameters exp)
                          (lambda-body exp)
                          env))
-        ((begin? exp) 
+        ((begin? exp)
          (eval-sequence (begin-actions exp) env))
         ((cond? exp) (eval (cond->if exp) env))
         ((application? exp)		;**
@@ -1097,7 +1097,7 @@ count
 ;;
 ;;* here is analyze with that clause in it (*not* in book)
 (define (analyze exp)
-  (cond ((self-evaluating? exp) 
+  (cond ((self-evaluating? exp)
          (analyze-self-evaluating exp))
         ((quoted? exp) (analyze-quoted exp))
         ((variable? exp) (analyze-variable exp))
@@ -1175,7 +1175,7 @@ count
   (let ((var (definition-variable exp))
         (vproc (analyze (definition-value exp))))
     (lambda (env succeed fail)
-      (vproc env                        
+      (vproc env
              (lambda (val fail)
                (define-variable! var val env)
                (succeed 'ok fail))
@@ -1188,7 +1188,7 @@ count
       (vproc env
              (lambda (val fail)         ; *1*
                (let ((old-value
-                      (lookup-variable-value var env))) 
+                      (lookup-variable-value var env)))
                  (set-variable-value! var val env)
                  (succeed 'ok
                           (lambda ()    ; *2*
@@ -1307,7 +1307,7 @@ count
            (require (even? x))
            x)
          'all-odd)
- 
+
 (if-fail (let ((x (an-element-of '(1 3 5 8))))
            (require (even? x))
            x)
@@ -1910,7 +1910,7 @@ count
 
 (define (contract-question-mark variable)
   (string->symbol
-   (string-append "?" 
+   (string-append "?"
      (if (number? (cadr variable))
          (string-append (symbol->string (caddr variable))
                         "-"
@@ -1987,4 +1987,3 @@ count
   (+ (square x) (square y)))
 
 (sum-of-squares 3 4)
-
