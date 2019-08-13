@@ -58,3 +58,28 @@
 
 (eval '(or false false) the-global-environment)
 ;Value: #f
+
+
+;;EXERCISE 4.5
+(eval '(define (f x)
+         (cond ((and x (cdr x)) => car)
+               (x true)
+               (else x)))
+      the-global-environment)
+
+(eval '(f '(1 2 3)) the-global-environment)
+;Value: 2
+
+(eval '(f (cons 4 false)) the-global-environment)
+;Value: #t
+
+(eval '(f false) the-global-environment)
+;Value: #f
+
+
+;;EXERCISE 4.6
+(eval '(let ((x 5) (y 6)) (cons x y)) the-global-environment)
+;Value: (5 . 6)
+
+(eval '(let () 5) the-global-environment)
+;Value: 5

@@ -39,6 +39,9 @@
         ((and? exp) (eval-and exp env))
         ((or? exp) (eval-or exp env))
 
+        ;; from exercise 6
+        ((let? exp) (eval (let->combination exp) env))
+
         ((application? exp)
          (apply (eval (operator exp) env)
                 (list-of-values (operands exp) env)))
@@ -319,9 +322,67 @@
 
 
 ;; EXERCISE 4.5
+;: (cond ((assoc 'b '((a 1) (b 2))) => cadr)
+;:       (else false))
 
-(cond ((assoc 'b '((a 1) (b 2))) => cadr)
-      (else false))
+(define (cond-arrow-clause? clause) (eq? (cadr clause) '=>))
+(define (cond-arrow-test clause) (car clause))
+(define (cond-arrow-recipient clause) (caddr clause))
+(define (make-application op args) (cons op args))
+
+(define (expand-clauses clauses)
+  (if (null? clauses)
+      'false                          ; no else clause
+      (let ((first (car clauses))
+            (rest (cdr clauses)))
+        (cond ((cond-else-clause? first)
+               (if (null? rest)
+                   (sequence->exp (cond-actions first))
+                   (error "ELSE clause isn't last -- COND->IF"
+                          clauses)))
+              ((cond-arrow-clause? first)
+                (make-application
+                  (make-lambda
+                    '(test-result)
+                    (list
+                      (make-if 'test-result
+                               (make-application (cond-arrow-recipient first)
+                                                 '(test-result))
+                               (expand-clauses rest))))
+                  (list (cond-arrow-test first))))
+              (else
+                (make-if (cond-predicate first)
+                         (sequence->exp (cond-actions first))
+                         (expand-clauses rest)))))))
+
+
+;; EXERCISE 4.6
+(define (let? exp) (tagged-list? exp 'let))
+(define (let-assignments exp) (cadr exp))
+(define (let-body exp) (cddr exp))
+(define (let-variables exp)
+  (define (iter assignments)
+    (if (null? assignments)
+        '()
+        (cons (caar assignments) (iter (cdr assignments)))))
+  (iter (let-assignments exp)))
+
+(define (let-values exp)
+  (define (iter assignments)
+    (if (null? assignments)
+        '()
+        (cons (cadar assignments) (iter (cdr assignments)))))
+  (iter (let-assignments exp)))
+
+(define (make-let assignments body) (cons 'let (cons assignments body)))
+
+(define (let->combination exp)
+  (make-application
+    (make-lambda (let-variables exp) (let-body exp))
+    (let-values exp)))
+
+;; add to eval
+;((let? exp) (eval (let->combination exp) env)
 
 
 ;; EXERCISE 4.7
