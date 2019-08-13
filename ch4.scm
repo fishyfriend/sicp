@@ -230,6 +230,18 @@
                      (expand-clauses rest))))))
 
 
+;;EXERCISE 4.2
+;; a. Moving the clause for procedure application before the clause for
+;; assignments will cause assignments like (define x 3) to be treated as
+;; procedure applications. The actual clause for assignments will never be
+;; reached.
+
+;; b.
+(define (application? exp) (tagged-list? exp 'call))
+(define (operator exp) (cadr exp))
+(define (operands exp) (cddr exp))
+
+
 ;; EXERCISE 4.5
 
 (cond ((assoc 'b '((a 1) (b 2))) => cadr)

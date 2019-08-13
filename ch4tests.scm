@@ -16,3 +16,13 @@
 ;; right-to-left version of list-of-values
 (run-test)
 ;Value: (5 6)
+
+
+;;EXERCISE 4.2
+(eval '(begin (define (f) 5)
+              (f))
+      the-global-environment)
+;Error: Unknown expression type
+
+(eval '(call f) the-global-environment)
+;Value: 5
