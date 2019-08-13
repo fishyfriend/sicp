@@ -411,13 +411,38 @@
 
 
 ;; EXERCISE 4.8
-(define (fib n)
-  (let fib-iter ((a 1)
-                 (b 0)
-                 (count n))
-    (if (= count 0)
-        b
-        (fib-iter (+ a b) a (- count 1)))))
+;; Requires "more primitives" in ch4-mceval.scm
+
+;: (define (fib n)
+;:   (let fib-iter ((a 1)
+;:                  (b 0)
+;:                  (count n))
+;:     (if (= count 0)
+;:         b
+;:         (fib-iter (+ a b) a (- count 1)))))
+
+(define (named-let? exp) (and (let? exp) (variable? (cadr exp))))
+(define (named-let-name exp) (cadr exp))
+
+(define (make-named-let name assignments body)
+  (cons 'let (cons name (cons assignments body))))
+
+(define (let-assignments exp) (if (named-let? exp) (caddr exp) (cadr exp)))
+(define (let-body exp) (if (named-let? exp) (cdddr exp) (cddr exp)))
+
+(define (make-definition variable value) (list 'define variable value))
+
+(define (let->combination exp)
+  (let ((inner-proc (make-lambda (let-variables exp) (let-body exp))))
+    (if (named-let? exp)
+        (make-application
+          (make-lambda
+            '()
+            (list (make-definition (named-let-name exp) inner-proc)
+                  (make-application (named-let-name exp) (let-values exp))))
+          '())
+        (make-application inner-proc (let-values exp)))))
+
 
 
 

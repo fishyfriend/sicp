@@ -88,3 +88,9 @@
 ;;EXERCISE 4.7
 (eval '(let* ((x 5) (y 6) (xy (cons x y))) (car xy)) the-global-environment)
 ;Value: 5
+
+
+;;EXERCISE 4.8
+;; first eval the fib definition from exercise prompt
+(eval '(fib 6) the-global-environment)
+;Value: 8
