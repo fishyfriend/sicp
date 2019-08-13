@@ -26,3 +26,21 @@
 
 (eval '(call f) the-global-environment)
 ;Value: 5
+
+
+;;EXERCISE 4.3
+(eval '(begin (define msg 'hey)
+              (define fun
+                (lambda (arg)
+                  (cond (arg (set! msg false) 'sup)
+                        (else (if msg msg 'eyo))))))
+      the-global-environment)
+
+(eval '(fun false) the-global-environment)
+;Value: hey
+
+(eval '(fun true) the-global-environment)
+;Value: sup
+
+(eval '(fun false) the-global-environment)
+;Value: eyo

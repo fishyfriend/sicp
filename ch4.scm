@@ -242,6 +242,43 @@
 (define (operands exp) (cddr exp))
 
 
+;;EXERCISE 4.3
+;; Requires operation-table, get, and put from ch2support.scm
+
+(define (eval exp env)
+  (cond ((self-evaluating? exp) exp)
+        ((variable? exp) (lookup-variable-value exp env))
+        ((pair? exp)
+         (let ((evaluator (or (get 'eval (operator exp))
+                              (get 'eval '_application))))
+           (evaluator exp env)))
+        (else (error "Unknown expression type -- EVAL" exp))))
+
+(put 'eval 'quote (lambda (exp env) (text-of-quotation exp)))
+(put 'eval 'set! eval-assignment)
+(put 'eval 'define eval-definition)
+(put 'eval 'if eval-if)
+(put 'eval 'begin (lambda (exp env) (eval-sequence (begin-actions exp) env)))
+(put 'eval 'cond (lambda (exp env) (eval (cond->if exp) env)))
+
+(put 'eval 'lambda (lambda (exp env)
+                     (make-procedure (lambda-parameters exp)
+                                     (lambda-body exp)
+                                     env)))
+
+(put 'eval '_application (lambda (exp env)
+                           (apply (eval (operator exp) env)
+                                  (list-of-values (operands exp) env))))
+
+;; The data-directed implementation of eval differs from the data-directed
+;; differentiation procedure of exercise 2.73 in that compound expressions can
+;; have arbitrary operators (i.e. when representing a procedure call), and so it
+;; must perform an additional "catchall" dispatch (get 'eval '_application) when
+;; the operator is not recognized. The two procedures are similar in that they
+;; both have a couple of special cases for variables and literal values, which
+;; are handled outside of the type-based dispatch system.
+
+
 ;; EXERCISE 4.5
 
 (cond ((assoc 'b '((a 1) (b 2))) => cadr)
