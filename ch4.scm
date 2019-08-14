@@ -444,6 +444,158 @@
         (make-application inner-proc (let-values exp)))))
 
 
+;;EXERCISE 4.9
+;; The usage examples require "more primitives" from ch4-mceval.scm.
+
+;; (do action pred) evaluates action and pred in order, repeatedly until pred
+;; evaluates to false. The return value is the final value of action.
+;;
+;;   (let ((count 0))
+;;     (do (begin (set! count (+ count 1))
+;;                count)
+;;         (< count 5)))
+;;   ;Value: 5
+
+(define (do? exp) (tagged-list? exp 'do))
+(define (do-action exp) (cadr exp))
+(define (do-predicate exp) (caddr exp))
+
+(define (do->combination exp)
+  (make-application
+    (make-lambda '() (list
+      (make-definition 'loop
+        (make-lambda '(action predicate) (list
+          (make-let
+            (list (list 'result (make-application 'action '())))
+            (list (make-if (make-application 'predicate '())
+                           (make-application 'loop '(action predicate))
+                           'result))))))
+      (make-application 'loop (list
+        (make-lambda '() (list (do-action exp)))
+        (make-lambda '() (list (do-predicate exp)))))))
+    '()))
+
+;; add to eval
+;((do? exp) (eval (do->combination exp) env))
+
+;; (for ((variable1 value1) (variable2 value2) ...)
+;;      (condition1 condition2 ...)
+;;      (increment1 increment2 ...)
+;;      action1 action2 ...)
+;;
+;; creates an environment with the specified variables and initial values, then
+;; evaluates repeatedly in this environment the conditions, then the actions,
+;; then the increment expressions, each in order, until a condition evaluates to
+;; false. The return value is the final value of the last action, or false if
+;; this was never evaluated (i.e. if a condition was false on the first
+;; iteration).
+;;
+;;   (for ((a 0) (b 1))
+;;        ((< a 5) (< b 10))
+;;        ((set! a (+ a 2)) (set! b (+ b 3)))
+;;        (+ a b))
+;;   ;Value: 11
+;;
+;;   (for ((a 0) (b 1))
+;;        ((> a b))
+;;        ((set! b (+ b 1)))
+;;        b)
+;;   ;Value: #f
+
+(define (for? exp) (tagged-list? exp 'for))
+(define (for-assignments exp) (cadr exp))
+(define (for-predicates exp) (caddr exp))
+(define (for-increments exp) (cadddr exp))
+(define (for-body exp) (cddddr exp))
+
+(define (for->combination exp)
+  (let->combination
+    (make-let
+      (for-assignments exp)
+      (list
+        (make-let
+          (list (list 'increment (make-lambda '() (for-increments exp)))
+                (list 'body (make-lambda '() (for-body exp))))
+          (list
+            (make-while
+              (make-and (for-predicates exp))
+              (list
+                (make-let
+                  (list (list 'result (make-application 'body '())))
+                  (list (make-application 'increment '())
+                        'result))))))))))
+
+;; add to eval
+;((for? exp) (eval (for->combination exp) env))
+
+;; (while pred action1 action2 ...) evaluates pred and the actions in order,
+;; repeatedly until pred evaluates to false. The return value is the final
+;; value of the last action, or false if this was never evaluated (i.e. if pred
+;; was false on the first iteration).
+;;
+;;   (let ((count 0))
+;;     (while (< count 5)
+;;            (set! count (+ count 1))
+;;            count))
+;;   ;Value: 5
+;;
+;;   (while (= 2 3) 4)
+;;   ;Value: #f
+
+(define (while? exp) (tagged-list? exp 'while))
+(define (while-predicate exp) (cadr exp))
+(define (while-body exp) (cddr exp))
+(define (make-while pred body) (cons 'while (cons pred body)))
+
+(define (while->combination exp)
+  (make-application
+    (make-lambda '(pred body)
+      (list (make-definition 'loop
+              (make-lambda '(previous-result)
+                (list (make-if (make-application 'pred '())
+                               (make-application 'loop
+                                 (list (make-application 'body '())))
+                               'previous-result))))
+            (make-application 'loop '(false))))
+    (list (make-lambda '() (list (while-predicate exp)))
+          (make-lambda '() (while-body exp)))))
+
+;; add to eval
+;((while? exp) (eval (while->combination exp) env))
+
+;; (until pred action1 action2 ...) evaluates pred and the actions in order,
+;; repeatedly until pred evaluates to something other than false. The return
+;; value is the final value of the last action, or false if this was never
+;; evaluated (i.e. if pred was non-false on the first iteration).
+;;
+;;   (let ((count 0))
+;;     (until (= count 5)
+;;            (set! count (+ count 1))
+;;            count))
+;;   ;Value: 5
+;;
+;;   (until (= 2 2) 4)
+;;   ;Value: #f
+
+(define (until? exp) (tagged-list? exp 'until))
+(define (until-predicate exp) (cadr exp))
+(define (until-body exp) (cddr exp))
+
+(define (until->combination exp)
+  (make-application
+    (make-lambda '(pred body)
+      (list (make-definition 'loop
+              (make-lambda '(previous-result)
+                (list (make-if (make-application 'pred '())
+                               'previous-result
+                               (make-application 'loop
+                                 (list (make-application 'body '())))))))
+            (make-application 'loop '(false))))
+    (list (make-lambda '() (list (until-predicate exp)))
+          (make-lambda '() (until-body exp)))))
+
+;; add to eval
+;((until? exp) (eval (until->combination exp) env))
 
 
 ;;;SECTION 4.1.3

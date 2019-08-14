@@ -41,6 +41,12 @@
         ;; from exercise 7
         ((let*? exp) (eval (let*->nested-lets exp) env))
 
+        ;; from exercise 9
+        ((do? exp) (eval (do->combination exp) env))
+        ((for? exp) (eval (for->combination exp) env))
+        ((while? exp) (eval (while->combination exp) env))
+        ((until? exp) (eval (until->combination exp) env))
+
         ((application? exp)
          (apply (eval (operator exp) env)
                 (list-of-values (operands exp) env)))
