@@ -97,3 +97,16 @@
 ;; first eval the fib definition from exercise prompt
 (eval '(fib 6) the-global-environment)
 ;Value: 8
+
+
+;;;SECTION 4.1.3
+
+
+;;EXERCISE 4.11
+(define my-frame (make-frame '((b 2) (c 3))))
+(equal? my-frame (make-frame (frame-bindings my-frame)))
+;Value: #t
+
+(add-binding-to-frame! 'a 1 my-frame)
+(equal? my-frame (make-frame '((a 1) (b 2) (c 3))))
+;Value: #t

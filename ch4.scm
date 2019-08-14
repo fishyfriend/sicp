@@ -788,6 +788,44 @@
     (scan (frame-variables frame)
           (frame-values frame))))
 
+
+;; EXERCISE 4.11
+(define (make-frame bindings) (cons '*frame* bindings))
+(define (frame-bindings frame) (cdr frame))
+(define (add-binding-to-frame! var val frame)
+  (set-cdr! frame (cons (list var val) (cdr frame))))
+
+(define (extend-environment vars vals base-env)
+  (cons (make-frame (map list vars vals))
+        base-env))
+
+(define (lookup-variable-value var env)
+  (define (env-loop env)
+    (define (scan bindings)
+      (cond ((null? bindings) (env-loop (enclosing-environment env)))
+            ((eq? var (caar bindings)) (cadar bindings))
+            (else (scan (cdr bindings)))))
+    (if (eq? env the-empty-environment)
+        (error "Unbound variable" var)
+        (let ((frame (first-frame env)))
+          (scan (frame-bindings frame))))
+  (env-loop env)))
+
+(define (set-variable-value! var val env)
+  (define (env-loop env)
+    (define (scan bindings)
+      (cond ((null? bindings) (env-loop (enclosing-environment env)))
+            ((eq? var (caar bindings)) (set-car! (cdar bindings) val))
+            (else (scan (cdr bindings)))))
+    (if (eq? env the-empty-environment)
+        (error "Unbound variable -- SET!" var)
+        (let ((frame (first-frame env)))
+          (scan (frame-bindings frame)))))
+  (env-loop env))
+
+
+
+
 ;;;SECTION 4.1.4
 
 (define (setup-environment)
