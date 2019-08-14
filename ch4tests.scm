@@ -93,7 +93,7 @@
 ;Value: 5
 
 
-;;EXERCISE 4.8
+;;EXERCISE 4.8, EXERCISE 4.10
 ;; first eval the fib definition from exercise prompt
 (eval '(fib 6) the-global-environment)
 ;Value: 8

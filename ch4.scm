@@ -598,6 +598,113 @@
 ;((until? exp) (eval (until->combination exp) env))
 
 
+;; EXERCISE 4.10
+;; The example summarizes the syntax changes; descriptions of each are given
+;; below.
+;;
+;;   ((fib n) ::=
+;;     (a ::= 0)
+;;     (b ::= 1)
+;;     (shift ::= (fun n ->
+;;       (if (= n 0) then a else
+;;         (let ((a+b ::= (+ a b)))
+;;           (a := b)
+;;           (b := a+b)
+;;           (shift (- n 1))))))
+;;     (shift n))
+
+;; Assignments:
+;;   (variable := value)
+
+(define (assignment? exp)
+  (and (pair? exp)
+       (eq? (cadr exp) ':=)))
+
+(define (assignment-variable exp) (car exp))
+(define (assignment-value exp) (caddr exp))
+
+;; Definitions:
+;;  (variable ::= value)
+;;  ((procedure param1 param2 ...) ::= exp1 exp2 ...)
+
+(define (definition? exp)
+  (and (pair? exp)
+       (eq? (cadr exp) '::=)))
+
+(define (definition-variable exp)
+  (if (symbol? (car exp))
+      (car exp)
+      (caar exp)))
+
+(define (definition-value exp)
+  (if (symbol? (car exp))
+      (caddr exp)
+      (make-lambda (cdar exp) (cddr exp))))
+
+;; Conditionals:
+;;   (if predicate then consequent)
+;;   (if predicate then consequent else alternative)
+;;   (cond ...) is unchanged.
+
+(define (if? exp)
+  (and (tagged-list? exp 'if)
+       (eq? (caddr exp) 'then)))
+
+(define (if-predicate exp) (cadr exp))
+(define (if-consequent exp) (cadddr exp))
+
+(define (if-alternative exp)
+  (let ((else-clause (cddddr exp)))
+    (cond ((null? else-clause) 'false)
+          ((not (eq? (car else-clause) 'else))
+           (error "Malformed else clause" else-clause))
+          ((null? (cdr else-clause))
+           (error "Empty else clause"))
+          (else (cadr else-clause)))))
+
+(define (make-if predicate consequent alternative)
+  (list 'if predicate 'then consequent 'else alternative))
+
+;; Lambdas:
+;;   (fun param1 param2 ... -> exp1 exp2 ...)
+
+(define (lambda? exp)
+  (if (and (eq? (car exp) 'fun)
+           (memq '-> (cdr exp)))
+      true
+      false))
+
+(define (lambda-parameters exp)
+  (define (iter acc rest)
+    (if (eq? (car rest) '->)
+        (reverse acc)
+        (iter (cons (car rest) acc) (cdr rest))))
+  (iter '() (cdr exp)))
+
+(define (lambda-body exp) (cdr (memq '-> exp)))
+
+(define (make-lambda parameters body)
+  (append (cons 'fun parameters) (cons '-> body)))
+
+;; Let-bindings:
+;;   (let ((variable1 ::= value1) (variable2 ::= value2) ...) exp1 exp2 ...)
+;;   let* and named-let are not supported.
+
+(define (let-assignments exp)
+  (map (lambda (a) (list (car a) (caddr a)))
+       (cadr exp)))
+
+(define (let-body exp) (cddr exp))
+(define (let-variables exp) (map car (let-assignments exp)))
+(define (let-values exp) (map cadr (let-assignments exp)))
+
+(define (make-let assignments body)
+  (cons 'let
+        (cons (map (function (a) (list (car a) '::= (cadr a)))
+                   assignments)
+              body)))
+
+
 ;;;SECTION 4.1.3
 
 (define (true? x)
