@@ -824,6 +824,55 @@
   (env-loop env))
 
 
+;; EXERCISE 4.12
+;; This and subsequent exercises use the textbook representation of frames, not
+;; the representation as lists of pairs from exercise 11.
+
+(define (scan-frame f frame)
+  (define (iter vars vals)
+    (if (null? vars)
+        false
+        (let ((result (f vars vals)))
+          (if result
+              result
+              (iter (cdr vars) (cdr vals))))))
+  (iter (frame-variables frame) (frame-values frame)))
+
+(define (scan-env f env)
+  (if (eq? the-empty-environment env)
+      false
+      (let ((result (scan-frame f (first-frame env))))
+        (if result
+            result
+            (scan-env f (enclosing-environment env))))))
+
+(define (set-variable-value! var val env)
+  (or (scan-env (lambda (vars vals)
+                  (if (eq? (car vars) var)
+                      (begin (set-car! vals val) 'ok)
+                      false))
+                env)
+      (error "Unbound variable -- SET!" var)))
+
+(define (define-variable! var val env)
+  (let ((frame (first-frame env)))
+    (scan-frame
+      (lambda (vars vals)
+        (if (eq? (car vars) var)
+            (set-car! vals val)
+            (add-binding-to-frame! var val frame))
+        'ok)
+      frame)))
+
+(define (lookup-variable-value var env)
+  (or (scan-env (lambda (vars vals)
+                  (if (eq? (car vars) var)
+                      (car vals)
+                      false))
+                env)
+      (error "Unbound variable" var)))
+
+
 
 
 ;;;SECTION 4.1.4

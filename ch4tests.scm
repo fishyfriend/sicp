@@ -110,3 +110,43 @@
 (add-binding-to-frame! 'a 1 my-frame)
 (equal? my-frame (make-frame '((a 1) (b 2) (c 3))))
 ;Value: #t
+
+
+;;EXERCISE 4.12
+(define outer-env (extend-environment '(x y) '(6 7) the-global-environment))
+(define inner-env (extend-environment '(y z) '(8 9) outer-env))
+
+(lookup-variable-value 'x inner-env)
+;Value: 6
+
+(lookup-variable-value 'y inner-env)
+;Value: 8
+
+(define-variable! 'w 5 inner-env)
+
+(lookup-variable-value 'w inner-env)
+;Value: 5
+
+(lookup-variable-value 'w outer-env)
+;Error: Unbound variable
+
+(define-variable! 'w 55 inner-env)
+
+(lookup-variable-value 'w inner-env)
+;Value: 55
+
+(set-variable-value! 'x 66 outer-env)
+
+(lookup-variable-value 'x inner-env)
+;Value: 66
+
+(set-variable-value! 'y 88 inner-env)
+
+(lookup-variable-value 'y inner-env)
+;Value: 88
+
+(lookup-variable-value 'y outer-env)
+;Value: 7
+
+(set-variable-value! 'v 4 inner-env)
+;Error: Unbound variable
