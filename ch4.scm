@@ -1019,7 +1019,21 @@
   (if (halts? p p)
       (run-forever)
       'halted))
-
+
+;; If we run (try try), the two possible outcomes are the branches of the if
+;; statement: either (A) the program runs forever, or (B) it returns the value
+;; 'halted. If the outcome was (A), then (halts? try try) must have returned
+;; true in order for that branch to have been selected. However, that would
+;; imply that (try try) halts, which is clearly not the case since it runs
+;; forever. Similarly if we got outcome (B), that would imply (halts? try try)
+;; returned false, which contradicts the observed behavior that it did in fact
+;; halt. With either possible outcome, halts? cannot accurately describe the
+;; behavior of (try try) without a logical inconsistency. Thus, for p=try a=try,
+;; it is impossible for (halts? p a) to correctly determine whether p halts on
+;; a. This proves generally that it is impossible to write a halts? that works
+;; for all p and a.
+
+
 ;;;SECTION 4.1.6
 
 (define (f x)
