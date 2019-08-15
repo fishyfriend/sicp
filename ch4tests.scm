@@ -1,8 +1,3 @@
-;;;SECTION 4.1.1-4.1.2
-;; Before each exercise, restart scheme and load ch4-mceval.scm including the
-;; commented-out initialization of the-global-environment.
-
-
 ;;EXERCISE 4.1
 (define (run-test)
   (eval '(begin (define log '())
