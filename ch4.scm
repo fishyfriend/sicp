@@ -1051,6 +1051,55 @@
   )
 
 
+;; EXERCISE 4.16
+;; a.
+(define (lookup-variable-value var env)
+  (let ((maybe-val
+         (scan-env (lambda (vars vals)
+                     (if (eq? (car vars) var)
+                         (list (car vals))
+                         false))
+                env)))
+    (cond ((not maybe-val) (error "Unbound variable" var))
+          ((eq? (car maybe-val) '*unassigned*)
+           (error "Attempt to use uninitialized variable" var))
+          (else (car maybe-val)))))
+
+;; b.
+(define (scan-out-defines exps)
+  (define (iter vars vals others exps)
+    (cond ((null? exps) (make-body vars vals others))
+          ((definition? (car exps))
+           (iter (cons (definition-variable (car exps)) vars)
+                 (cons (definition-value (car exps)) vals)
+                 others
+                 (cdr exps)))
+          (else (iter vars vals (cons (car exps) others) (cdr exps)))))
+  (define (make-body vars vals others)
+    (if (null? vars)
+        others
+        (list (make-let
+                (map (lambda (var) (list var ''*unassigned*))
+                     vars)
+                (append
+                  (map (lambda (var val) (make-assignment var val))
+                       vars
+                       vals)
+                  others)))))
+  (iter '() '() '() (reverse exps)))
+
+(define (make-assignment var val) (list 'set! var val))
+
+;; c.
+;; It is better to call scan-out-defines in make-procedure rather than
+;; procedure-body so that the scanning out needs to happen only once, when a
+;; procedure object is created, rather than each time the procedure body is
+;; accessed (which could potentially happen many times).
+
+(define (make-procedure parameters body env)
+  (list 'procedure parameters (scan-out-defines body) env))
+
+
 ;; EXERCISE 4.19
 
 (let ((a 1))

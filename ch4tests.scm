@@ -154,3 +154,43 @@
 (make-unbound! 'x outer-env)
 (lookup-variable-value 'x inner-env)
 ;Error: Unbound variable
+
+
+;;EXERCISE 4.16
+;; a. first repeat tests from exercise 12
+(define-variable! 'u '*unassigned* the-global-environment)
+(lookup-variable-value 'u the-global-environment)
+;Error: Attempt to use uninitialized variable u
+
+;; b. example from the text, section 4.1.6
+(define before
+  '((define u e1)
+    (define v e2)
+    e3))
+
+(define after
+  '((let ((u '*unassigned*)
+          (v '*unassigned*))
+     (set! u e1)
+     (set! v e2)
+     e3)))
+
+(equal? (scan-out-defines before) after)
+;Value: #t
+
+;; c.
+(eval '((lambda ()
+          (define a b)
+          (define b 5)
+          (+ a b)))
+      the-global-environment)
+;Error: Attempt to use uninitialized variable b
+
+(eval '(begin
+         (define (f x)
+           (define (g) y)
+           (define y x)
+           (g))
+         (f 5))
+      the-global-environment)
+;Value: 5
