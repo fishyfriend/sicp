@@ -988,6 +988,18 @@
 (append '(a b c) '(d e f))
 
 
+;; EXERCISE 4.14
+;; The system version of map can't serve as a primitive implementation "as-is"
+;; because it involves procedure application. When the evaluator processes
+;; (map f items), the arguments are evaluated first. The f argument, assuming a
+;; sensible one has been passed, will evaluate to a procedure value: in our
+;; current representation, either (procedure ...) or (primitive ...). Next,
+;; apply-primitive-procedure will attempt to apply the system map procedure to
+;; the evaluated arguments. This undoubtedly involves applying the f argument to
+;; list items. But as the f argument is not a valid procedure in the underlying
+;; Scheme, this attempted application leads to an error.
+
+
 ;;;SECTION 4.1.5
 
 (define (factorial n)
