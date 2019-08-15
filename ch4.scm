@@ -873,6 +873,39 @@
       (error "Unbound variable" var)))
 
 
+;; EXERCISE 4.13
+;; (make-unbound! var env) removes any definition of var from the first frame
+;; of env. It is not an error if var was not defined in the first frame. Any
+;; definitions in enclosing frames are not affected.
+;;
+;; I limit make-unbound!'s effect to the first frame so that it resembles its
+;; approximate inverse operation, define-variable!, and also because there's no
+;; clear reason why one would need the other behavior. If we were to implement
+;; an undefine special form (the opposite of define), then for parallelism with
+;; define and for the preservation of modularity, we'd want it to be able to
+;; operate only on the innermost frame.
+;;
+;; I do not require that var be bound as a precondition because that is easy
+;; enough to check explicitly if needed, and the name of the procedure,
+;; make-unbound!, highlights the postcondition that var is unbound, suggesting
+;; its effect should be the same regardless whether var was bound initially.
+;; (If the procedure were instead called unbind!, the other behavior might be
+;; indicated.) In addition to these reasons, there is also a similarity with
+;; define-variable! here, as that procedure operates regardless of whether the
+;; name in question is bound.
+
+(define (make-unbound! var env)
+  (or (scan-frame
+        (lambda (vars vals)
+          (if (eq? (car vars) var)
+              (begin (set-car! vars (cadr vars))
+                     (set-cdr! vars (cddr vars))
+                     (set-car! vals (cadr vals))
+                     (set-cdr! vals (cddr vals))
+                     'ok)
+              false))
+        (first-frame env))
+      'ok))
 
 
 ;;;SECTION 4.1.4

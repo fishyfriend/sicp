@@ -150,3 +150,16 @@
 
 (set-variable-value! 'v 4 inner-env)
 ;Error: Unbound variable
+
+
+;;EXERCISE 4.13
+(define outer-env (extend-environment '(x y) '(6 7) the-global-environment))
+(define inner-env (extend-environment '(y z) '(8 9) outer-env))
+
+(make-unbound! 'x inner-env)
+(lookup-variable-value 'x inner-env)
+;Value: 6
+
+(make-unbound! 'x outer-env)
+(lookup-variable-value 'x inner-env)
+;Error: Unbound variable
