@@ -865,12 +865,14 @@
       frame)))
 
 (define (lookup-variable-value var env)
-  (or (scan-env (lambda (vars vals)
-                  (if (eq? (car vars) var)
-                      (car vals)
-                      false))
-                env)
-      (error "Unbound variable" var)))
+  (let ((maybe-val
+         (scan-env (lambda (vars vals)
+                     (if (eq? (car vars) var)
+                         (list (car vals))
+                         false))
+                env)))
+    (cond (maybe-val => car)
+          (else (error "Unbound variable" var)))))
 
 
 ;; EXERCISE 4.13

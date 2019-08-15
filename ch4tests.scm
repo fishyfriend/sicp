@@ -118,7 +118,6 @@
 ;Value: 8
 
 (define-variable! 'w 5 inner-env)
-
 (lookup-variable-value 'w inner-env)
 ;Value: 5
 
@@ -126,19 +125,16 @@
 ;Error: Unbound variable
 
 (define-variable! 'w 55 inner-env)
-
 (lookup-variable-value 'w inner-env)
 ;Value: 55
 
 (set-variable-value! 'x 66 outer-env)
-
 (lookup-variable-value 'x inner-env)
 ;Value: 66
 
-(set-variable-value! 'y 88 inner-env)
-
+(set-variable-value! 'y false inner-env)
 (lookup-variable-value 'y inner-env)
-;Value: 88
+;Value: #f
 
 (lookup-variable-value 'y outer-env)
 ;Value: 7
