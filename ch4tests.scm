@@ -122,7 +122,7 @@
 ;Value: 5
 
 (lookup-variable-value 'w outer-env)
-;Error: Unbound variable
+;Error: Unbound variable w
 
 (define-variable! 'w 55 inner-env)
 (lookup-variable-value 'w inner-env)
@@ -140,7 +140,7 @@
 ;Value: 7
 
 (set-variable-value! 'v 4 inner-env)
-;Error: Unbound variable
+;Error: Unbound variable v
 
 
 ;;EXERCISE 4.13
@@ -153,7 +153,7 @@
 
 (make-unbound! 'x outer-env)
 (lookup-variable-value 'x inner-env)
-;Error: Unbound variable
+;Error: Unbound variable x
 
 
 ;;EXERCISE 4.16
