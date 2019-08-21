@@ -210,3 +210,30 @@
 ;Value: #t
 
 ;; Repeat test case for exercise 16 part c
+
+
+;; EXERCISE 4.19
+(define before
+  '((define u e1)
+    (define v e2)
+    e3))
+
+(define after
+  '((define u (cons '*unassigned* (quote e1)))
+    (define v (cons '*unassigned* (quote e2)))
+    u
+    v
+    e3))
+
+(equal? (scan-out-defines before) after)
+;Value: #t
+
+(eval
+  '(let ((a 1))
+    (define (f x)
+      (define b (+ a x))
+      (define a 5)
+      (+ a b))
+    (f 10))
+  the-global-environment)
+;Value: 20

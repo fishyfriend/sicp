@@ -1213,18 +1213,96 @@
 
 
 ;; EXERCISE 4.19
+;; Require exercise 4-9, 12, and 16
 
-(let ((a 1))
-  (define (f x)
-    (define b (+ a x))
-    (define a 5)
-    (+ a b))
-  (f 10))
+;: (let ((a 1))
+;:   (define (f x)
+;:     (define b (+ a x))
+;:     (define a 5)
+;:     (+ a b))
+;:   (f 10))
 
 ;;Behavior of above is
 ;; in MIT Scheme: --> ;Unassigned variable: a  [Alyssa]
 ;; in MC-Eval:--> 16 (sequential rule)     [Ben]
 ;; in MC-Eval with scanout: --> ;Unassigned variable a
+
+;; Of the three approaches, I like Alyssa's best. I would eliminate Ben's
+;; approach because it feels un-Lisp-like and hard to reason about. It makes the
+;; environment of later define directives within a sequence depend on earlier
+;; ones: this is a hierarchical relationship and should be expressed
+;; hierarchically, i.e., with nested parentheses, rather than sequentially. We
+;; already have nice constructs (let, let*) that express such relationships more
+;; clearly.
+;;
+;; Eva's view does not suffer from the same shortcoming, but permits confusing
+;; code. In the example above, it is challenging to remember that the first a
+;; refers to the variable defined below (=5) rather than the outer variable (=1)
+;; given the untuition that if we just defined a variable to a certain value,
+;; the next reference to a variable of that name ought to produce that value.
+;; A hybrid approach might be possible, so that in
+;;
+;;   (let ((a 1))
+;;     (define b (+ a 3))
+;;     (define a 5)
+;;     (define c (+ a 4))
+;;     ...
+;;
+;; the first a refers to the outer scope (=1) and the second to the inner (=5);
+;; however, this reintroduces the same problem we saw with Ben's approach, i.e.,
+;; confusingly expresses a hierarchical relationship in a sequential manner.
+;;
+;; We are left with Alyssa's approach, which does not introduce hierarchy like
+;; Ben's, and does not permit confusing code like Eva's, as recursive references
+;; of that sort will cause an error. While less flexible, this approach forces
+;; the programmer to do something clearer when dealing with recursive
+;; definitions or shadowing: e.g. use an additional let- or let*-expression, or
+;; rename a variable.
+;;
+;; All this said, I would be in favor of removing define entirely from Scheme
+;; and simply relying on let and let*, which are unambiguous and desugar in an
+;; easy-to-understand way. To facilitate this I would add a shortcut for
+;; procedure definitions, similar to what we currently have with define:
+;;
+;;   (let (((f x) (+ x 5))) ...)
+;;
+;; This change would also remove a redundancy from the language and encourage
+;; a more functional, expression-oriented style of programming by encouraging
+;; the programmer to think of frames as sets of bound values rather than as
+;; mutable objects to be modified step-by-step using a construct (define) that
+;; looks like a procedure call. The downside of this change is that mutually
+;; recursive, simultaneous definitions aren't possible with either let or let*,
+;; but for those it appears we have letrec (see exercise 20).
+
+;; Implementation of Eva's behavior
+;; N.B. Not thread-safe
+(define (lookup-variable-value var env)
+  (let ((var-and-val (lookup-variable-and-raw-value var env)))
+    (if var-and-val
+        (let ((val (cdr var-and-val)))
+          (cond ((eq? val '*assigning*)
+                 (error "Invalid recursive reference" var))
+                ((and (pair? val) (eq? (car val) '*unassigned*))
+                 (let ((val-exp (cdr val)))
+                   (set-variable-value! var '*assigning* env)
+                   (let ((new-val (eval val-exp env)))
+                     (set-variable-value! var new-val env)
+                     new-val)))
+                (else val)))
+        (error "Unbound variable" var))))
+
+(define (scan-out-defines exps)
+  (define (make-body vars vals others)
+    (append
+      (map (lambda (var val)
+             (make-definition var
+                              (list 'cons ''*unassigned* (list 'quote val))))
+           vars
+           vals)
+      vars
+      others))
+  (rewrite-defines make-body exps))
+
 
 ;; EXERCISE 4.20
 (define (f x)
