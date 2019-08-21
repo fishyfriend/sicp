@@ -1050,6 +1050,18 @@
   ;; rest of body of f
   )
 
+;: (lambda <vars>
+;:   (define u <e1>)
+;:   (define v <e2>)
+;:   <e3>)
+;:
+;: (lambda <vars>
+;:   (let ((u '*unassigned*)
+;:         (v '*unassigned*))
+;:     (set! u <e1>)
+;:     (set! v <e1>)
+;:     <e3>))
+
 
 ;; EXERCISE 4.16
 ;; a.
