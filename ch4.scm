@@ -856,13 +856,13 @@
 
 (define (define-variable! var val env)
   (let ((frame (first-frame env)))
-    (scan-frame
-      (lambda (vars vals)
-        (if (eq? (car vars) var)
-            (set-car! vals val)
-            (add-binding-to-frame! var val frame))
-        'ok)
-      frame)))
+    (or (scan-frame
+          (lambda (vars vals)
+            (if (eq? (car vars) var)
+                (begin (set-car! vals val) 'ok)
+                false))
+          frame)
+        (begin (add-binding-to-frame! var val frame) 'ok))))
 
 (define (lookup-variable-value var env)
   (let ((maybe-val
