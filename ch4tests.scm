@@ -194,3 +194,22 @@
          (f 5))
       the-global-environment)
 ;Value: 5
+
+
+;; EXERCISE 4.17
+(define before
+  '((define u e1)
+    (define v e2)
+    e3))
+
+(define after
+  '((define u '*unassigned*)
+    (define v '*unassigned*)
+    (set! u e1)
+    (set! v e2)
+    e3))
+
+(equal? (scan-out-defines before) after)
+;Value: #t
+
+;; Repeat test case for exercise 17 part c

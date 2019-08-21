@@ -1100,6 +1100,67 @@
   (list 'procedure parameters (scan-out-defines body) env))
 
 
+;; EXERCISE 4.17
+;; Environment structure when interpreting definitions sequentially:
+;;
+;;   ┌──────────────────────────────┐
+;;   │                              │◀── environment in which the
+;;   └──────────────────────────────┘    outer lambda is called
+;;                  ▲
+;;   ┌──────────────┴───────────────┐
+;;   │ <vars>                       │
+;;   │ u: <result of evaluating e1> │◀── environment in which
+;;   │ v: <result of evaluating e2> │    <e3> is evaluated
+;;   └──────────────────────────────┘
+;;
+;; Environment structure when definitions are scanned out as described:
+;;
+;;   ┌──────────────────────────────┐
+;;   │                              │◀── environment in which the
+;;   └──────────────────────────────┘    outer lambda is called
+;;                  ▲
+;;   ┌──────────────┴───────────────┐
+;;   │ <vars>                       │
+;;   └──────────────────────────────┘
+;;                  ▲
+;;   ┌──────────────┴───────────────┐
+;;   │ u: <result of evaluating e1> │◀── environment in which
+;;   │ v: <result of evaluating e2> │    <e3> is evaluated
+;;   └──────────────────────────────┘
+;;
+;; Discussion:
+;;
+;; The extra frame in the transformed program results from the introduction of
+;; a let-expression, which desugars into a lambda application, necessitating the
+;; creation of an additional frame. The difference in environment structure does
+;; not affect program behavior because the program expressions are evaluated in
+;; the same order (<e1>, <e2>, <e3> in this example) and the variable bindings
+;; seen by each expression are equivalent *provided* that the value expressions
+;; avoid making reference to any other variable define'd in the same block. (If
+;; we don't follow this restriction, the two versions of the program may indeed
+;; behave differently; for example, <e1> could attempt to look up u but actually
+;; get some other u present in the outer environment, whereas in the transformed
+;; version, this lookup would result in an error due to the special behavior for
+;; '*unassigned* variables.)
+;;
+;; To achieve "simultaneous" scoping without constructing an additional frame:
+(define (scan-out-defines exps)
+  (define (iter vars vals others exps)
+    (cond ((null? exps) (make-body vars vals others))
+          ((definition? (car exps))
+           (iter (cons (definition-variable (car exps)) vars)
+                 (cons (definition-value (car exps)) vals)
+                 others
+                 (cdr exps)))
+          (else (iter vars vals (cons (car exps) others) (cdr exps)))))
+  (define (make-body vars vals others)
+    (append
+      (map (lambda (var) (make-definition var ''*unassigned*)) vars)
+      (map (lambda (var val) (make-assignment var val)) vars vals)
+      others))
+  (iter '() '() '() (reverse exps)))
+
+
 ;; EXERCISE 4.19
 
 (let ((a 1))
