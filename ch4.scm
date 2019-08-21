@@ -378,6 +378,8 @@
 
 
 ;; EXERCISE 4.7
+;; Requires exercise 6
+
 ;: (let* ((x 3)
 ;:        (y (+ x 2))
 ;:        (z (+ x y 5)))
@@ -412,6 +414,7 @@
 
 ;; EXERCISE 4.8
 ;; Requires "more primitives" in ch4-mceval.scm
+;; Requires exercise 6
 
 ;: (define (fib n)
 ;:   (let fib-iter ((a 1)
@@ -445,7 +448,8 @@
 
 
 ;;EXERCISE 4.9
-;; The usage examples require "more primitives" from ch4-mceval.scm.
+;; Requires "more primitives" from ch4-mceval.scm.
+;; Requires exercise 6
 
 ;; (do action pred) evaluates action and pred in order, repeatedly until pred
 ;; evaluates to false. The return value is the final value of action.
@@ -599,6 +603,7 @@
 
 
 ;; EXERCISE 4.10
+;; Requires exercise 6
 ;; The example summarizes the syntax changes; descriptions of each are given
 ;; below.
 ;;
@@ -879,6 +884,8 @@
 
 
 ;; EXERCISE 4.13
+;; Requires exercise 12
+
 ;; (make-unbound! var env) removes any definition of var from the first frame
 ;; of env. It is not an error if var was not defined in the first frame. Any
 ;; definitions in enclosing frames are not affected.
@@ -1067,6 +1074,8 @@
 
 
 ;; EXERCISE 4.16
+;; Requires exercises 4-9 and 12
+
 ;; a.
 (define (lookup-variable-value var env)
   (let ((var-and-val (lookup-variable-and-raw-value var env)))
@@ -1116,6 +1125,8 @@
 
 
 ;; EXERCISE 4.17
+;; Requires exercises 4-9, 12, and 16
+;;
 ;; Environment structure when interpreting definitions sequentially:
 ;;
 ;;   ┌──────────────────────────────┐
