@@ -865,14 +865,17 @@
         (begin (add-binding-to-frame! var val frame) 'ok))))
 
 (define (lookup-variable-value var env)
-  (let ((maybe-val
-         (scan-env (lambda (vars vals)
-                     (if (eq? (car vars) var)
-                         (list (car vals))
-                         false))
-                env)))
-    (cond (maybe-val => car)
-          (else (error "Unbound variable" var)))))
+  (let ((var-and-val (lookup-variable-and-raw-value var env)))
+    (if var-and-val
+        (cdr var-and-val)
+        (error "Unbound variable" var))))
+
+(define (lookup-variable-and-raw-value var env)
+  (scan-env (lambda (vars vals)
+              (if (eq? (car vars) var)
+                  (cons var (car vals))
+                  false))
+    env))
 
 
 ;; EXERCISE 4.13
@@ -1066,27 +1069,16 @@
 ;; EXERCISE 4.16
 ;; a.
 (define (lookup-variable-value var env)
-  (let ((maybe-val
-         (scan-env (lambda (vars vals)
-                     (if (eq? (car vars) var)
-                         (list (car vals))
-                         false))
-                env)))
-    (cond ((not maybe-val) (error "Unbound variable" var))
-          ((eq? (car maybe-val) '*unassigned*)
-           (error "Attempt to use uninitialized variable" var))
-          (else (car maybe-val)))))
+  (let ((var-and-val (lookup-variable-and-raw-value var env)))
+    (if var-and-val
+        (let ((val (cdr var-and-val)))
+          (if (eq? val '*unassigned*)
+              (error "Attempt to use uninitialized variable" var)
+              val))
+        (error "Unbound variable" var))))
 
 ;; b.
 (define (scan-out-defines exps)
-  (define (iter vars vals others exps)
-    (cond ((null? exps) (make-body vars vals others))
-          ((definition? (car exps))
-           (iter (cons (definition-variable (car exps)) vars)
-                 (cons (definition-value (car exps)) vals)
-                 others
-                 (cdr exps)))
-          (else (iter vars vals (cons (car exps) others) (cdr exps)))))
   (define (make-body vars vals others)
     (if (null? vars)
         others
@@ -1098,6 +1090,17 @@
                        vars
                        vals)
                   others)))))
+  (rewrite-defines make-body exps))
+
+(define (rewrite-defines f exps)
+  (define (iter vars vals others exps)
+    (cond ((null? exps) (f vars vals others))
+          ((definition? (car exps))
+           (iter (cons (definition-variable (car exps)) vars)
+                 (cons (definition-value (car exps)) vals)
+                 others
+                 (cdr exps)))
+          (else (iter vars vals (cons (car exps) others) (cdr exps)))))
   (iter '() '() '() (reverse exps)))
 
 (define (make-assignment var val) (list 'set! var val))
@@ -1157,20 +1160,12 @@
 ;;
 ;; To achieve "simultaneous" scoping without constructing an additional frame:
 (define (scan-out-defines exps)
-  (define (iter vars vals others exps)
-    (cond ((null? exps) (make-body vars vals others))
-          ((definition? (car exps))
-           (iter (cons (definition-variable (car exps)) vars)
-                 (cons (definition-value (car exps)) vals)
-                 others
-                 (cdr exps)))
-          (else (iter vars vals (cons (car exps) others) (cdr exps)))))
   (define (make-body vars vals others)
     (append
       (map (lambda (var) (make-definition var ''*unassigned*)) vars)
       (map (lambda (var val) (make-assignment var val)) vars vals)
       others))
-  (iter '() '() '() (reverse exps)))
+  (rewrite-defines make-body exps))
 
 
 ;; EXERCISE 4.18
