@@ -1173,6 +1173,39 @@
   (iter '() '() '() (reverse exps)))
 
 
+;; EXERCISE 4.18
+;: (lambda <vars>
+;:   (let ((u '*unassigned*)
+;:         (v '*unassigned*))
+;:     (let (a <e1>)
+;:          (b <e2>))
+;:       (set! u a)
+;:       (set! v b))
+;:   <e3>))
+;:
+;: (define (solve f y0 dt)
+;:   (define y (integral (delay dy) y0 dt))
+;:   (define dy (stream-map f y))
+;:   y)
+
+;; The solve procedure will not work if internal definitions are scanned out as
+;; shown here. The definition of y poses no problem: although it refers to dy,
+;; this is done in a delayed expression which is not forced by the call to
+;; integral. However, the value expression of dy fails evaluation when it tries
+;; to access the value of y, because -- despite y's value expression having been
+;; evaluated -- the variable y is still set to '*unassigned* at this point.
+;;
+;; The solve procedure *will* work if internal definitions are scanned out as
+;; shown in the text. As above, the definition of y poses no problem, and now,
+;; the definition of dy is valid as well. The variable y has been fully defined
+;; when dy's value expression is evaluated, so there is no longer an access
+;; error. Furthermore, the reference to dy that is contained in the delayed
+;; expression inside y does not cause a problem, as it is not forced when
+;; evaluating (stream-map f y). Only the first item in the underlying stream
+;; is mapped over, which in this case means the initial value y0. The delayed
+;; expression is not forced until the second item of the stream is taken.
+
+
 ;; EXERCISE 4.19
 
 (let ((a 1))
