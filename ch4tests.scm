@@ -94,9 +94,6 @@
 ;Value: 8
 
 
-;;;SECTION 4.1.3
-
-
 ;;EXERCISE 4.11
 (define my-frame (make-frame '((b 2) (c 3))))
 (equal? my-frame (make-frame (frame-bindings my-frame)))
