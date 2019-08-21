@@ -212,4 +212,4 @@
 (equal? (scan-out-defines before) after)
 ;Value: #t
 
-;; Repeat test case for exercise 17 part c
+;; Repeat test case for exercise 16 part c
