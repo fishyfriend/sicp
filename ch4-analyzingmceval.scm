@@ -28,7 +28,7 @@
   ((analyze exp) env))
 
 (define (analyze exp)
-  (cond ((self-evaluating? exp) 
+  (cond ((self-evaluating? exp)
          (analyze-self-evaluating exp))
         ((quoted? exp) (analyze-quoted exp))
         ((variable? exp) (analyze-variable exp))
