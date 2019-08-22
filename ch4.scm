@@ -349,6 +349,7 @@
 
 
 ;; EXERCISE 4.6
+;; Requires exercise 5
 (define (let? exp) (tagged-list? exp 'let))
 (define (let-assignments exp) (cadr exp))
 (define (let-body exp) (cddr exp))
@@ -414,7 +415,7 @@
 
 ;; EXERCISE 4.8
 ;; Requires "more primitives" in ch4-mceval.scm
-;; Requires exercise 6
+;; Requires exercises 5-6
 
 ;: (define (fib n)
 ;:   (let fib-iter ((a 1)
@@ -449,7 +450,7 @@
 
 ;;EXERCISE 4.9
 ;; Requires "more primitives" from ch4-mceval.scm.
-;; Requires exercise 6
+;; Requires exercises 5-6
 
 ;; (do action pred) evaluates action and pred in order, repeatedly until pred
 ;; evaluates to false. The return value is the final value of action.
