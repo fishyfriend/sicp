@@ -1304,26 +1304,96 @@
 
 
 ;; EXERCISE 4.20
-(define (f x)
-  (letrec ((even?
-            (lambda (n)
-              (if (= n 0)
-                  true
-                  (odd? (- n 1)))))
-           (odd?
-            (lambda (n)
-              (if (= n 0)
-                  false
-                  (even? (- n 1))))))
-    ;; rest of body of f
-    ))
+;; Requires exercises 4-9
 
-(letrec ((fact
-          (lambda (n)
-            (if (= n 1)
-                1
-                (* n (fact (- n 1)))))))
-  (fact 10))
+;: (define (f x)
+;:   (letrec ((even?
+;:             (lambda (n)
+;:               (if (= n 0)
+;:                   true
+;:                   (odd? (- n 1)))))
+;:            (odd?
+;:             (lambda (n)
+;:               (if (= n 0)
+;:                   false
+;:                   (even? (- n 1))))))
+;:     ;; rest of body of f
+;:     ))
+;:
+;: (letrec ((fact
+;:           (lambda (n)
+;:             (if (= n 1)
+;:                 1
+;:                 (* n (fact (- n 1)))))))
+;:   (fact 10))
+
+;; a. Implementation of letrec
+(define (letrec? exp) (tagged-list? exp 'letrec))
+(define (letrec-assignments exp) (let-assignments exp))
+(define (letrec-body exp) (let-body exp))
+(define (letrec-variables exp) (let-variables exp))
+(define (letrec-values exp) (let-values exp))
+(define (make-letrec assignments body) (cons 'letrec (cons assignments body)))
+
+(define (letrec->let exp)
+  (let ((vars (letrec-variables exp))
+        (vals (letrec-values exp))
+        (body (letrec-body exp)))
+    (make-let (map (lambda (var) (list var ''*unassigned*))
+                   vars)
+              (append (map make-assignment vars vals)
+                      body))))
+
+;; b.
+;; Evaluating <rest of body of f> as shown in exercise:
+;;
+;;   ┌─────────────────────────────────┐
+;;   │                                 │◀── environment where
+;;   └─────────────────────────────────┘    f is defined
+;;                    ▲
+;;   ┌────────────────┴────────────────┐
+;;   │ x: ...                          │◀── environment where <rest of
+;;   │ even?: ────────────────┐        │    body of f> is evaluated
+;;   │ odd?: ─┐               │        │
+;;   └────────┼───────────────┼────────┘
+;;            ▼   ▲           ▼   ▲
+;;          (•I•)─┘         (•I•)─┘
+;;           │               │
+;;           ▼               ▼
+;;       params: n       params: n
+;;       body:           body:
+;;        (if (= n 0)     (if (= n 0)
+;;            false           true
+;;            ...             ...
+;;
+;; Evaluating <rest of body of f> with let replacing letrec:
+;;
+;;   ┌────────────────────────────────────────┐
+;;   │                                        │◀── environment where
+;;   └────────────────────────────────────────┘    f is defined
+;;        ▲            ▲                ▲
+;;   ┌────┴────┐       │                │
+;;   │ x: ...  │◀──────┼────────────────┼──── environment where <rest of
+;;   │ even?: ─┼───────┼────────────┐   │     body of f> is evaluated
+;;   │ odd?: ──┼───┐   │            │   │
+;;   └─────────┘   ▼   │            ▼   │
+;;               (•I•)─┘          (•I•)─┘
+;;                │                │
+;;                ▼                ▼
+;;            params: n        params:
+;;            body:            body:
+;;              (if (= n 0)     (if (= n 0)
+;;                  false           true
+;;                  ...             ...
+;;
+;; Discussion:
+;;
+;; With let in place of letrec, the definition of f no longer works. The
+;; procedures that implement even? and odd? are defined outside the environment
+;; where even? and odd? are visible. When one of these procedures is called,
+;; its internal recursive reference to the other procedure will error as the
+;; name of that procedure is not bound in the evaluation environment.
+
 
 ;; EXERCISE 4.21
 

@@ -47,6 +47,9 @@
         ((while? exp) (eval (while->combination exp) env))
         ((until? exp) (eval (until->combination exp) env))
 
+        ;; from exercise 20
+        ((letrec? exp) (eval (letrec->let exp) env))
+
         ((application? exp)
          (apply (eval (operator exp) env)
                 (list-of-values (operands exp) env)))

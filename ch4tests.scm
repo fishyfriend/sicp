@@ -258,3 +258,26 @@
       (define b a)))
   the-global-environment)
 ;Error: Invalid recursive reference a
+
+
+;; EXERCISE 4.20
+;; eval the fact example from the exercise prompt
+;Value: 3628800
+
+(eval
+  '((lambda ()
+      (define (f x)
+        (letrec ((even?
+                  (lambda (n)
+                    (if (= n 0)
+                        true
+                        (odd? (- n 1)))))
+                 (odd?
+                  (lambda (n)
+                    (if (= n 0)
+                        false
+                        (even? (- n 1))))))
+          (even? x)))
+      (f 5)))
+  the-global-environment)
+;Value: #f
