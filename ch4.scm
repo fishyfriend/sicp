@@ -1565,7 +1565,31 @@
     (if (null? procs)
         (error "Empty sequence -- ANALYZE"))
     (lambda (env) (execute-sequence procs env))))
-
+
+;; For a sequence of a single expression, the original version of
+;; analyze-sequence simply returns the execution procedure for the lone
+;; expression of the sequence. Calling this procedure obviously just evaluates
+;; that expression in the passed environment; there is no other work performed.
+;; Alyssa's version returns an execution procedure that performs 5 additional
+;; steps: cond + cdr + null? + car + apply.
+;;
+;; For a sequence of two expressions, the original version returns a procedure
+;; that calls each expression's execution procedure in sequence. In other words,
+;; the work performed is two procedure applications (plus whatever those
+;; procedures do). Alyssa's version, on the other hand, does a lot more:
+;; cond + cdr + null? + car + apply + cdr + apply + all the work from the
+;; single-expression sequence, for a total of 12 steps, 10 more than the
+;; original.
+;;
+;; In general we can see that the original version performs the bare minimum
+;; work needed to call the execution procedures for each item in the sequence,
+;; whereas the new version adds 6 additional steps per sequence item (they are
+;; cond + cdr + null? + car + cdr + apply). In both versions, the amount of
+;; extra work scales linearly with the number of expressions in the sequence;
+;; it is simply greater by some constant factor in the new version vs. the
+;; original.
+
+
 ;;;SECTION 4.2.1
 
 (define (try a b)
