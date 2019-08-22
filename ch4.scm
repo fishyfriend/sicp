@@ -1276,6 +1276,13 @@
 
 ;; Implementation of Eva's behavior
 ;; N.B. Not thread-safe
+(define (eval-definition exp env)
+  (define-variable! (definition-variable exp)
+                    (cons '*unassigned*
+                          (delay (eval (definition-value exp) env)))
+                    env)
+  'ok)
+
 (define (lookup-variable-value var env)
   (let ((var-and-val (lookup-variable-and-raw-value var env)))
     (if var-and-val
@@ -1283,9 +1290,9 @@
           (cond ((eq? val '*assigning*)
                  (error "Invalid recursive reference" var))
                 ((and (pair? val) (eq? (car val) '*unassigned*))
-                 (let ((val-exp (cdr val)))
+                 (let ((delayed-val (cdr val)))
                    (set-variable-value! var '*assigning* env)
-                   (let ((new-val (eval val-exp env)))
+                   (let ((new-val (force delayed-val)))
                      (set-variable-value! var new-val env)
                      new-val)))
                 (else val)))
@@ -1293,14 +1300,9 @@
 
 (define (scan-out-defines exps)
   (define (make-body vars vals others)
-    (append
-      (map (lambda (var val)
-             (make-definition var
-                              (list 'cons ''*unassigned* (list 'quote val))))
-           vars
-           vals)
-      vars
-      others))
+    (append (map make-definition vars vals)
+            vars
+            others))
   (rewrite-defines make-body exps))
 
 

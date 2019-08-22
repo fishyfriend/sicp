@@ -219,8 +219,8 @@
     e3))
 
 (define after
-  '((define u (cons '*unassigned* (quote e1)))
-    (define v (cons '*unassigned* (quote e2)))
+  '((define u e1)
+    (define v e2)
     u
     v
     e3))
@@ -237,3 +237,24 @@
     (f 10))
   the-global-environment)
 ;Value: 20
+
+;; test to ensure that value expressions are evaluated in the correct environment
+(eval
+  '((lambda ()
+      (define a
+        ((lambda ()
+           (define b 10)
+           (+ c 2))))
+      (define b 6)
+      (define c (+ b 1))
+      (+ a b)))
+  the-global-environment)
+;Value: 15
+
+;; test to ensure infinite recursion is avoided
+(eval
+  '((lambda ()
+      (define a b)
+      (define b a)))
+  the-global-environment)
+;Error: Invalid recursive reference a
