@@ -1590,6 +1590,116 @@
 ;; original.
 
 
+;; EXERCISE 4.24
+;; Requires exercises 4-9 and 20
+;; Requires "more primitives" in ch4-mceval.scm
+;;
+;; To set up the environment, first load ch4-mceval.scm, then load
+;; ch4-analyzingmceval.scm starting from (define analyze ...). I.e., don't
+;; load the new analyzing version of eval. Finally load the additional required
+;; exercises listed above.
+;;
+;; Use (run-tests) to run all the tests and display results.
+;;
+;; Test cases are stored as scheme files in ch4-ex24-tests/ directory. Each
+;; file defines a test-proc that takes an integer argument. The test framework
+;; will run each test-proc with a range of values.
+;;
+;; Estimated % time spent on analysis for the procedures and inputs tested:
+;;
+;;   count-change: 5%-25% (decreases with # of iterations)
+;;   fib:          5%-70% (decreases with # of iterations)
+;;   sqrt:         20%
+;;
+;; The analyzing evaluator takes roughly 50-70% as much time as the original
+;; evaluator across all the tests.
+
+(define (run-tests)
+  (let ((test-files
+         (filter
+           (lambda (path)
+             (let ((ext (pathname-type path)))
+               (and ext (string=? ext "scm"))))
+           (directory-read "ch4-ex24-tests/"))))
+    (if (null? test-files)
+        (error "No test cases found")
+        (for-each run-test test-files))))
+
+(define (run-test test-file)
+  (let*
+    ((name (pathname-name test-file))
+     (defs (read-exprs test-file))
+     (inputs '(2 5 10 25))
+     (reps 100))
+    (for-each (lambda (input) (run-comparison name defs input reps))
+              inputs)))
+
+(define (run-comparison name defs input reps)
+  (let* ((appl (list 'test-proc input))
+         (expr1 (cons 'begin (append defs (list appl))))
+         (expr2 (cons 'begin (append defs (list appl appl))))
+         (t0 (time-eval original-eval expr1 reps))
+         (t1 (time-eval analyzing-eval expr1 reps))
+         (t2 (time-eval analyzing-eval expr2 reps))
+         (a% (analysis-fraction t1 t2))
+         (e% (execution-fraction t1 t2)))
+    (display "Test case: ") (display name) (newline)
+    (display "Input: ") (display input) (newline)
+    (display "Original eval elapsed time (1 run): ") (display t0) (newline)
+    (display "Analyzing eval elapsed time (1 run): ") (display t1) (newline)
+    (display "Analyzing eval elapsed time (2 runs): ") (display t2) (newline)
+    (display "Analyzing eval % spent analyzing: ") (display a%) (newline)
+    (display "Analyzing eval % spent executing: ") (display e%) (newline)
+    (display "Analyzing eval time as % of original: ") (display (/ t1 t0))
+    (newline) (newline)))
+
+(define (read-exprs file)
+  (define (iter exprs)
+    (let ((expr (read)))
+      (if (eof-object? expr)
+          (reverse exprs)
+          (iter (cons expr exprs)))))
+  (with-input-from-file file (lambda () (iter '()))))
+
+(define (avg-time proc reps)
+  (define (iter nrep)
+    (if (= nrep 0)
+        (runtime)
+        (begin (proc)
+               (iter (- nrep 1)))))
+  (let* ((t0 (runtime))
+         (t (iter reps)))
+    (/ (- t t0) reps)))
+
+(define (time-eval eval expr reps)
+  (avg-time (lambda () (eval expr (setup-environment))) reps))
+
+
+;; Given
+;;
+;;   t1 the runtime of the expression in the analyzing evaluator,
+;;   t2 the runtime of repeating the expression 2x in the analyzing evaluator,
+;;   a the fraction of time spent on analysis in the analyzing evaluator,
+;;   e the fraction of time spend on execution in the analyzing evaluator
+;;
+;; we have
+;;
+;;   e = 1 - a
+;;   t2 = (a + 2e)(t1)
+;;      = (2 - a)(t1)
+;;   t2 / t1 = 2 - a
+;;   a = 2 - t2 / t1.
+;;
+;; Empirically, t2 / t1 sometimes turns out to be greater than 2 (!) so we
+;; account for that by flooring the analysis fraction at 0%. (Sampling error
+;; when using a small # of reps seems to be the cause.)
+(define (analysis-fraction t1 t2) (max 0. (- 2. (/ t2 t1))))
+(define (execution-fraction t1 t2) (- 1. (analysis-fraction t1 t2)))
+
+(define original-eval eval)
+(define (analyzing-eval exp env) ((analyze exp) env))
+
+
 ;;;SECTION 4.2.1
 
 (define (try a b)
