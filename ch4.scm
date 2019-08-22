@@ -1094,11 +1094,8 @@
         (list (make-let
                 (map (lambda (var) (list var ''*unassigned*))
                      vars)
-                (append
-                  (map (lambda (var val) (make-assignment var val))
-                       vars
-                       vals)
-                  others)))))
+                (append (map make-assignment vars vals)
+                        others)))))
   (rewrite-defines make-body exps))
 
 (define (rewrite-defines f exps)
