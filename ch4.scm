@@ -1600,11 +1600,20 @@
 
 
 ;; EXERCISE 4.25
-
 (define (factorial n)
   (unless (= n 1)
           (* n (factorial (- n 1)))
           1))
+
+;; Evaluating (factorial 5) in ordinary, applicative-order Scheme won't
+;; terminate, as evaluation of expression e, (* n (factorial (- n 1))), recurses
+;; indefinitely. With normal-order evaluation, (factorial 5) works as expected.
+;; At each iteration, e is passed unevaluated as the alternative branch to the
+;; underlying if-expression. Now when the if-expression is evaluated, for n > 1,
+;; the predicate (= n 1) holds false, causing e to be evaluated. When n = 1, the
+;; predicate is now true, so the consequent 1 is evaluated and returned. The
+;; alternative e is not evaluated, recursion stops, the procedure terminates.
+
 
 ;;;SECTION 4.2.2
 ;;; **SEE ALSO** ch4-leval.scm (loadable/runnable evaluator)
