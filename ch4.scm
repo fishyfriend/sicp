@@ -1547,6 +1547,14 @@
 
 ;; *end* of analyzing evaluator
 
+
+;; EXERCISE 4.22
+;; Requires exercise 6
+
+;; add to analyze
+;((let? exp) (analyze (let->combination exp)))
+
+
 ;; EXERCISE 4.23
 (define (analyze-sequence exps)
   (define (execute-sequence procs env)

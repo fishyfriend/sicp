@@ -281,3 +281,8 @@
       (f 5)))
   the-global-environment)
 ;Value: #f
+
+
+;; EXERCISE 4.22
+(eval '(let ((x 5)) (+ x 1)) the-global-environment)
+;Value: 6
