@@ -50,6 +50,9 @@
         ;; from exercise 20
         ((letrec? exp) (eval (letrec->let exp) env))
 
+        ;; from exercise 26
+        ((unless? exp) (eval-unless exp env))
+
         ((application? exp)
          (apply (eval (operator exp) env)
                 (list-of-values (operands exp) env)))

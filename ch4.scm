@@ -1724,7 +1724,49 @@
 ;; predicate is now true, so the consequent 1 is evaluated and returned. The
 ;; alternative e is not evaluated, recursion stops, the procedure terminates.
 
-
+
+;; EXERCISE 4.26
+;; unless as a derived expression in applicative-order scheme:
+(define (unless? exp) (tagged-list? exp 'unless))
+(define (unless-predicate exp) (cadr exp))
+(define (unless-consequent exp) (caddr exp))
+
+(define (unless-alternative exp)
+  (if (not (null? (cdddr exp)))
+      (cadddr exp)
+      'false))
+
+(define (make-unless predicate consequent alternative)
+  (list 'unless predicate consequent alternative))
+
+(define (eval-unless exp)
+  (if (false? (eval (if-predicate exp) env))
+      (eval (if-consequent exp) env)
+      (eval (if-alternative exp) env)))
+
+;; add to eval
+;((unless? exp) (eval-unless exp env))
+
+;; utility of having unless as a procedure rather than as a special form:
+;;
+;; It could be useful to have unless (or if) as a procedure rather than a
+;; special form when we want to use a list of booleans to select items from
+;; other lists in a map expression. It is cleaner to pass the procedure by
+;; name rather than having to wrap it in a lambda. Here is an example:
+;;
+;;   (let ((selectors (list true false false true))
+;;         (left-vals (list 6 2 0 5))
+;;         (right-vals (list 3 8 9 1)))
+;;     (map unless selectors left-vals right-vals))
+;;   ;Value: (3 2 0 1)
+;;
+;; With unless as a special form, the last line would have to be more verbose:
+;;
+;;   (map (lambda (s l r) (unless s l r)) selectors left-vals right-vals)
+;;
+;; Note that these examples assume normal-order evaluation.
+
+
 ;;;SECTION 4.2.2
 ;;; **SEE ALSO** ch4-leval.scm (loadable/runnable evaluator)
 
