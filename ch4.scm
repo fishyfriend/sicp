@@ -349,7 +349,6 @@
 
 
 ;; EXERCISE 4.6
-;; Requires exercise 5
 (define (let? exp) (tagged-list? exp 'let))
 (define (let-assignments exp) (cadr exp))
 (define (let-body exp) (cddr exp))
@@ -415,7 +414,7 @@
 
 ;; EXERCISE 4.8
 ;; Requires "more primitives" in ch4-mceval.scm
-;; Requires exercises 5-6
+;; Requires exercise 5
 
 ;: (define (fib n)
 ;:   (let fib-iter ((a 1)
@@ -1075,7 +1074,7 @@
 
 
 ;; EXERCISE 4.16
-;; Requires exercises 4-9 and 12
+;; Requires exercise 12
 
 ;; a.
 (define (lookup-variable-value var env)
@@ -1123,7 +1122,7 @@
 
 
 ;; EXERCISE 4.17
-;; Requires exercises 4-9, 12, and 16
+;; Requires exercises 12 and 16
 ;;
 ;; Environment structure when interpreting definitions sequentially:
 ;;
@@ -1211,7 +1210,7 @@
 
 
 ;; EXERCISE 4.19
-;; Require exercise 4-9, 12, and 16
+;; Require exercise 12 and 16
 
 ;: (let ((a 1))
 ;:   (define (f x)
@@ -1305,7 +1304,7 @@
 
 
 ;; EXERCISE 4.20
-;; Requires exercises 4-9
+;; Requires exercises 6, 12, and 16
 
 ;: (define (f x)
 ;:   (letrec ((even?
@@ -1591,9 +1590,6 @@
 
 
 ;; EXERCISE 4.24
-;; Requires exercises 4-9 and 20
-;; Requires "more primitives" in ch4-mceval.scm
-;;
 ;; To set up the environment, first load ch4-mceval.scm, then load
 ;; ch4-analyzingmceval.scm starting from (define analyze ...). I.e., don't
 ;; load the new analyzing version of eval. Finally load the additional required

@@ -16,6 +16,31 @@
 
 ;;;SECTION 4.1.1
 
+;; Define various syntactic predicate procedures to false initially so that eval
+;; can run even if all the exercise code hasn't been pasted into the REPL.
+
+;; from exercise 4
+(define (and? exp) false)
+(define (or? exp) false)
+
+;; from exercise 6
+(define (let? exp) false)
+
+;; from exercise 7
+(define (let*? exp) false)
+
+;; from exercise 9
+(define (do? exp) false)
+(define (for? exp) false)
+(define (while? exp) false)
+(define (until? exp) false)
+
+;; from exercise 20
+(define (letrec? exp) false)
+
+;; from exercise 26
+(define (unless? exp) false)
+
 (define (eval exp env)
   (cond ((self-evaluating? exp) exp)
         ((variable? exp) (lookup-variable-value exp env))
