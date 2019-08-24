@@ -1887,7 +1887,6 @@
 
 
 ;; EXERCISE 4.27
-
 (define count 0)
 
 (define (id x)
@@ -1895,9 +1894,47 @@
   x)
 
 (define w (id (id 10)))
-count
-w
-count
+
+;;; L-Eval input: count
+;;; L-Eval value: 1
+;; Why: Evaluating the definition of w requires evaluating the procedure
+;; application (id (id 10)). (id 10) is turned into a thunk and passed to the
+;; outer id, which proceeds to increment count and return the thunk argument,
+;; which is then bound to the name w. The thunk is not yet evaluated at this
+;; stage, so count remains at 1.
+
+;;; L-Eval input: w
+;;; L-Eval value: 10
+;; Why: w is bound to a thunk containing the expression (id 10). Evaluating any
+;; thunk in the REPL forces that thunk and returns the result. Here, forcing the
+;; thunk causes the evaluation of (id 10), which increments count to 2 and
+;; returns 10, the value that is displayed in the REPL.
+
+;;; L-Eval input: count
+;;; L-Eval value: 2
+;; Why: see previous explanation.
+
+
+;; EXERCISE 4.28
+;; In this example, eval must evaluate the operator of a procedure application
+;; using actual-value. In the definition of threes, map2 receives as its f
+;; argument a thunk containing the expression (flip -). Within the body of map2
+;; we have the procedure application (f (car as) (car bs)). If we tried to
+;; evaluate its operator, f, using ordinary eval, we would get an error (Unknown
+;; expression type) because eval cannot handle thunks. But since we evaluate the
+;; operator using actual-value, the (flip -) thunk is forced and evaluates to a
+;; procedure object, which can then be applied to arguments.
+
+(define (flip f) (lambda (a b) (f b a)))
+
+(define (map2 f as bs)
+  (cond ((null? as) '())
+        ((null? bs) '())
+        (else (cons (f (car as) (car bs))
+                    (map2 f (cdr as) (cdr bs))))))
+
+(define threes (map2 (flip -) '(1 2 3) '(4 5 6)))
+
 
 ;; EXERCISE 4.29
 
