@@ -2037,6 +2037,66 @@
 ;Value: (1 2)
 
 
+;; EXERCISE 4.31
+(define (apply procedure arguments env)
+  (cond ((primitive-procedure? procedure)
+         (apply-primitive-procedure
+          procedure
+          (list-of-arg-values arguments env)))
+        ((compound-procedure? procedure)
+         (eval-sequence
+          (procedure-body procedure)
+          (extend-environment
+           (procedure-parameters procedure)
+           (list-of-args (procedure-arg-kinds procedure)
+                         arguments
+                         env)
+           (procedure-environment procedure))))
+        (else
+         (error
+          "Unknown procedure type -- APPLY" procedure))))
+
+(define (list-of-args kinds exps env)
+  (if (no-operands? exps)
+      '()
+      (let ((first (cond ((eq? (car kinds) 'lazy)
+                          (delay-it (first-operand exps) env false))
+                         ((eq? (car kinds) 'lazy-memo)
+                          (delay-it (first-operand exps) env true))
+                         ((eq? (car kinds) 'eager)
+                          (actual-value (first-operand exps) env))
+                         (else (error "Unknown argument kind" (car kinds))))))
+        (cons first
+              (list-of-args (cdr kinds)
+                            (rest-operands exps)
+                            env)))))
+
+(define (procedure-parameters p)
+  (map (lambda (param) (if (pair? param) (car param) param))
+       (cadr p)))
+
+(define (procedure-arg-kinds p)
+  (map (lambda (param) (if (pair? param) (cadr param) 'eager))
+       (cadr p)))
+
+(define (thunk-memoizing? x) (cadddr x))
+(define (delay-it exp env memoizing?) (list 'thunk exp env memoizing?))
+
+(define (force-it obj)
+  (cond ((thunk? obj)
+         (let ((result (actual-value
+                        (thunk-exp obj)
+                        (thunk-env obj))))
+           (if (thunk-memoizing? obj)
+               (begin (set-car! obj 'evaluated-thunk)
+                      (set-car! (cdr obj) result)
+                      (set-cdr! (cdr obj) '())))
+           result))
+        ((evaluated-thunk? obj)
+         (thunk-value obj))
+        (else obj)))
+
+
 ;;;SECTION 4.2.3
 ;;;
 ;;; This code can be loaded as a whole into the lazy evaluator,

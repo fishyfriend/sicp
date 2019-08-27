@@ -311,3 +311,30 @@ count
 (actual-value program the-global-environment)
 count
 ; Value: 41311
+
+
+;; EXERCISE 4.31
+;; Evaluate inside REPL (driver-loop)
+(define (f a (b lazy) (c lazy-memo))
+  (+ a b b c c))
+
+(define a-count 0)
+(define b-count 0)
+(define c-count 0)
+
+(f (begin (set! a-count (+ a-count 1))
+          (+ 1 2))
+   (begin (set! b-count (+ b-count 1))
+          (+ 3 4))
+   (begin (set! c-count (+ c-count 1))
+          (+ 5 6)))
+;Value: 39
+
+a-count
+;Value: 1
+
+b-count
+;Value: 2
+
+c-count
+;Value: 1
