@@ -1962,13 +1962,12 @@
 
 
 ;; EXERCISE 4.30
-
 (define (eval-sequence exps env)
   (cond ((last-exp? exps) (eval (first-exp exps) env))
         (else (actual-value (first-exp exps) env)
               (eval-sequence (rest-exps exps) env))))
 
-;;PART A
+;; a.
 (define (for-each proc items)
   (if (null? items)
       'done
@@ -1978,8 +1977,14 @@
 (for-each (lambda (x) (newline) (display x))
           (list 57 321 88))
 
-;;PART B
+;; In the above program, although the value of (proc (car items)) is not forced,
+;; the expression is still evaluated via eval, per eval-sequence. This results
+;; in evaluation, also via eval, of each of the body expressions of the lambda,
+;; producing the desired behavior of the program. The distinction between
+;; forcing and not forcing a given expression is not relevant here because
+;; (proc (car items)) is an explicit procedure application, not a thunk.
 
+;; b.
 (define (p1 x)
   (set! x (cons x '(2)))
   x)
@@ -1989,7 +1994,49 @@
     e
     x)
   (p (set! x (cons x '(2)))))
-
+
+;; With original eval-sequence:
+;(p1 1)
+;Value: (1 2)
+
+;(p2 1)
+;Value: 1
+
+;; With modified eval-sequence:
+;(p1 1)
+;Value: (1 2)
+
+;(p2 1)
+;Value: (1 2)
+
+;; c.
+;; The items of the sequence are not thunks, so evaluating them using eval is
+;; equivalent to evaluating them using actual-value.
+
+;; d.
+;; For the treatment of sequences in the lazy evaluator, I would favor the
+;; original approach from the text. The whole point of a lazy evaluator, it
+;; seems, is to avoid doing more work than necessary. Likewise, the whole point
+;; of thunks is that there are some expressions that we might not need to
+;; evaluate right away, so we need a way to defer their evaluation until later,
+;; or possibly never. Thus, it makes sense not to force any of the expressions
+;; in a sequence until absolutely necessary. For expressions occurring before
+;; the end of the sequence, we'll never use their value, so we should never
+;; force them. If we require a side effect from forcing any of those
+;; expressions, we should restructure our code to execute that side effect
+;; explicitly rather than relying on thunk forcing. For example, in part b of
+;; this exercise, we could rewrite p2 as follows, and get the desired behavior:
+
+(define (p2 x)
+  (define (p e)
+    (e)
+    x)
+  (p (lambda () (set! x (cons x '(2))))))
+
+;(p2 1)
+;Value: (1 2)
+
+
 ;;;SECTION 4.2.3
 ;;;
 ;;; This code can be loaded as a whole into the lazy evaluator,
