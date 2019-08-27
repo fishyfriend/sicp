@@ -1937,12 +1937,29 @@
 
 
 ;; EXERCISE 4.29
+;; a. A program that performs significantly worse under non-memoizing evaluator
+(define (fact-iter x n)
+  (if (= n 0)
+      x
+      (fact-iter (* x n) (- n 1))))
 
+(define (fact n)
+  (fact-iter 1 n))
+
+(fact 100)
+
+;; b. Interaction from text:
 (define (square x)
   (* x x))
 
-(square (id 10))
-count
+;;; L-Eval input: (square (id 10))
+;;; L-Eval value (memoizing evaluator): 100
+;;; L-Eval value (non-memoizing evaluator): 100
+
+;;; L-Eval input: count
+;;; L-Eval value (memoizing evaluator): 1
+;;; L-Eval value (non-memoizing evaluator): 2
+
 
 ;; EXERCISE 4.30
 

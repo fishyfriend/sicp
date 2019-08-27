@@ -286,3 +286,28 @@
 ;; EXERCISE 4.22
 (eval '(let ((x 5)) (+ x 1)) the-global-environment)
 ;Value: 6
+
+
+;; EXERCISE 4.29
+(define count 0)
+(define actual-value-0 actual-value)
+(define (actual-value exp env)
+  (set! count (+ count 1))
+  (actual-value-0 exp env))
+
+(define program (quote ((lambda ()
+  ;; paste in the program from the answer
+))))
+
+;; Memoizing evaluator
+;; Use "memoizing version of force-it" from ch4-leval.scm
+(actual-value program the-global-environment)
+count
+; Value: 1311
+
+;; Non-memoizing evaluator
+;; Use "non-memoizing version of force-it" from ch4-leval.scm
+(set! count 0)
+(actual-value program the-global-environment)
+count
+; Value: 41311
