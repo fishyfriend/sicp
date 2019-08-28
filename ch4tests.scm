@@ -338,3 +338,31 @@ b-count
 
 c-count
 ;Value: 1
+
+
+;; EXERCISE 4.34
+;; Evaluate inside REPL (driver-loop)
+
+(cons 5 '())
+;Value: (lazy 5)
+
+(cons 5 6)
+;Value: (lazy 5 . 6)
+
+(cons 5 (cons 6 7))
+;Value: (lazy 5 6 . 7)
+
+(cons 5 (cons 6 (cons 7 '())))
+;Value: (lazy 5 6 7)
+
+(cons 5 (cons 6 (cons 7 8)))
+;Value: (lazy 5 6 7 ...)
+
+(cons 5 (cons 6 (cons 7 (cons 8 9))))
+;Value: (lazy 5 6 7 ...)
+
+(cons 5 (cons 6 (cons 7 (cons 8 '()))))
+;Value: (lazy 5 6 7 ...)
+
+(cons (cons 5 (cons 6 '())) (cons (cons 7 (cons 8 '())) (cons 9 '())))
+;Value: (lazy (lazy 5 6) (lazy 7 8) 9)

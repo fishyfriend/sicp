@@ -31,9 +31,19 @@
 
 ;;; Modifying the evaluator
 
+;; Define various syntactic predicate procedures to false initially so that eval
+;; can run even if all the exercise code hasn't been pasted into the REPL.
+
+;; from exercise 33
+(define (quoted-pair? exp) false)
+
 (define (eval exp env)
   (cond ((self-evaluating? exp) exp)
         ((variable? exp) (lookup-variable-value exp env))
+
+        ;; from exercise 33
+        ((quoted-pair? exp) (eval-quoted-pair exp env))
+
         ((quoted? exp) (text-of-quotation exp))
         ((assignment? exp) (eval-assignment exp env))
         ((definition? exp) (eval-definition exp env))

@@ -2158,7 +2158,82 @@
 ;; EXERCISE 4.33
 ;: (car '(a b c))
 
-
+(define (quoted-pair? exp)
+  (and (quoted? exp)
+       (pair? (text-of-quotation exp))))
+
+(define (eval-quoted-pair exp env)
+  (let ((contents (text-of-quotation exp)))
+    (eval (list 'cons
+                (list 'quote (car contents))
+                (list 'quote (cdr contents)))
+          env)))
+
+;; add to eval
+;((quoted-list? exp) (eval-quoted-pair exp env))
+
+
+;; EXERCISE 4.34
+;; To use the code in this solution, do the following in order:
+;;   • Start a fresh Scheme session
+;;   • Paste the contents of ch4-leval.scm
+;;   • Run the line at the end of ch4-mceval.scm to init the global environment
+;;   • Paste the "Code to modify the driver loop" below
+;;   • Run (driver-loop) to enter the driver loop
+;;   • Paste the "Code to be evaluated within the driver loop" below
+;;   • Paste the definitions under section 4.2.3 above, *except for* cons, car,
+;;     and cdr
+
+;; Code to modify the driver loop
+(define (user-print object)
+  (cond ((compound-procedure? object)
+         (display (list 'compound-procedure
+                        (procedure-parameters object)
+                        (procedure-body object)
+                        '<procedure-env>)))
+        ((lazy-pair? object) (display (partial-eval-lazy-pair object 3)))
+        (else (display object))))
+
+(define (partial-eval-lazy-pair object max-items)
+  (define (iter object count)
+    (if (lazy-pair? object)
+        (let* ((obj-car (lazy-pair-car object))
+               (obj-car-evaled
+                (if (lazy-pair? obj-car)
+                    (partial-eval-lazy-pair obj-car max-items)
+                    obj-car))
+               (obj-cdr (lazy-pair-cdr object)))
+          (cond ((null? obj-cdr) (list obj-car-evaled))
+                ((= count max-items) (list obj-car "..."))
+                ((lazy-pair? obj-cdr)
+                 (cons obj-car-evaled (iter obj-cdr (+ count 1))))
+                (else (list obj-car-evaled "." obj-cdr))))
+        object))
+  (cons 'lazy (iter object 1)))
+
+(define (lazy-pair? x) (tagged-list? x '*lazy-pair*))
+(define (lazy-pair-procedure x) (cadr x))
+
+(define (lazy-pair-car x)
+  (force-it (apply (lazy-pair-procedure x)
+            (list '(lambda (p q) p))
+            the-empty-environment)))
+
+(define (lazy-pair-cdr x)
+  (force-it (apply (lazy-pair-procedure x)
+            (list '(lambda (p q) q))
+            the-empty-environment)))
+
+;; Code to be evaluated within the driver loop
+(define primitive-cons cons)
+(define primitive-car car)
+(define primitive-cdr cdr)
+(define primitive-list list)
+(define (cons x y) (primitive-list '*lazy-pair* (lambda (m) (m x y))))
+(define (car z) ((primitive-car (primitive-cdr z)) (lambda (p q) p)))
+(define (cdr z) ((primitive-car (primitive-cdr z)) (lambda (p q) q)))
+
+
 ;;;SECTION 4.3
 ;;;
 ;;; The code from 4.3 (intro), 4.3.1, and 4.3.2 can be loaded into the
