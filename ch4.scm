@@ -2155,6 +2155,106 @@
 ;: (list-ref (solve (lambda (x) x) 1 .001) 1000)
 
 
+;; EXERCISE 4.32
+;; Requires "more primitives" from ch4-leval.scm
+
+;; Example 1: We can use the fact that head of a "lazier" list is delayed to
+;; more efficiently implement procedures that need only later elements from the
+;; list. In the stream version of last-item, every item in the list must be
+;; evaluated before returning the last one. In the "lazier" list version, only
+;; the last item is evaluated.
+
+;; Stream version
+(define (last-item s)
+  (if (empty-stream? (stream-cdr s))
+      (stream-car s)
+      (last-item (stream-cdr s))))
+
+;; "Lazier" list version
+(define (last-item xs)
+  (if (null? (cdr xs))
+      (car xs)
+      (last-item (cdr xs))))
+
+;; Example 2: This example, sequence reversal, illustrates how we can rearrange
+;; all the items of a "lazier" list without evaluating any of them. Performing
+;; the same change on a stream requires evaluation of the entire stream.
+
+;; Stream version
+(define (reverse s)
+  (define (iter xs ys)
+    (if (empty-stream? ys)
+        xs
+        (iter (cons-stream (stream-car ys) xs)
+              (stream-cdr ys))))
+  (iter the-empty-stream s))
+
+;; "Lazier" list version
+(define (reverse s)
+  (define (iter xs ys)
+    (if (null? ys)
+        (map car xs)
+        (iter (cons ys xs)
+              (cdr ys))))
+  (iter '() s))
+
+;; Example 3: We can define sequences in terms of each other without having to
+;; write an explicit delay or restructure the code. This is not always possible
+;; with streams.
+
+(define (calculate-interest balance)
+  (cond ((> balance 50000.) 0.031)
+        ((> balance 25000.) 0.028)
+        ((> balance 10000.) 0.026)
+        (else 0.014)))
+
+;; Stream version -- Initial, doesn't work
+(define (balance-over-time initial-value changes)
+  (define balance (cons-stream initial-value (stream-map + balance changes)))
+  balance)
+
+(define (balance-with-interest initial-value)
+  (define balance
+    (balance-over-time initial-value
+                       (stream-map (lambda (bal int) (* bal (+ 1. int)))
+                                   balance
+                                   interest-rate)))
+  (define interest-rate (stream-map calculate-interest balance))
+  balance)
+
+;; Stream version -- Revised, works due to added delay
+(define (balance-over-time initial-value delayed-changes) ;changed
+  (define balance
+    (cons-stream initial-value
+      (stream-map + balance (force delayed-changes)))) ;changed
+  balance)
+
+(define (balance-with-interest initial-value)
+  (define balance
+    (balance-over-time initial-value
+                       (delay ;changed
+                         (stream-map (lambda (bal int) (* bal (+ 1. int)))
+                                     balance
+                                     interest-rate))))
+  (define interest-rate (stream-map calculate-interest balance))
+  balance)
+
+;; "Lazier" list version, works as-is
+;; Requires map2 from exercise 28
+(define (balance-over-time initial-value changes)
+  (define balance (cons initial-value (add-lists balance changes)))
+  balance)
+
+(define (balance-with-interest initial-value)
+  (define balance
+      (balance-over-time initial-value
+                         (map2 (lambda (bal int) (* bal (+ 1. int)))
+                               balance
+                               interest-rate)))
+  (define interest-rate (map calculate-interest balance))
+  balance)
+
+
 ;; EXERCISE 4.33
 ;: (car '(a b c))
 

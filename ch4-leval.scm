@@ -172,6 +172,13 @@
         (list '= =)
         (list 'newline newline)
         (list 'display display)
+
+        ;; from exercise 32
+        (list '> >)
+        (list '< <)
+        (list '>= >=)
+        (list '<= <=)
+
 ;;      more primitives
         ))
 

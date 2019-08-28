@@ -340,6 +340,83 @@ c-count
 ;Value: 1
 
 
+;; EXERCISE 4.32
+;; Examples 1-2 -- Stream version -- evaluate in fresh Scheme session
+;; Requires first-n-of-series from ch3support.scm
+(define count 0)
+
+(define (test-stream n)
+  (if (= n 0)
+      the-empty-stream
+      (cons-stream (begin (set! count (+ count 1)) n)
+                   (test-stream (- n 1)))))
+
+(last-item (test-stream 10))
+;Value: 1
+
+count
+;Value: 10
+
+(set! count 0)
+
+(define s (reverse (test-stream 10)))
+
+count
+;Value: 10
+
+(first-n-of-series s 3)
+;Value: '(1 2 3)
+
+;; Examples 1-2 -- "Lazier" list version -- evaluate in lazy evaluator
+(define count 0)
+
+(define (test-list n)
+  (if (= n 0)
+      '()
+      (cons (begin (set! count (+ count 1)) n)
+            (test-list (- n 1)))))
+
+(last-item (test-list 10))
+;Value: 1
+
+count
+;Value: 1
+
+(set! count 0)
+
+(define s (reverse (test-list 10)))
+
+count
+;Value: 0
+
+(list-ref s 0)
+;Value: 0
+
+(list-ref s 1)
+;Value: 1
+
+(list-ref s 2)
+;Value: 2
+
+;; Example 3 -- Stream version
+(define count 0)
+
+(first-n-of-series (balance-with-interest 9500.) 3)
+;Value: (9500. 19133. 38763.458)
+
+;; Example 3 -- "Lazier" list version
+(define b (balance-with-interest 9500.))
+
+(list-ref b 0)
+;Value: 9500.
+
+(list-ref b 1)
+;Value: 19133.
+
+(list-ref b 2)
+;Value: 38763.458
+
+
 ;; EXERCISE 4.34
 ;; Evaluate inside REPL (driver-loop)
 
