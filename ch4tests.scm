@@ -314,7 +314,7 @@ count
 
 
 ;; EXERCISE 4.31
-;; Evaluate inside REPL (driver-loop)
+;; Evaluate in lazy evaluator
 (define (f a (b lazy) (c lazy-memo))
   (+ a b b c c))
 
@@ -418,7 +418,7 @@ count
 
 
 ;; EXERCISE 4.34
-;; Evaluate inside REPL (driver-loop)
+;; Evaluate in lazy evaluator
 
 (cons 5 '())
 ;Value: (lazy 5)
