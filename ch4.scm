@@ -2378,13 +2378,18 @@
 
 
 ;; EXERCISE 4.35
-
 (define (a-pythagorean-triple-between low high)
   (let ((i (an-integer-between low high)))
     (let ((j (an-integer-between i high)))
       (let ((k (an-integer-between j high)))
         (require (= (+ (* i i) (* j j)) (* k k)))
         (list i j k)))))
+
+(define (an-integer-between a b)
+  (cond ((= a b) a)
+        ((> a b) (an-integer-between b a))
+        (else (amb a (an-integer-between (+ a 1) b)))))
+
 
 ;; EXERCISE 4.37
 

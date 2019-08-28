@@ -443,3 +443,25 @@ count
 
 (cons (cons 5 (cons 6 '())) (cons (cons 7 (cons 8 '())) (cons 9 '())))
 ;Value: (lazy (lazy 5 6) (lazy 7 8) 9)
+
+
+;; EXERCISE 4.35
+;; Evaluate in amb evaluator
+
+(an-integer-between 6 4)
+;Value: 4
+
+try-again
+;Value: 5
+
+try-again
+;Value: 6
+
+try-again
+;No more values
+
+(a-pythagorean-triple-between 10 30)
+;Value: (10 24 26)
+
+try-again
+;Value: (12 16 20)
