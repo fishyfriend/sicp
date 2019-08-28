@@ -2391,6 +2391,27 @@
         (else (amb a (an-integer-between (+ a 1) b)))))
 
 
+;; EXERCISE 4.36
+;; If we replace an-integer-between with an-integer-starting-from in the
+;; previous exercise, the procedure will run indefinitely without yielding an
+;; answer. The first values of i and j will be selected (i=low and j=low), then
+;; the program will try increasing values of k forever, never halting because
+;; i=j and there exist no Pythagorean triples where i=j.
+
+(define (a-pythagorean-triple-starting-from n)
+  (define (a-triple-with-sum sum)
+    (let ((i (an-integer-between n sum)))
+      (let ((j (an-integer-between i (- sum i))))
+        (let ((k (- sum i j)))
+          (require (= (+ i j k) sum))
+          (require (= (+ (* i i) (* j j)) (* k k)))
+          (list i j k)))))
+  (define (a-triple-with-sum-at-least sum)
+    (amb (a-triple-with-sum sum)
+         (a-triple-with-sum-at-least (+ sum 1))))
+  (a-triple-with-sum-at-least n))
+
+
 ;; EXERCISE 4.37
 
 (define (a-pythagorean-triple-between low high)

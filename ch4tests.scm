@@ -465,3 +465,16 @@ try-again
 
 try-again
 ;Value: (12 16 20)
+
+
+;; EXERCISE 4.36
+;; Evaluate in amb evaluator
+
+(a-pythagorean-triple-starting-from 1)
+;Value: (3 4 5)
+
+try-again
+;Value: (6 8 10)
+
+try-again
+;Value: (5 12 13)
