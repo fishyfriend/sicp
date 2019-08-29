@@ -2625,6 +2625,24 @@
 ;; There are two solutions when we lack Mary Ann's last name: Downing, Parker
 
 
+;; EXERCISE 4.44
+(define (queens board-size)
+  (define (iter col rows dias1 dias2)
+    (if (> col board-size)
+        rows
+        (let ((row (an-integer-between 1 board-size)))
+          (require (not (memq row rows)))
+          (let ((dia1 (+ row col -1)))
+            (require (not (memq dia1 dias1)))
+            (let ((dia2 (+ board-size row (- col))))
+              (require (not (memq dia2 dias2)))
+              (iter (+ col 1)
+                    (cons row rows)
+                    (cons dia1 dias1)
+                    (cons dia2 dias2)))))))
+  (iter 1 '() '() '()))
+
+
 ;;;SECTION 4.3.2 -- Parsing natural language
 
 ;;; In this section, sample calls to parse are commented out with ;:
