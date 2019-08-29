@@ -2569,6 +2569,62 @@
           (else (apply-in-underlying-scheme show (car answers))))))
 
 
+;; EXERCISE 4.42
+(define (liars-puzzle)
+  (define (xor a b)
+    (require (if a (not b) b)))
+  (let ((betty (amb 1 2 3 4 5))
+        (ethel (amb 1 2 3 4 5))
+        (joan (amb 1 2 3 4 5))
+        (kitty (amb 1 2 3 4 5))
+        (mary (amb 1 2 3 4 5)))
+    (require (distinct? (list betty ethel joan kitty mary)))
+    (xor (= kitty 2) (= betty 3))
+    (xor (= ethel 1) (= joan 2))
+    (xor (= joan 3) (= ethel 5))
+    (xor (= kitty 2) (= mary 4))
+    (xor (= mary 4) (= betty 1))
+    (list (list 'betty betty)
+          (list 'ethel ethel)
+          (list 'joan joan)
+          (list 'kitty kitty)
+          (list 'mary mary))))
+
+;; Solution: ((betty 3) (ethel 5) (joan 2) (kitty 1) (mary 4))
+
+
+;; EXERCISE 4.43
+;; Requires map from section 2.2.1 and nil from ch2support.scm
+;; Set mary-ann-moore? to false to omit the information that Mary Ann's last
+;; name is Moore.
+(define (yacht-puzzle mary-ann-moore?)
+  (define (find f x ys)
+    (cond ((null? ys) false)
+          ((eq? (f (car ys)) x) (car ys))
+          (else (find f x (cdr ys)))))
+  (define (fdy f d y) (require (not (eq? d y))) (list f d y))
+  (define (f fdy) (car fdy))
+  (define (d fdy) (car (cdr fdy)))
+  (define (y fdy) (car (cdr (cdr fdy))))
+  (let ((ds '(mary-ann gabrielle lorna rosalind melissa)))
+    (let ((barnacle (fdy 'barnacle 'melissa 'gabrielle)))
+      (let ((hall (fdy 'hall (an-element-of ds) 'rosalind)))
+        (let ((downing (fdy 'downing (an-element-of ds) 'melissa)))
+          (let ((moore (fdy 'moore
+                            (if mary-ann-moore? 'mary-ann (an-element-of ds))
+                            'lorna)))
+            (let ((parker (fdy 'parker (an-element-of ds) (an-element-of ds))))
+              (let ((fdys (list moore barnacle hall downing parker)))
+                (require (distinct? (map d fdys)))
+                (require (eq? (y (find d 'gabrielle fdys)) (d parker)))
+                (require (distinct? (map f fdys)))
+                (require (distinct? (map y fdys)))
+                (f (find d 'lorna fdys))))))))))
+
+;; Solution: Downing
+;; There are two solutions when we lack Mary Ann's last name: Downing, Parker
+
+
 ;;;SECTION 4.3.2 -- Parsing natural language
 
 ;;; In this section, sample calls to parse are commented out with ;:
