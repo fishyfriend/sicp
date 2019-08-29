@@ -2852,6 +2852,23 @@
                          (simple-noun-phrase (article the) (noun cat)))))))))
 
 
+;; EXERCISE 4.46
+;; Since parsers modify a global state (*unparsed*) that affects the results of
+;; future parsing operations, the execution order of parsers is important. The
+;; list representation of each grammatical rule orders subcomponents in the same
+;; order they are expected to be encountered in the input stream. Accordingly,
+;; the parsers for subcomponents are invoked in that order as arguments to the
+;; list constructor. For example, a sentence consists of a noun phrase followed
+;; by a verb phrase, and thus parse-sentence invokes parse-noun-phrase and
+;; parse-verb-phrase as the second and third arguments to list. If argument
+;; lists were evaluated in any other order than left-to-right, the parsers for
+;; subcomponents would not execute in the order that the subcomponents occur in
+;; input, causing parsing to fail on input that should be valid. For example,
+;; when parsing a sentence with parse-sentence, parse-verb-phrase will be
+;; invoked first, and will fail when it attempts to parse the noun phrase that
+;; occurs first in the input.
+
+
 ;; EXERCISE 4.47
 
 (define (parse-verb-phrase)
