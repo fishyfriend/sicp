@@ -2543,6 +2543,32 @@
                   (list 'smith smith))))))))
 
 
+;; EXERCISE 4.41
+;; Requires nil from ch2support.scm
+;; Requires accumulate, flatmap, permutations, and remove from section 2.2.3
+(define (multiple-dwelling-native)
+  (define (valid? baker cooper fletcher miller smith)
+    (and (not (= baker 5))
+         (not (= cooper 1))
+         (not (= fletcher 5))
+         (not (= fletcher 1))
+         (> miller cooper)
+         (not (= (abs (- smith fletcher)) 1))
+         (not (= (abs (- fletcher cooper)) 1))))
+  (define (show baker cooper fletcher miller smith)
+    (list (list 'baker baker)
+          (list 'cooper cooper)
+          (list 'fletcher fletcher)
+          (list 'miller miller)
+          (list 'smith smith)))
+  (let ((answers
+         (filter (lambda (p) (apply-in-underlying-scheme valid? p))
+                 (permutations '(1 2 3 4 5)))))
+    (cond ((null? answers) (error "No solution found"))
+          ((not (null? (cdr answers))) (error "Multiple solutions found"))
+          (else (apply-in-underlying-scheme show (car answers))))))
+
+
 ;;;SECTION 4.3.2 -- Parsing natural language
 
 ;;; In this section, sample calls to parse are commented out with ;:
