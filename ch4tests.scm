@@ -503,3 +503,115 @@ try-again
 ;; Uses time routine from exercise 39
 (time '(multiple-dwelling-fast) 100)
 ;Value: .105
+
+
+;; EXERCISE 4.48
+;; Evaluate in amb evaluator
+
+(parse '(the always best student with the cat studies with the professor now))
+;(sentence
+; (simple-noun-phrase
+;  (article the)
+;  (noun-with-adjective-prefix
+;   (adjective-phrase-with-adverbial-prefix (adverb always)
+;                                           (adjective best))
+;   (noun student)))
+; (verb-phrase-with-adverbial-suffix
+;  (verb-phrase-with-adverbial-suffix
+;   (verb-phrase-with-adverbial-prefix
+;    (prep-phrase (prep with)
+;                 (simple-noun-phrase (article the) (noun cat)))
+;    (verb studies))
+;   (prep-phrase
+;    (prep with)
+;    (simple-noun-phrase (article the) (noun professor))))
+;  (adverb now)))
+
+try-again
+;(sentence
+; (simple-noun-phrase
+;  (article the)
+;  (noun-with-adjective-prefix
+;   (adjective-phrase-with-adverbial-prefix (adverb always)
+;                                           (adjective best))
+;   (noun student)))
+; (verb-phrase-with-adverbial-suffix
+;  (verb-phrase-with-adverbial-prefix
+;   (prep-phrase (prep with)
+;                (simple-noun-phrase (article the) (noun cat)))
+;   (verb-phrase-with-adverbial-suffix
+;    (verb studies)
+;    (prep-phrase
+;     (prep with)
+;     (simple-noun-phrase (article the) (noun professor)))))
+;  (adverb now)))
+
+try-again
+;(sentence
+; (simple-noun-phrase
+;  (article the)
+;  (noun-with-adjective-prefix
+;   (adjective-phrase-with-adverbial-prefix (adverb always)
+;                                           (adjective best))
+;   (noun student)))
+; (verb-phrase-with-adverbial-prefix
+;  (prep-phrase (prep with)
+;               (simple-noun-phrase (article the) (noun cat)))
+;  (verb-phrase-with-adverbial-suffix
+;   (verb-phrase-with-adverbial-suffix
+;    (verb studies)
+;    (prep-phrase
+;     (prep with)
+;     (simple-noun-phrase (article the) (noun professor))))
+;   (adverb now))))
+
+try-again
+;(sentence
+; (noun-phrase
+;  (simple-noun-phrase
+;   (article the)
+;   (noun-with-adjective-prefix
+;    (adjective-phrase-with-adverbial-prefix (adverb always)
+;                                            (adjective best))
+;    (noun student)))
+;  (prep-phrase (prep with)
+;               (simple-noun-phrase (article the) (noun cat))))
+; (verb-phrase-with-adverbial-suffix
+;  (verb-phrase-with-adverbial-suffix
+;   (verb studies)
+;   (prep-phrase
+;    (prep with)
+;    (simple-noun-phrase (article the) (noun professor))))
+;  (adverb now)))
+
+try-again
+;No more values
+
+(parse '(the cat eats and the professor sleeps but the student studies))
+;(compound-sentence
+; (compound-sentence
+;  (simple-sentence
+;   (simple-noun-phrase (article the) (noun cat))
+;   (verb eats))
+;  (conjunction and)
+;  (simple-sentence
+;   (simple-noun-phrase (article the) (noun professor))
+;   (verb sleeps)))
+; (conjunction but)
+; (simple-sentence
+;  (simple-noun-phrase (article the) (noun student))
+;  (verb studies)))
+
+try-again
+;(compound-sentence
+; (simple-sentence (simple-noun-phrase (article the) (noun cat))
+;                  (verb eats))
+; (conjunction and)
+; (compound-sentence
+;  (simple-sentence
+;   (simple-noun-phrase (article the) (noun professor))
+;   (verb sleeps))
+;  (conjunction but)
+;  (simple-sentence
+;   (simple-noun-phrase (article the) (noun student))
+;   (verb studies))))

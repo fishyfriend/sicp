@@ -2889,7 +2889,67 @@
 ;; parse-verb-phrase now simply hangs indefinitely without the possibility of
 ;; yielding any results at all.
 
-
+
+;; EXERCISE 4.48
+;; Extend noun and verb phrases to include adjectives and averbs
+(define (parse-simple-noun-phrase)
+  (list 'simple-noun-phrase
+        (parse-word articles)
+        (parse-noun)))
+
+(define (parse-noun)
+  (amb (parse-word nouns)
+       (list 'noun-with-adjective-prefix
+             (parse-adjective-phrase)
+             (parse-noun))))
+
+(define (parse-adjective-phrase)
+  (define (maybe-extend adjective-phrase)
+    (amb adjective-phrase
+         (maybe-extend (list 'adjective-phrase-with-adverbial-suffix
+                             adjective-phrase
+                             (parse-adverbial-phrase)))))
+  (maybe-extend (amb (parse-word adjectives)
+                     (list 'adjective-phrase-with-adverbial-prefix
+                           (parse-adverbial-phrase)
+                           (parse-adjective-phrase)))))
+
+(define (parse-verb-phrase)
+  (define (maybe-extend verb-phrase)
+    (amb verb-phrase
+         (maybe-extend (list 'verb-phrase-with-adverbial-suffix
+                             verb-phrase
+                             (parse-adverbial-phrase)))))
+  (maybe-extend (amb (parse-word verbs)
+                     (list 'verb-phrase-with-adverbial-prefix
+                           (parse-adverbial-phrase)
+                           (parse-verb-phrase)))))
+
+(define (parse-adverbial-phrase)
+  (amb (parse-word adverbs)
+       (parse-prepositional-phrase)))
+
+(define adjectives '(adjective green smelly fast fun happy nerdy best worst))
+(define adverbs '(adverb hastily fast breezily gallantly messily always now))
+
+;;Support compound sentences
+(define (parse-sentence)
+  (define (maybe-extend sentence)
+    (amb sentence
+         (maybe-extend (list 'compound-sentence
+                             sentence
+                             (parse-word conjunctions)
+                             (parse-sentence)))))
+  (maybe-extend (parse-simple-sentence)))
+
+(define (parse-simple-sentence)
+  (list 'simple-sentence
+         (parse-noun-phrase)
+         (parse-verb-phrase)))
+
+(define conjunctions '(conjunction and or but))
+
+
 ;;;SECTION 4.3.3
 ;;; **SEE ALSO** ch4-ambeval.scm (loadable/runnable evaluator)
 
