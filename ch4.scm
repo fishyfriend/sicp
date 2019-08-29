@@ -2870,12 +2870,24 @@
 
 
 ;; EXERCISE 4.47
-
 (define (parse-verb-phrase)
   (amb (parse-word verbs)
        (list 'verb-phrase
              (parse-verb-phrase)
              (parse-prepositional-phrase))))
+
+;; This revised version will correctly generate all possible parsings, but it
+;; has a problem. Observe that the second branch of the amb begins by calling
+;; parse-verb-phrase recursively. The order of arguments to amb ensures that
+;; all correct answers will be found first, but once that happens, the only
+;; remaining non-failing path is the one that takes the second branch of the amb
+;; repeatedly ad infinitum. amb is required to explore this path (all paths must
+;; be explored, per its definition) and this causes evaluation to hang forever.
+;;
+;; Swapping the order of the arguments to amb makes the problem more immediate:
+;; the infinitely recursive path is now evaluated first, so every call to
+;; parse-verb-phrase now simply hangs indefinitely without the possibility of
+;; yielding any results at all.
 
 
 ;;;SECTION 4.3.3
