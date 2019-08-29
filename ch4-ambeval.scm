@@ -289,6 +289,8 @@
         (list 'sqrt sqrt)
         (list 'eq? eq?)
 ;;      more primitives
+        (list 'pair? pair?)
+        (list 'append append)
         ))
 
 
