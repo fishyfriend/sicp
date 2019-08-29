@@ -478,3 +478,28 @@ try-again
 
 try-again
 ;Value: (5 12 13)
+
+
+;; EXERCISE 4.39
+(define (time exp reps)
+  (let iter ((start (runtime))
+             (rep 0))
+    (if (= rep reps)
+        (/ (- (runtime) start)
+           reps)
+        (ambeval exp
+                 the-global-environment
+                 (lambda (val next) (iter start (+ rep 1)))
+                 (lambda () (error "unexpected failure"))))))
+
+(time '(multiple-dwelling) 100)
+;Value: .6576
+
+(time '(multiple-dwelling-reordered) 100)
+;Value: .5737
+
+
+;; EXERCISE 4.40
+;; Uses time routine from exercise 39
+(time '(multiple-dwelling-fast) 100)
+;Value: .105

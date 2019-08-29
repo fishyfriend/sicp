@@ -2413,7 +2413,6 @@
 
 
 ;; EXERCISE 4.37
-
 (define (a-pythagorean-triple-between low high)
   (let ((i (an-integer-between low high))
         (hsq (* high high)))
@@ -2423,7 +2422,16 @@
         (let ((k (sqrt ksq)))
           (require (integer? k))
           (list i j k))))))
-
+
+;; Ben's version is more efficient. It cuts down the number of combinations that
+;; must be explored. For i and j, the number of combinations is the same as in
+;; the original version, as the expressions used to initialize these variables
+;; are the same. For k, however, we now effectively explore one k value for
+;; each combination of i and j, rather than all k values in the range from j to
+;; high. This improvement should easily outweigh any added computation time
+;; from other changes, e.g. the addition of the sqrt call.
+
+
 ;;;SECTION 4.3.2 -- Logic Puzzles
 
 (define (distinct? items)
@@ -2452,7 +2460,89 @@
           (list 'fletcher fletcher)
           (list 'miller miller)
           (list 'smith smith))))
+
+
+;; EXERCISE 4.38
+;; If we re-run (multiple-dwelling) after commenting out the line
+;; (require (not (= (abs (- smith fletcher)) 1))), there are now 5 solutions.
+
+
+;; EXERCISE 4.39
+;; The order of restrictions does not affect the answer in this procedure. We
+;; always begin with the complete set of all possible answers, regardless of the
+;; order that restrictions are later applied. An valid answer, by definition,
+;; passes all restrictions, so it is impossible for any restriction to filter
+;; out a valid answer. Thus, all valid answers from the set of possible answers
+;; are guaranteed to still be present at the end. Likewise, an invalid answer
+;; by definition fails at least one restriction. For each invalid answer,
+;; that same restriction will still be applied at some point, regardless of the
+;; order the restrictions are applied overall. Therefore all invalid answers are
+;; guaranteed to be removed from the final set. From this we can see that the
+;; final set is unchanged. (The order in which multiple answers are presented
+;; would not change, either, as the only affect of applying a restriction can be
+;; to remove an answer from the working set. It cannot reorder the set.)
+;;
+;; The order of restrictions *can* affect the performance of the procedure.
+;; Since a given evaluation of the procedure body terminates immediately
+;; when a single restriction fails, we should expect better performance from
+;; versions of the procedure that move the most-likely-to-fail restrictions
+;; earlier in the procedure body, as their failure will avoid more evaluations
+;; of additional restrictions this way. Below is a version of multiple-dwelling
+;; that reorders the requirements slightly. If we time the two versions over
+;; numerous invocations, the reordered version gives a very slight but
+;; persistent speed advantage. (See ch4tests.scm for timing code and timings on
+;; my machine.)
+
+(define (multiple-dwelling-reordered)
+  (let ((baker (amb 1 2 3 4 5))
+        (cooper (amb 1 2 3 4 5))
+        (fletcher (amb 1 2 3 4 5))
+        (miller (amb 1 2 3 4 5))
+        (smith (amb 1 2 3 4 5)))
+    ;(require (distinct? (list baker cooper fletcher miller smith))) >──┐
+    (require (> miller cooper)) ; ◀────────────────────────────────┐    │
+    (require (not (= (abs (- smith fletcher)) 1))) ; ◀────────┐    │    │
+    (require (not (= (abs (- fletcher cooper)) 1))) ; ◀───┐   │    │    │
+    (require (not (= baker 5))) ;                         │   │    │    │
+    (require (not (= cooper 1))) ;                        │   │    │    │
+    (require (not (= fletcher 5))) ;                      │   │    │    │
+    (require (not (= fletcher 1))) ;                      │   │    │    │
+    ;(require (> miller cooper)) ; >──────────────────────┼───┼────┘    │
+    ;(require (not (= (abs (- smith fletcher)) 1))) ; >───┼───┘         │
+    ;(require (not (= (abs (- fletcher cooper)) 1))) ; >──┘             │
+    (require (distinct? (list baker cooper fletcher miller smith))) ; ◀─┘
+    (list (list 'baker baker)
+          (list 'cooper cooper)
+          (list 'fletcher fletcher)
+          (list 'miller miller)
+          (list 'smith smith))))
+
+
+;; EXERCISE 4.40
+;; Before the distinct? requirement, there are 5^5 = 3125 sets of assignments of
+;; people to floors; after, there are 5! = 120 sets.
 
+(define (multiple-dwelling-fast)
+  (let ((baker (amb 1 2 3 4 5)))
+    (require (not (= baker 5)))
+    (let ((cooper (amb 1 2 3 4 5)))
+      (require (not (= cooper 1)))
+      (let ((fletcher (amb 1 2 3 4 5)))
+        (require (not (= fletcher 5)))
+        (require (not (= fletcher 1)))
+        (require (not (= (abs (- fletcher cooper)) 1)))
+        (let ((miller (amb 1 2 3 4 5)))
+          (require (> miller cooper))
+          (let ((smith (amb 1 2 3 4 5)))
+            (require (not (= (abs (- smith fletcher)) 1)))
+            (require (distinct? (list baker cooper fletcher miller smith)))
+            (list (list 'baker baker)
+                  (list 'cooper cooper)
+                  (list 'fletcher fletcher)
+                  (list 'miller miller)
+                  (list 'smith smith))))))))
+
+
 ;;;SECTION 4.3.2 -- Parsing natural language
 
 ;;; In this section, sample calls to parse are commented out with ;:
