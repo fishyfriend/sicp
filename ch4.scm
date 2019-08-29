@@ -2767,6 +2767,91 @@
                              (simple-noun-phrase
                               (article the) (noun cat)))))))
 
+
+;; EXERCISE 4.45
+;: (parse '(the professor lectures to the student in the class with the cat))
+
+;; The student is lectured to by the professor; this lecturing occurs in the
+;; class; the lecture makes use of the cat.
+'(sentence
+  (simple-noun-phrase (article the) (noun professor))
+  (verb-phrase
+    (verb-phrase
+      (verb-phrase
+        (verb lectures)
+        (prep-phrase (prep to)
+                     (simple-noun-phrase (article the) (noun student))))
+      (prep-phrase (prep in)
+                   (simple-noun-phrase (article the) (noun class))))
+    (prep-phrase (prep with)
+                 (simple-noun-phrase (article the) (noun cat)))))
+
+;; The student is lectured to by the professor; this lecturing occurs in not
+;; just any class, but specifically the class where the cat is.
+'(sentence
+  (simple-noun-phrase (article the) (noun professor))
+  (verb-phrase
+    (verb-phrase
+      (verb lectures)
+      (prep-phrase (prep to)
+                   (simple-noun-phrase (article the) (noun student))))
+    (prep-phrase
+      (prep in)
+      (noun-phrase
+        (simple-noun-phrase (article the) (noun class))
+        (prep-phrase (prep with)
+                     (simple-noun-phrase (article the) (noun cat)))))))
+
+;; Not just any student, but specifically the student who is a member of the
+;; class, is lectured to by the professor; the lecture incorporates the cat.
+'(sentence
+  (simple-noun-phrase (article the) (noun professor))
+  (verb-phrase
+    (verb-phrase
+      (verb lectures)
+      (prep-phrase
+        (prep to)
+        (noun-phrase
+          (simple-noun-phrase (article the) (noun student))
+          (prep-phrase (prep in)
+                       (simple-noun-phrase (article the) (noun class))))))
+    (prep-phrase (prep with)
+                 (simple-noun-phrase (article the) (noun cat)))))
+
+;; That specific student who is a member of the class, and who also has the cat,
+;; receives a lecture from the professor.
+'(sentence
+  (simple-noun-phrase (article the) (noun professor))
+  (verb-phrase
+    (verb lectures)
+    (prep-phrase
+      (prep to)
+      (noun-phrase
+        (noun-phrase
+          (simple-noun-phrase (article the) (noun student))
+          (prep-phrase (prep in)
+                       (simple-noun-phrase (article the) (noun class))))
+        (prep-phrase (prep with)
+                     (simple-noun-phrase (article the) (noun cat)))))))
+
+;; You know that specific student who is a member of not just any class, but the
+;; class which has the cat? That person is being lectured to by the professor.
+'(sentence
+  (simple-noun-phrase (article the) (noun professor))
+  (verb-phrase
+    (verb lectures)
+    (prep-phrase
+      (prep to)
+      (noun-phrase
+        (simple-noun-phrase (article the) (noun student))
+        (prep-phrase
+          (prep in)
+          (noun-phrase
+            (simple-noun-phrase (article the) (noun class))
+            (prep-phrase (prep with)
+                         (simple-noun-phrase (article the) (noun cat)))))))))
+
+
 ;; EXERCISE 4.47
 
 (define (parse-verb-phrase)
