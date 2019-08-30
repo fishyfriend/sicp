@@ -44,6 +44,9 @@
 ;; from exercise 51
 (define (perm-assignment? exp) false)
 
+;; from exercise 52
+(define (if-fail? exp) false)
+
 ;; analyze from 4.1.6, with clause from 4.3.3 added
 ;; and also support for Let
 (define (analyze exp)
@@ -65,6 +68,9 @@
 
         ;; from exercise 51
         ((perm-assignment? exp) (analyze-perm-assignment exp))
+
+        ;; from exercise 52
+        ((if-fail? exp) (analyze-if-fail exp))
 
         ((application? exp) (analyze-application exp))
         (else
@@ -307,6 +313,8 @@
 ;;      more primitives
         (list 'pair? pair?)
         (list 'append append)
+        (list 'even? even?)
+        (list 'odd? even?)
         ))
 
 

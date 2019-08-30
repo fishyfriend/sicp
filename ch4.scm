@@ -3293,25 +3293,42 @@
 
 
 ;; EXERCISE 4.52
+;; Requires "more primitives" from ch4-ambeval.scm
 
 (if-fail (let ((x (an-element-of '(1 3 5))))
            (require (even? x))
            x)
          'all-odd)
+;Value: all-odd
 
 (if-fail (let ((x (an-element-of '(1 3 5 8))))
            (require (even? x))
            x)
          'all-odd)
+;Value: 8
+
+(define (if-fail? exp) (tagged-list? exp 'if-fail))
+(define (if-fail-value exp) (cadr exp))
+(define (if-fail-alternative exp) (caddr exp))
+
+(define (analyze-if-fail exp)
+  (let ((vproc (analyze (if-fail-value exp)))
+        (aproc (analyze (if-fail-alternative exp))))
+    (lambda (env succeed fail)
+      (vproc env succeed
+             (lambda () (aproc env succeed fail))))))
+
+;; add to analyze
+;((if-fail? exp) (analyze-if-fail exp))
 
 
 ;; EXERCISE 4.53
-
 (let ((pairs '()))
-  (if-fail (let ((p (prime-sum-pair '(1 3 5 8) '(20 35 110))))
-             (permanent-set! pairs (cons p pairs))
-             (amb))
-           pairs))
+ (if-fail (let ((p (prime-sum-pair '(1 3 5 8) '(20 35 110))))
+            (permanent-set! pairs (cons p pairs))
+            (amb))
+          pairs))
+;Value: ((8 35) (3 110) (3 20))
 
 
 ;;  what about query assertions, rules, and queries?
