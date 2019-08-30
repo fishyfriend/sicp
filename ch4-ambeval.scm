@@ -35,6 +35,12 @@
 (define (amb? exp) (tagged-list? exp 'amb))
 (define (amb-choices exp) (cdr exp))
 
+;; Define various syntactic predicate procedures to false initially so that eval
+;; can run even if all the exercise code hasn't been pasted into the REPL.
+
+;; from exercise 50
+(define (ramb? exp) false)
+
 ;; analyze from 4.1.6, with clause from 4.3.3 added
 ;; and also support for Let
 (define (analyze exp)
@@ -50,9 +56,13 @@
         ((cond? exp) (analyze (cond->if exp)))
         ((let? exp) (analyze (let->combination exp))) ;**
         ((amb? exp) (analyze-amb exp))                ;**
+
+        ;; from exercise 50
+        ((ramb? exp) (analyze-ramb exp))
+
         ((application? exp) (analyze-application exp))
         (else
-         (error "Unknown expression type -- ANALYZE" exp))))
+          (error "Unknown expression type -- ANALYZE" exp))))
 
 (define (ambeval exp env succeed fail)
   ((analyze exp) env succeed fail))
