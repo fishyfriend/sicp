@@ -3254,14 +3254,42 @@
 
 
 ;; EXERCISE 4.51
+;: (define count 0)
+;:
+;: (let ((x (an-element-of '(a b c)))
+;:       (y (an-element-of '(a b c))))
+;:   (permanent-set! count (+ count 1))
+;:   (require (not (eq? x y)))
+;:
+;:   (list x y count))
+;Value: (a b 2)
+;: try-again
+;Value: (a c 3)
 
-(define count 0)
+(define (perm-assignment? exp) (tagged-list? exp 'permanent-set!))
+(define (perm-assignment-variable exp) (cadr exp))
+(define (perm-assignment-value exp) (caddr exp))
 
-(let ((x (an-element-of '(a b c)))
-      (y (an-element-of '(a b c))))
-  (permanent-set! count (+ count 1))
-  (require (not (eq? x y)))
-  (list x y count))
+(define (analyze-perm-assignment exp)
+  (let ((var (perm-assignment-variable exp))
+        (vproc (analyze (perm-assignment-value exp))))
+  (lambda (env succeed fail)
+    (vproc env
+           (lambda (val fail2)
+             (set-variable-value! var val env)
+             (succeed 'ok fail2))
+           fail))))
+
+;; add to analyze
+;((perm-assignment? exp) (analyze-perm-assignment exp))
+
+;; If permanent-set! is replaced with set! in the example, the values displayed
+;; are as follows:
+;;
+;;   (list x y count)
+;;   ;Value: (a b 1)
+;;   try-again
+;;   ;Value: (a c 1)
 
 
 ;; EXERCISE 4.52

@@ -41,6 +41,9 @@
 ;; from exercise 50
 (define (ramb? exp) false)
 
+;; from exercise 51
+(define (perm-assignment? exp) false)
+
 ;; analyze from 4.1.6, with clause from 4.3.3 added
 ;; and also support for Let
 (define (analyze exp)
@@ -59,6 +62,9 @@
 
         ;; from exercise 50
         ((ramb? exp) (analyze-ramb exp))
+
+        ;; from exercise 51
+        ((perm-assignment? exp) (analyze-perm-assignment exp))
 
         ((application? exp) (analyze-application exp))
         (else
