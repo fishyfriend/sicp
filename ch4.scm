@@ -3330,7 +3330,25 @@
           pairs))
 ;Value: ((8 35) (3 110) (3 20))
 
-
+
+;; EXERCISE 4.54
+(define (require? exp) (tagged-list? exp 'require))
+(define (require-predicate exp) (cadr exp))
+
+(define (analyze-require exp)
+  (let ((pproc (analyze (require-predicate exp))))
+    (lambda (env succeed fail)
+      (pproc env
+             (lambda (pred-value fail2)
+               (if (not pred-value)
+                   (fail2)
+                   (succeed 'ok fail2)))
+             fail))))
+
+;; add to analyze
+;((require? exp) (analyze-require exp))
+
+
 ;;  what about query assertions, rules, and queries?
 ;;  ***a few left -- ex 4.59, 4.61, 4.63, 4.64
 ;;  also append-to-form and assert!

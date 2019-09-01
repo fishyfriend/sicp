@@ -47,6 +47,9 @@
 ;; from exercise 52
 (define (if-fail? exp) false)
 
+;; from exercise 54
+(define (require? exp) false)
+
 ;; analyze from 4.1.6, with clause from 4.3.3 added
 ;; and also support for Let
 (define (analyze exp)
@@ -71,6 +74,9 @@
 
         ;; from exercise 52
         ((if-fail? exp) (analyze-if-fail exp))
+
+        ;; from exercise 54
+        ((require? exp) (analyze-require exp))
 
         ((application? exp) (analyze-application exp))
         (else
