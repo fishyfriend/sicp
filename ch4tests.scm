@@ -615,3 +615,96 @@ try-again
 ;  (simple-sentence
 ;   (simple-noun-phrase (article the) (noun student))
 ;   (verb studies))))
+
+
+;; EXERCISE 4.55
+;; a.
+;;; Query results:
+(supervisor (tweakit lem e) (bitdiddle ben))
+(supervisor (fect cy d) (bitdiddle ben))
+(supervisor (hacker alyssa p) (bitdiddle ben))
+
+;; b.
+;;; Query results:
+(job (cratchet robert) (accounting scrivener))
+(job (scrooge eben) (accounting chief accountant))
+
+;; c.
+;;; Query results:
+(address (aull dewitt) (slumerville (onion square) 5))
+(address (reasoner louis) (slumerville (pine tree road) 80))
+(address (bitdiddle ben) (slumerville (ridge road) 10))
+
+
+;; EXERCISE 4.56
+;; a.
+;;; Query results:
+(and (supervisor (tweakit lem e) (bitdiddle ben))
+     (address (tweakit lem e) (boston (bay state road) 22)))
+(and (supervisor (fect cy d) (bitdiddle ben))
+     (address (fect cy d) (cambridge (ames street) 3)))
+(and (supervisor (hacker alyssa p) (bitdiddle ben))
+     (address (hacker alyssa p) (cambridge (mass ave) 78)))
+
+;; b.
+;;; Query results:
+(and (salary (aull dewitt) 25000)
+     (salary (bitdiddle ben) 60000)
+     (lisp-value < 25000 60000))
+(and (salary (cratchet robert) 18000)
+     (salary (bitdiddle ben) 60000)
+     (lisp-value < 18000 60000))
+(and (salary (reasoner louis) 30000)
+     (salary (bitdiddle ben) 60000)
+     (lisp-value < 30000 60000))
+(and (salary (tweakit lem e) 25000)
+     (salary (bitdiddle ben) 60000)
+     (lisp-value < 25000 60000))
+(and (salary (fect cy d) 35000)
+     (salary (bitdiddle ben) 60000)
+     (lisp-value < 35000 60000))
+(and (salary (hacker alyssa p) 40000)
+     (salary (bitdiddle ben) 60000)
+     (lisp-value < 40000 60000))
+
+;; c.
+;;; Query results:
+(and (supervisor (aull dewitt) (warbucks oliver))
+     (not (job (warbucks oliver) (computer . ?type)))
+     (job (warbucks oliver) (administration big wheel)))
+(and (supervisor (cratchet robert) (scrooge eben))
+     (not (job (scrooge eben) (computer . ?type)))
+     (job (scrooge eben) (accounting chief accountant)))
+(and (supervisor (scrooge eben) (warbucks oliver))
+    (not (job (warbucks oliver) (computer . ?type)))
+    (job (warbucks oliver) (administration big wheel)))
+(and (supervisor (bitdiddle ben) (warbucks oliver))
+     (not (job (warbucks oliver) (computer . ?type)))
+     (job (warbucks oliver) (administration big wheel)))
+
+
+;; EXERCISE 4.57
+;; a.
+;;; Query results:
+(can-replace (bitdiddle ben) (fect cy d))
+(can-replace (hacker alyssa p) (fect cy d))
+
+;; b.
+;;; Query results:
+(and (can-replace (aull dewitt) (warbucks oliver))
+     (salary (aull dewitt) 25000)
+     (salary (warbucks oliver) 150000)
+     (lisp-value < 25000 150000))
+(and (can-replace (fect cy d) (hacker alyssa p))
+     (salary (fect cy d) 35000)
+     (salary (hacker alyssa p) 40000)
+     (lisp-value < 35000 40000))
+
+
+;; EXERCISE 4.58
+;;; Query input:
+(big-shot ?person ?division)
+;;; Query results:
+(big-shot (scrooge eben) accounting)
+(big-shot (warbucks oliver) administration)
+(big-shot (bitdiddle ben) computer)

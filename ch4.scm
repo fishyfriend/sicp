@@ -3403,6 +3403,58 @@
      (lives-near ?x (Bitdiddle Ben)))
 
 
+;; EXERCISE 4.55
+;; a.
+(supervisor ?person (Bitdiddle Ben))
+
+;; b.
+(job ?person (accounting . ?type))
+
+;; c.
+(address ?person (Slumerville . ?where))
+
+
+;; EXERCISE 4.56
+;; a.
+(and (supervisor ?person (Bitdiddle Ben))
+     (address ?person ?where))
+
+;; b.
+(and (salary ?person ?amount1)
+     (salary (Bitdiddle Ben) ?amount2)
+     (lisp-value < ?amount1 ?amount2))
+
+;; c.
+(and (supervisor ?person ?boss)
+     (not (job ?boss (computer . ?type)))
+     (job ?boss ?position))
+
+
+;; EXERCISE 4.57
+(rule (can-replace ?person1 ?person2)
+  (and (job ?person1 ?job1)
+       (or (job ?person2 ?job1)
+           (and (job ?person2 ?job2)
+                (can-do-job ?job1 ?job2)))
+       (not (same ?person1 ?person2))))
+
+;; a.
+(can-replace ?person (Fect Cy D))
+
+;; b.
+(and (can-replace ?person1 ?person2)
+     (salary ?person1 ?amount1)
+     (salary ?person2 ?amount2)
+     (lisp-value < ?amount1 ?amount2))
+
+
+;; EXERCISE 4.58
+(rule (big-shot ?person ?division)
+  (and (job ?person (?division . ?type))
+       (not (and (supervisor ?person ?super)
+                 (job ?super (?division . ?type2))))))
+
+
 ;; EXERCISE 4.59
 (meeting accounting (Monday 9am))
 (meeting administration (Monday 10am))
