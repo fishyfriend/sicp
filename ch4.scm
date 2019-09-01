@@ -3615,7 +3615,6 @@
 
 
 ;; EXERCISE 4.64
-
 (rule (outranked-by ?staff-person ?boss)
       (or (supervisor ?staff-person ?boss)
           (and (outranked-by ?middle-manager ?boss)
@@ -3623,7 +3622,28 @@
 
 (outranked-by (Bitdiddle Ben) ?who)
 
-
+;; The query unifies with the outranked-by rule, causing the body of the rule to
+;; be evaluated in an environment with ?staff-person bound to (Bitdiddle Ben)
+;; and ?boss and ?who bound to one another, but not to a value. This evaluation
+;; reaches a recursive invocation of outranked-by. At the point where this
+;; invocation occurs, neither of its arguments has yet been bound to a value:
+;; ?middle-manager is a variable with no prior occurrences, and ?boss is not
+;; restricted by the first branch of the or-expression since the branches are
+;; evaluated independently. As the evaluator evaluates the recursive query,
+;; it reaches the *next* recursive invocation of outranked-by, where, for the
+;; same reasons as before, neither of the arguments is bound to a value. We have
+;; now evaluated outranked-by and reached a recursive invocation with
+;; essentially identical arguments (i.e. two arguments not bound to anything),
+;; so it is clear that recursion will proceed indefinitely (or at least, it will
+;; proceed indefinitely if we attempt to iterate through the full contents of
+;; the outermost result stream).
+;;
+;; This problem does not occur in the original version of outranked-by because
+;; the arguments to the and-expression are swapped. The recursive search is
+;; gated by (supervisor ?staff-person ?middle-manager), limiting recursive calls
+;; to only those situations where a relevant supervisor record exists.
+
+
 ;;;SECTION 4.4.4
 ;;; **SEE ALSO** ch4-query.scm (loadable/runnable query system)
 
