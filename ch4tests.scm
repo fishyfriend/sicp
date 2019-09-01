@@ -708,3 +708,16 @@ try-again
 (big-shot (scrooge eben) accounting)
 (big-shot (warbucks oliver) administration)
 (big-shot (bitdiddle ben) computer)
+
+
+;; EXERCISE 4.59
+;; a.
+;;; Query input:
+(meeting ?dept (Friday ?time))
+;;; Query results:
+(meeting administration (friday 1pm))
+
+;; c.
+;;; Query results:
+(meeting-time (hacker alyssa p) (wednesday 4pm))
+(meeting-time (hacker alyssa p) (wednesday 3pm))
