@@ -3476,9 +3476,35 @@
 
 
 ;; EXERCISE 4.60
-
 (lives-near ?person (Hacker Alyssa P))
 (lives-near ?person-1 ?person-2)
+
+;; The second search expression returns all instantiations of the invoked rule
+;; for which the variable assignments satisfy the rule body. For some pair of
+;; people a and b who live near each other, (lives-near a b) and
+;; (lives-near b a) are both true according to the body of lives-near, and so
+;; both instantiations are returned as search results.
+;;
+;; To filter out the redundant results from a commutative rule like lives-near,
+;; we can add an additional condition to our query to allow only results where
+;; the arguments follow a standard ordering. This ensures each combination of
+;; arguments can occur only once. We can achieve the filtering by using a
+;; lisp-value pattern to invoke an external sorting procedure.
+
+;; In Lisp:
+(define (in-order? xs ys)
+  (let ((lx (length xs)) (ly (length ys)))
+  (cond ((< lx ly) true)
+        ((> lx ly) false)
+        ((null? xs) true)
+        ((eq? (car xs) (car ys))
+         (in-order? (cdr xs) (cdr ys)))
+        (else
+         (symbol<? (car xs) (car ys))))))
+
+;; In query evaluator:
+(and (lives-near ?person-1 ?person-2)
+     (lisp-value in-order? ?person-1 ?person-2))
 
 
 ;;; Logic as programs

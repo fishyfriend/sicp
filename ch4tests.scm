@@ -721,3 +721,15 @@ try-again
 ;;; Query results:
 (meeting-time (hacker alyssa p) (wednesday 4pm))
 (meeting-time (hacker alyssa p) (wednesday 3pm))
+
+
+;; EXERCISE 4.60
+;;; Query results:
+(and (lives-near (aull dewitt) (reasoner louis))
+     (lisp-value in-order? (aull dewitt) (reasoner louis)))
+(and (lives-near (aull dewitt) (bitdiddle ben))
+     (lisp-value in-order? (aull dewitt) (bitdiddle ben)))
+(and (lives-near (fect cy d) (hacker alyssa p))
+     (lisp-value in-order? (fect cy d) (hacker alyssa p)))
+(and (lives-near (bitdiddle ben) (reasoner louis))
+     (lisp-value in-order? (bitdiddle ben) (reasoner louis)))
