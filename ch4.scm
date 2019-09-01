@@ -3644,6 +3644,19 @@
 ;; to only those situations where a relevant supervisor record exists.
 
 
+;; EXERCISE 4.65
+(wheel ?who)
+
+;; This query evaluates the body of wheel with ?person bound to ?who.
+;; A rule produces a result stream based on all valid instantiations of its
+;; body. Examining the body of wheel, we see that it holds for multiple
+;; combinations of values of the variables ?middle-manager and ?x when ?person
+;; is bound to (Warbucks Oliver). The result stream of the body will thus
+;; include multiple frames where ?person is (Warbucks Oliver), and each of these
+;; will produce a separate instantiation of (wheel ?who) with ?who bound to
+;; (Warbucks Oliver).
+
+
 ;;;SECTION 4.4.4
 ;;; **SEE ALSO** ch4-query.scm (loadable/runnable query system)
 
