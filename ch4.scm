@@ -3657,6 +3657,41 @@
 ;; (Warbucks Oliver).
 
 
+;; EXERCISE 4.66
+;; Some queries that include numeric data may produce multiple results that,
+;; while they are not the same result overall, may include the same numeric data
+;; as subexpressions. For example, this query to find the average salary among
+;; all supervisors --
+;;
+;;   (average ?amount
+;;     (and (supervisor ?report ?boss)
+;;          (salary ?boss ?amount)))
+;;
+;; -- will include results with the same ?boss and same ?amount for each
+;; employee who reports to a given supervisor, causing the average calculation
+;; to erroneously include the supervisor's salary more than once in cases
+;; where a supervisor has multiple direct reports. The result stream includes
+;; the salary of Ben Bitdiddle two times:
+;;
+;;   (and (supervisor (fect cy d) (bitdiddle ben))
+;;        (salary (bitdiddle ben) 60000))
+;;   (and (supervisor (hacker alyssa p) (bitdiddle ben))
+;;        (salary (bitdiddle ben) 60000))
+;;
+;; One way to fix this issue would be to create a new special form, unique.
+;; (unique (<var-1> <var-2> ... <var-n>) <query>) filters the results of <query>
+;; in such a way that, for each unique combination of values of <var-1> ...
+;; <var-n> that occurs in the frames of the result stream, the first frame
+;; containing that combination of values is retained, while subsequent such
+;; frames are dropped. Here is how unique could be used to achieve the desired
+;; behavior of the present example:
+;;
+;;   (average ?amount
+;;     (unique (?boss)
+;;             (and (supervisor ?report ?boss)
+;;                  (salary ?boss ?amount))))
+
+
 ;;;SECTION 4.4.4
 ;;; **SEE ALSO** ch4-query.scm (loadable/runnable query system)
 
