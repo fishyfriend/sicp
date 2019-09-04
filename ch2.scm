@@ -491,7 +491,7 @@
 ; which yields this simple approximation for the tolerance of the product of
 ; intervals:
 ;
-;   tol(ij) = tol(i) + tol(j) |#
+;   tol(ij) = tol(i) + tol(j)
 
 ;; parallel resistors
 
@@ -780,7 +780,7 @@
                            (max-val (cdr min-max)))
                      (cons (if min-val (min result min-val) result)
                            (if max-val (max result max-val) result))))
-                 (cons #f #f)
+                 (cons false false)
                  domain
                  grid-spacing))))
 
@@ -851,7 +851,7 @@
 
 ;; look up a value in a list of items of the form (list key value)
 (define (lookup key assoc-list)
-  (cond ((null? assoc-list) #f)
+  (cond ((null? assoc-list) false)
         ((eq? (car (car assoc-list)) key) (cadr (car assoc-list)))
         (else (lookup key (cdr assoc-list)))))
 
@@ -1034,7 +1034,7 @@
 ;; EXERCISE 2.23
 (define (for-each f xs)
   (if (null? xs)
-      #t
+      true
       (begin (f (car xs))
              (for-each f (cdr xs)))))
 
@@ -1560,20 +1560,20 @@
 (define (safe? k positions)
   (fold-left (lambda (acc col)
                (if (not acc)
-                   #f
+                   false
                    (safe-from k col positions)))
-             #t
+             true
              (enumerate-interval 1 (length positions))))
 
 (define (safe-from k1 k2 positions)
   (let ((row1 (row-of-queen-in-col positions k1))
         (row2 (row-of-queen-in-col positions k2)))
-       (cond ((= k1 k2) #t)
-             ((= row1 row2) #f)
+       (cond ((= k1 k2) true)
+             ((= row1 row2) false)
              ((= (abs (- row1 row2))
                  (abs (- k1 k2)))
-              #f)
-             (else #t))))
+              false)
+             (else true))))
 
 (queens 5)
 ; ((1 3 5 2 4) (1 4 2 5 3) (2 4 1 3 5) (2 5 3 1 4) (3 1 4 2 5)
@@ -2250,7 +2250,7 @@
                       (list '+)
                       (if (or (number? a2) (variable? a2)) (list a2) a2)))))
 
-(define (sum? x) (if (and (pair? x) (memq '+ x)) #t #f))
+(define (sum? x) (and (pair? x) (memq '+ x) true))
 (define (addend s) (simplify (before '+ s)))
 (define (augend s) (simplify (cdr (memq '+ s))))
 
@@ -2263,7 +2263,7 @@
                       (list '*)
                       (if (product? m2) m2 (list m2))))))
 
-(define (product? x) (if (and (pair? x) (not (sum? x)) (memq '* x)) #t #f))
+(define (product? x) (and (pair? x) (not (sum? x)) (memq '* x) true))
 (define (multiplier p) (simplify (before '* p)))
 (define (multiplicand p) (simplify (cdr (memq '* p))))
 
@@ -2725,7 +2725,7 @@
         (iter (cdr syms) (lambda () (display "  ")
                                     (indent)))))
   (iter (sublist symbols 0 n)
-        (lambda () #t)))
+        (lambda () true)))
 
 ; The procedure above generates a visualization of the Huffman tree for n
 ; symbols with relative frequencies 1, 2, 4, ..., 2ⁿ⁻¹.
@@ -3172,7 +3172,7 @@
 ; implementation of sets, and set is a set of employee records that conforms to
 ; that implementation. Valid set implementations should expose a lookup
 ; procedure via the data-directed dispatch table. (lookup key set) should return
-; data in the form of a pair (key . value), or #f if the requested key wasn't
+; data in the form of a pair (key . value), or false if the requested key wasn't
 ; found.
 
 (define (get-record file-path employee-name)
@@ -3771,8 +3771,8 @@
                       (lambda (items)
                         (cons (coerce-item (car items))
                               (coerce-tail (cdr items))))
-                      #f))
-                #f)))))
+                      false))
+                false)))))
   (define (make-apply-proc type-tags sig)
     (let ((proc (get op sig))
           (coerce-args (make-list-coercion type-tags sig)))
@@ -3873,7 +3873,7 @@
                       (fail)))
                 (fail)))))))
 
-;; Raise a to the same type as b, returning #f if this is not possible.
+;; Raise a to the same type as b, returning false if this is not possible.
 (define (try-raise a b)
   (define (iter a b)
     (if (eq? (type-tag a) (type-tag b))
@@ -4635,8 +4635,8 @@
 ;: (greatest-common-divisor p1 p2)
 ;Value: (polynomial x (2 -1) (1 1))
 
-;; The result obtained by hand is -1 times the result returned, which is acceptable
-;; for purposes of polynomial operations.
+;; The result obtained by hand is -1 times the result returned, which is
+;; acceptable for purposes of polynomial operations.
 ;;
 ;;   p1 = x⁴ - x³ + 2x²	+ 2 = (x² - 2)(x - 1)(x)
 ;;   p2 = x³ - x = (x + 1)(x - 1)(x)
