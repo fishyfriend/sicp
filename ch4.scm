@@ -3704,6 +3704,21 @@
 ;; first item of the history list should be dropped.
 
 
+;; EXERCISE 4.68
+;; This solution works for both (reverse ?x (1 2 3)) and (reverse (1 2 3) ?x).
+;; I haven't yet figured out a solution that follows the book's suggestion to
+;; use append-to-form. The solution below uses an auxiliary rule to mimic the
+;; logic of the reverse procedure from exercise 2.18.
+
+(rule (reverse ?a ?b)
+  (reverse-iter () () ?a ?b ?b ?a))
+
+(rule (reverse-iter ?x ?y (?a . ?b) (?c . ?d) ?x0 ?y0)
+  (reverse-iter (?a . ?x) (?c . ?y) ?b ?d ?x0 ?y0))
+
+(rule (reverse-iter ?x ?y () () ?x ?y))
+
+
 ;;;SECTION 4.4.4
 ;;; **SEE ALSO** ch4-query.scm (loadable/runnable query system)
 

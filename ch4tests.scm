@@ -769,3 +769,35 @@ try-again
 ;;; Query response:
 (grandson methushael jubal)
 (grandson methushael jabal)
+
+
+;; EXERCISE 4.68
+;;; Query input:
+(reverse (1 2 3) ?x)
+;;; Query response:
+(reverse (1 2 3) (3 2 1))
+
+;;; Query input:
+(reverse ?x (1 2 3))
+;;; Query response:
+(reverse (1 2 3) (3 2 1))
+
+;;; Query input:
+(reverse (1) ?x)
+;;; Query response:
+(reverse (1) (1))
+
+;;; Query input:
+(reverse ?x (1))
+;;; Query response:
+(reverse (1) (1))
+
+;;; Query input:
+(reverse ?x ())
+;;; Query response:
+(reverse () ())
+
+;;; Query input:
+(reverse () ?x)
+;;; Query response:
+(reverse () ())
