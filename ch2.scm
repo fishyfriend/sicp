@@ -633,7 +633,7 @@
 ;; introduced by "double-counting" variables as in exercise 2.15 can be said to
 ;; be a result of treating variables erroneously as pure quantities.) So we'll
 ;; need a way to represent expressions symbolically. This should be
-;; straightforward -- e.g. '((x + (* 3 y)).
+;; straightforward -- e.g. '((+ x (* 3 y))).
 ;;
 ;; Now we can rethink the problem in terms of the actual mathematical meaning of
 ;; expressions. An expression is essentially a function of multiple variables.
