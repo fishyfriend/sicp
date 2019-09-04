@@ -3719,6 +3719,19 @@
 (rule (reverse-iter ?x ?y () () ?x ?y))
 
 
+;; EXERCISE 4.69
+(rule ((great . ?rel) ?x ?y)
+  (and (son ?x ?s)
+       (or (and (same ?rel (grandson))
+                (grandson ?s ?y))
+           (and (?rel ?s ?y)
+                (ends-with ?rel grandson)))))
+
+(rule (ends-with (?x) ?x))
+(rule (ends-with (?a ?b . ?c) ?x)
+  (ends-with (?b . ?c) ?x))
+
+
 ;;;SECTION 4.4.4
 ;;; **SEE ALSO** ch4-query.scm (loadable/runnable query system)
 

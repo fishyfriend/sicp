@@ -801,3 +801,31 @@ try-again
 (reverse () ?x)
 ;;; Query response:
 (reverse () ())
+
+
+;; EXERCISE 4.69
+;;; Query input:
+((great grandson) ?g ?ggs)
+;;; Query response:
+((great grandson) adam irad)
+((great grandson) cain mehujael)
+((great grandson) enoch methushael)
+((great grandson) irad lamech)
+((great grandson) mehujael jabal)
+((great grandson) mehujael jubal)
+
+;;; Query input:
+(?relationship Adam Irad)
+;;; Query response:
+((great grandson) adam irad)
+
+;;; Query input:
+((great great great great great grandson) adam ?x)
+;;; Query response:
+((great great great great great grandson) adam jabal)
+((great great great great great grandson) adam jubal)
+
+;;; Query input:
+(?relationship adam jabal)
+;;; Query response:
+((great great great great great grandson) adam jabal)
