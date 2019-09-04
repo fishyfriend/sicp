@@ -4049,6 +4049,18 @@
         (cons-stream assertion THE-ASSERTIONS))
   'ok)
 
+;; This version of add-assertion! won't have the intended effect because
+;; cons-stream is a special form which delays evaluation of its second argument
+;; (the stream tail) until it is explicitly requested via stream-cdr. So calling
+;; stream-cdr on THE-ASSERTIONS will simply return THE-ASSERTIONS itself, and
+;; the stream is just an infinite repetition of its head, assertion.
+;;
+;; Aliasing THE-ASSERTIONS using a let-binding solves the problem because the
+;; values of variables in a let-binding are evaluated strictly. The alias
+;; variable already points at the intended stream tail (the old stream) when
+;; the tail of the new stream is evaluated, so the new stream behaves as
+;; expected.
+
 
 ;;;SECTION 4.4.4.6
 ;;;Stream operations
