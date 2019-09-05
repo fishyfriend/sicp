@@ -4222,6 +4222,17 @@
        (stream-car stream)
        (flatten-stream (stream-cdr stream)))))
 
+;; This version of flatten-stream forces a calculation of the entire contents
+;; of stream immediately. Because the recursive call to flatten-stream and its
+;; argument (stream-cdr stream) are both evaluated strictly, recursion will not
+;; cease until the stream is exhausted. This behavior is undesirable as it
+;; runs contrary to the purpose of using streams in the first place (delay the
+;; calculation of values in a sequence until they're needed) and because some
+;; streams are infinite, which will lead to stack overflow. By using the
+;; delayed version of interleave, we avoid these issues and preserve the
+;; expected benefits of stream usage.
+
+
 ;; EXERCISE 4.74
 (define (simple-stream-flatmap proc s)
   (simple-flatten (stream-map proc s)))
