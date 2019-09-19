@@ -3693,15 +3693,19 @@
 
 
 ;; EXERCISE 4.67
-;; The history should be a list of pairs of rules and frames, and the evaluator
-;; should use it like a queue. Each time the evaluator is about to evaluate a
-;; rule body in a frame, it should check the history to see whether there exists
-;; any pair containing that rule alongside a frame with the same variables and
+;; The history should be a list of pairs where each pair consists of a pattern
+;; and a frame. Each time the evaluator is about to evaluate a rule body in a
+;; frame, it should check the history to see whether there is a pair containing
+;; a pattern matching that rule alongside a frame with the same variables and
 ;; values as that frame. If such a pair exists, evaluation terminates with an
 ;; error. If such a pair does not exist, then a pair containing the rule and
 ;; frame should be added to the front of the history, and evaluation should
-;; proceed as normal. When the last item in the result stream is consumed, the
-;; first item of the history list should be dropped.
+;; proceed as normal. Each time a rule evaluation finishes, the front item of
+;; the history list should be dropped. (I.e., drop the item when qeval returns,
+;; *not* when the last item in the resulting stream is consumed. The history
+;; list is internal to qeval and does not persist between calls to qeval. This
+;; allows us to have recursive queries so long as the recursive part is delayed.
+;; See exercise 71.)
 
 
 ;; EXERCISE 4.68
