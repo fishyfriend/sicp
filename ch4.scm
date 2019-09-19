@@ -4213,6 +4213,84 @@
        (qeval (first-disjunct disjuncts) frame-stream)
        (disjoin (rest-disjuncts disjuncts) frame-stream))))
 
+;; Both simple-query and disjoin use delayed evaluation to avoid infinite
+;; recursion when evaluating certain recursive rules.
+;;
+;; Consider a recursive rule where some "base cases" are provided by assertions
+;; that match the same pattern as the rule. Such a rule relies on the fact
+;; that, when evaluating a matching query, the first results come from
+;; assertions rather than the rule itself. This means the result stream can be
+;; created without invoking the rule recursively, which is what we want, since
+;; for some rules (particularly those designed to generate an infinite set of
+;; results), recursive evaluation of the rule might continue indefinitely. In
+;; the following example, we have a data base of DNA fragments and a rule for
+;; generating combinations of fragments. We can run a query to generate valid
+;; DNA sequences (dna-seq ?x) successfully using the original implementation of
+;; simple-query, but with Louis Reasoner's modifiction above, this query
+;; overflows the stack.
+
+(rule (dna-seq ?z)
+  (and (dna-seq ?x)
+       (dna-seq ?y)
+       (append-to-form ?x ?y ?z)))
+
+(dna-seq (C A T))
+(dna-seq (A C T))
+(dna-seq (T A G))
+
+;;; Query input:
+(dna-seq ?x)
+
+;; With disjoin, an infinite recursion can occur when we have a recursive rule
+;; that invokes itself from the second or subsequent disjuncts of an
+;; or-expression. Delayed evaluation of the second and subsequent disjuncts
+;; avoids a stack overflow by postponing evaluation of each recursive query
+;; until the results it generates are actually needed.
+
+(direction north)
+(direction south)
+(direction east)
+(direction west)
+
+(rule (path ?x . ?y)
+  (and (direction ?x)
+       (or (same ?y ())
+           (path . ?y))))
+
+;;; Query input:
+(path . ?x)
+
+;; Note that some recursive queries will cause a stack overflow regardless of
+;; whether we use the delaying or non-delaying versions of simple-query and
+;; disjoin. With simple-query, a recursive rule that does not have any
+;; "base case" assertions will overflow because stream-append forces its second
+;; argument immediately when the first argument is the empty stream. (In this
+;; case the first argument is the empty stream of assertion results and the
+;; second argument is a recursive rule application.)
+
+(rule (ones 1))
+
+(rule (ones ?x . ?y)
+  (and (same ?x 1)
+       (ones . ?y)))
+
+;;; Query input:
+(ones . ?x)
+
+;; Similarly, placing a recursive query in the first disjunct of an
+;; or-expression causes an overflow because the first disjunct is evaluated
+;; strictly in both versions of disjoin. (Moreover, it is evaluated *first*,
+;; before all other disjuncts, so generating the first item in the result
+;; stream necessarily triggers the recursion.)
+
+(rule (path ?x . ?y)
+  (and (direction ?x)
+       (or (path . ?y)
+           (same ?y ()))))
+
+;; In conclusion, we can think of delayed evaluation as faciliating a limited
+;; subset of recursive queries that would not be possible otherwise.
+
 
 ;; EXERCISE 4.73
 (define (flatten-stream stream)
