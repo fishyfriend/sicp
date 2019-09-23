@@ -4296,6 +4296,44 @@
 ;; subset of recursive queries that would not be possible otherwise.
 
 
+;; EXERCISE 4.72
+;; Requires rules and assertions from exercise 71
+
+;; disjoin and stream-flatmap interleave items from their input streams so that,
+;; in the combined stream, an infinite input stream will not "starve out"
+;; results from the others. In the following example, if disjoin simply appended
+;; its substreams, items from the second disjunct of the or-expression would
+;; never be reachable due to the infinite length of the result stream produced
+;; by the first disjunct:
+
+(predefined-path over-sea-under-stone)
+(predefined-path as-the-crow-flies)
+(predefined-path there-and-back-again)
+
+(rule (directions . ?x)
+  (or (path . ?x)
+      (predefined-path . ?x)))
+
+;;; Query input:
+(directions . ?x)
+
+;; Below, we redefine directions as two separate rules. In evaluating multiple
+;; rules for a pattern, apply-rules uses stream-flatmap to combine the result
+;; streams from evaluating each applicable rule. If we issue the same query as
+;; before (directions . ?x), and if stream-flatmap appends its substreams rather
+;; than interleaving them, then the same problem occurs: any results from the
+;; first rule below are never reached as the second rule returns an infinite
+;; stream of results. (This example requires that the rules be defined in the
+;; order shown, as under the present data base implementation, results from the
+;; last-defined rule are returned first. Were we to reverse the order of
+;; definitions, the non-infinite result stream would be produced first, the
+;; infinite stream would be appended to it, and all results would eventually be
+;; reached.)
+
+(rule (directions . ?x) (predefined-path . ?x))
+(rule (directions . ?x) (path . ?x))
+
+
 ;; EXERCISE 4.73
 (define (flatten-stream stream)
   (if (stream-null? stream)
