@@ -4354,11 +4354,17 @@
 
 
 ;; EXERCISE 4.74
+;; a.
 (define (simple-stream-flatmap proc s)
   (simple-flatten (stream-map proc s)))
+
 (define (simple-flatten stream)
-  (stream-map ??FILL-THIS-IN??
-              (stream-filter ??FILL-THIS-IN?? stream)))
+  (stream-map stream-car
+              (stream-filter (lambda (s) (not (stream-null? s)))
+                             stream)))
+
+;; b. The behavior of the query system is unaffected by this change.
+
 
 ;; EXERCISE 4.75
 
