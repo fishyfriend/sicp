@@ -4292,7 +4292,7 @@
        (or (path . ?y)
            (same ?y ()))))
 
-;; In conclusion, we can think of delayed evaluation as faciliating a limited
+;; In conclusion, we can think of delayed evaluation as facilitating a limited
 ;; subset of recursive queries that would not be possible otherwise.
 
 
