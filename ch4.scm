@@ -4394,7 +4394,55 @@
 (and (supervisor ?e ?s) (unique (supervisor ?x ?s)) )
 
 
+;; EXERCISE 4.76
+;; This implementation of and-expressions creates some additional restrictions
+;; on recursive rules. For example, the query (outranked-by (?x ?y)) causes an
+;; infinite recursion. This issue does not seem to be avoidable without
+;; rewriting the rule in question or developing a novel way to handle recursive
+;; queries. The problem is that, when we evaluate a recursive query inside an
+;; and-expression, any "filtering" by earlier conjuncts of the and-expression
+;; is no longer applied, as the new implementation processes each conjunct
+;; separately. In some cases this filtering is needed to constrain the recursive
+;; query in such a way that infinite recursion is avoided.
 
+(define (conjoin conjuncts frame-stream)
+  (cond ((or (empty-conjunction? conjuncts)
+             (empty-stream? frame-stream))
+         frame-stream)
+        ((memq (type (first-conjunct conjuncts)) '(not lisp-value))
+         (conjoin (rest-conjuncts conjuncts)
+                  (qeval (first-conjunct conjuncts) frame-stream)))
+        (else
+          (conjoin (rest-conjuncts conjuncts)
+                   (merge-frame-streams
+                     frame-stream
+                     (qeval (first-conjunct conjuncts)
+                            (singleton-stream '())))))))
+
+(define (merge-frame-streams a b)
+  (stream-filter
+    (lambda (frame) (not (eq? frame 'failed)))
+    (stream-flatmap
+      (lambda (frame-a)
+        (stream-map
+          (lambda (frame-b) (merge-frames frame-a frame-b))
+          b))
+       a)))
+
+(define (merge-frames a b)
+  (cond ((or (eq? a 'failed) (eq? b 'failed)) 'failed)
+        ((empty-frame? a) b)
+        ((empty-frame? b) a)
+        (else
+          (let* ((binding (first-binding a))
+                 (variable (binding-variable binding))
+                 (value (binding-value binding)))
+            (merge-frames (rest-bindings a)
+                          (extend-if-possible variable value b))))))
+
+(define (empty-frame? frame) (null? frame))
+(define (first-binding frame) (car frame))
+(define (rest-bindings frame) (cdr frame))
 
 
 ;; EXERCISE 4.79
