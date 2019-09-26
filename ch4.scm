@@ -4367,14 +4367,34 @@
 
 
 ;; EXERCISE 4.75
+;: (unique (job ?x (computer wizard)))
+;: (unique (job ?x (computer programmer)))
+;: (and (job ?x ?j) (unique (job ?anyone ?j)))
 
-(unique (job ?x (computer wizard)))
+;; add to initialize-data-base
+;(put 'unique 'qeval uniquely-asserted)
 
-(unique (job ?x (computer programmer)))
+(define (uniquely-asserted operands frame-stream)
+  (stream-flatmap
+    (lambda (frame)
+      (let ((result-stream (qeval (unique-query operands)
+                                  (singleton-stream frame))))
+        (if (singleton-stream? result-stream)
+            result-stream
+            the-empty-stream)))
+    frame-stream))
 
-(and (job ?x ?j) (unique (job ?anyone ?j)))
+(define (unique-query operands) (car operands))
 
-(put 'unique 'qeval uniquely-asserted)
+(define (singleton-stream? s)
+  (and (not (empty-stream? s))
+       (empty-stream? (stream-cdr s))))
+
+;;; Query input:
+(and (supervisor ?e ?s) (unique (supervisor ?x ?s)) )
+
+
+
 
 
 ;; EXERCISE 4.79

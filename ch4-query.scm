@@ -13,6 +13,9 @@
 ;;;;Instead use initialize-data-base (from manual), supplied in this file.
 
 
+(define (defined? x)
+  (environment-bound? (nearest-repl/environment) x))
+
 ;;;SECTION 4.4.4.1
 ;;;The Driver Loop and Instantiation
 
@@ -572,6 +575,11 @@
   (put 'not 'qeval negate)
   (put 'lisp-value 'qeval lisp-value)
   (put 'always-true 'qeval always-true)
+
+  ;; from exercise 75
+  (if (defined? 'uniquely-asserted)
+      (put 'unique 'qeval uniquely-asserted))
+
   (deal-out rules-and-assertions '() '()))
 
 ;; Do following to reinit the data base from microshaft-data-base
