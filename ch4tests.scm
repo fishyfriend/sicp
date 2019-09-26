@@ -755,18 +755,18 @@ try-again
 ;; EXERCISE 4.63
 ;;; Query input:
 (grandson Cain ?x)
-;;; Query response:
+;;; Query results:
 (grandson cain irad)
 
 ;;; Query input:
 (son Lamech ?x)
-;;; Query response:
+;;; Query results:
 (son lamech jubal)
 (son lamech jabal)
 
 ;;; Query input:
 (grandson Methushael ?x)
-;;; Query response:
+;;; Query results:
 (grandson methushael jubal)
 (grandson methushael jabal)
 
@@ -774,39 +774,39 @@ try-again
 ;; EXERCISE 4.68
 ;;; Query input:
 (reverse (1 2 3) ?x)
-;;; Query response:
+;;; Query results:
 (reverse (1 2 3) (3 2 1))
 
 ;;; Query input:
 (reverse ?x (1 2 3))
-;;; Query response:
+;;; Query results:
 (reverse (1 2 3) (3 2 1))
 
 ;;; Query input:
 (reverse (1) ?x)
-;;; Query response:
+;;; Query results:
 (reverse (1) (1))
 
 ;;; Query input:
 (reverse ?x (1))
-;;; Query response:
+;;; Query results:
 (reverse (1) (1))
 
 ;;; Query input:
 (reverse ?x ())
-;;; Query response:
+;;; Query results:
 (reverse () ())
 
 ;;; Query input:
 (reverse () ?x)
-;;; Query response:
+;;; Query results:
 (reverse () ())
 
 
 ;; EXERCISE 4.69
 ;;; Query input:
 ((great grandson) ?g ?ggs)
-;;; Query response:
+;;; Query results:
 ((great grandson) adam irad)
 ((great grandson) cain mehujael)
 ((great grandson) enoch methushael)
@@ -816,18 +816,18 @@ try-again
 
 ;;; Query input:
 (?relationship Adam Irad)
-;;; Query response:
+;;; Query results:
 ((great grandson) adam irad)
 
 ;;; Query input:
 ((great great great great great grandson) adam ?x)
-;;; Query response:
+;;; Query results:
 ((great great great great great grandson) adam jabal)
 ((great great great great great grandson) adam jubal)
 
 ;;; Query input:
 (?relationship adam jabal)
-;;; Query response:
+;;; Query results:
 ((great great great great great grandson) adam jabal)
 
 
