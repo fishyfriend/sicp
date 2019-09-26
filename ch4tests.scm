@@ -829,3 +829,64 @@ try-again
 (?relationship adam jabal)
 ;;; Query response:
 ((great great great great great grandson) adam jabal)
+
+
+;; EXERCISE 4.77
+;;; Query input:
+(and (supervisor ?x ?y)
+     (not (job ?x (computer programmer))))
+;;; Query results:
+(and (supervisor (aull dewitt) (warbucks oliver))
+     (not (job (aull dewitt) (computer programmer))))
+(and (supervisor (cratchet robert) (scrooge eben))
+     (not (job (cratchet robert) (computer programmer))))
+(and (supervisor (scrooge eben) (warbucks oliver))
+     (not (job (scrooge eben) (computer programmer))))
+(and (supervisor (bitdiddle ben) (warbucks oliver))
+     (not (job (bitdiddle ben) (computer programmer))))
+(and (supervisor (reasoner louis) (hacker alyssa p))
+     (not (job (reasoner louis) (computer programmer))))
+(and (supervisor (tweakit lem e) (bitdiddle ben))
+     (not (job (tweakit lem e) (computer programmer))))
+
+;;; Query input:
+(and (not (job ?x (computer programmer)))
+     (supervisor ?x ?y))
+;;; Query results:
+(and (not (job (aull dewitt) (computer programmer)))
+     (supervisor (aull dewitt) (warbucks oliver)))
+(and (not (job (cratchet robert) (computer programmer)))
+     (supervisor (cratchet robert) (scrooge eben)))
+(and (not (job (scrooge eben) (computer programmer)))
+     (supervisor (scrooge eben) (warbucks oliver)))
+(and (not (job (bitdiddle ben) (computer programmer)))
+     (supervisor (bitdiddle ben) (warbucks oliver)))
+(and (not (job (reasoner louis) (computer programmer)))
+     (supervisor (reasoner louis) (hacker alyssa p)))
+(and (not (job (tweakit lem e) (computer programmer)))
+     (supervisor (tweakit lem e) (bitdiddle ben)))
+
+;;; Query input:
+(and (salary ?person ?amount)
+     (lisp-value > ?amount 30000))
+;;; Query results:
+(and (salary (scrooge eben) 75000) (lisp-value > 75000 30000))
+(and (salary (warbucks oliver) 150000) (lisp-value > 150000 30000))
+(and (salary (fect cy d) 35000) (lisp-value > 35000 30000))
+(and (salary (hacker alyssa p) 40000) (lisp-value > 40000 30000))
+(and (salary (bitdiddle ben) 60000) (lisp-value > 60000 30000))
+
+;;; Query input:
+(and (lisp-value > ?amount 30000)
+     (salary ?person ?amount))
+;;; Query results:
+(and (lisp-value > 75000 30000) (salary (scrooge eben) 75000))
+(and (lisp-value > 150000 30000) (salary (warbucks oliver) 150000))
+(and (lisp-value > 35000 30000) (salary (fect cy d) 35000))
+(and (lisp-value > 40000 30000) (salary (hacker alyssa p) 40000))
+(and (lisp-value > 60000 30000) (salary (bitdiddle ben) 60000))
+
+;;; Query input:
+(not (job ?x (computer programmer)))
+;;; Query results:
+(not (job ?x (computer programmer)))

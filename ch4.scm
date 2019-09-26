@@ -4445,6 +4445,124 @@
 (define (rest-bindings frame) (cdr frame))
 
 
+;; EXERCISE 4.77
+;; N.B. If the user enters a query where a filter expression contains variables
+;; that do not become bound by the time the query results are instantiated and
+;; displayed back to the user, the ideal behavior is not clear. In the following
+;; example, the variables ?a and ?b never become bound, so the frames in the
+;; final result stream still have delayed filters attached to them.
+;;
+;;   (and (not (address ?a ?b)) (supervisor ?x ?y))
+;;
+;; One choice is to simply display the query results with the unbound variables.
+;; This makes it reasonably clear to the user what is going on, and mimics
+;; the behavior of other queries with unbound variables, e.g. (same ?x ?x). I
+;; have chosen this behavior for ease of implementation as it requires no extra
+;; code changes.
+;;
+;; A second choice is to silently remove frames with unbound variables from the
+;; query result stream. This could be implemented by simply applying a filter
+;; in query-driver-loop. This behavior is similar to the original behavior of
+;; the system when the user enters such a "nonsense" query, but may conceal a
+;; problem from the user.
+;;
+;; A final choice is to raise an error. This could be implemented by checking
+;; whether each frame to be instantiated has any delayed filters attached, and
+;; raising an error if so. An explicit error message makes things clearer to the
+;; user but breaks the original system's implicit invariant that syntactically
+;; valid queries do not raise errors.
+
+(define (negate operands frame-stream)
+  (let* ((query (negated-query operands))
+         (filter (make-delayed-filter
+                   (vars-in-query query)
+                   (lambda (frame)
+                     (stream-null? (qeval query (singleton-stream frame)))))))
+    (apply-delayed-filter filter frame-stream)))
+
+(define (lisp-value call frame-stream)
+  (let ((filter
+         (make-delayed-filter
+           (vars-in-query call)
+           (lambda (frame)
+             (execute
+               (instantiate call
+                            frame
+                            (lambda (v f)
+                              (error "Unknown pat var -- LISP-VALUE" v))))))))
+    (apply-delayed-filter filter frame-stream)))
+
+(define (extend variable value frame)
+  (try-delayed-filters (add-binding variable value frame)))
+
+(define (apply-delayed-filter filter frame-stream)
+  (stream-flatmap
+    (lambda (frame)
+      (let ((result (filter frame)))
+        (cond ((eq? result 'missing-bindings)
+               (singleton-stream (attach-delayed-filter filter frame)))
+              ((eq? result 'success) (singleton-stream frame))
+              ((eq? result 'failed) the-empty-stream)
+              (else (error "Unexpected value -- APPLY-DELAYED-FILTER")))))
+    frame-stream))
+
+(define (make-delayed-filter required-vars pred)
+  (define (unbound? var frame)
+    (not (binding-in-frame var frame)))
+  (lambda (frame)
+    (cond ((find (lambda (v) (unbound? v frame)) required-vars)
+           'missing-bindings)
+          ((pred frame) 'success)
+          (else 'failed))))
+
+(define (try-delayed-filters frame)
+  (define (iter frame filters-to-keep filters-to-try)
+    (if (null? filters-to-try)
+        (fold-left (lambda (frame filter) (attach-delayed-filter filter frame))
+                   (without-delayed-filters frame)
+                   filters-to-keep)
+        (let* ((filter (car filters-to-try))
+               (result (filter frame)))
+          (cond ((eq? result 'missing-bindings)
+                 (iter frame
+                       (cons filter filters-to-keep)
+                       (cdr filters-to-try)))
+                ((eq? result 'success)
+                 (iter frame
+                       filters-to-keep
+                       (cdr filters-to-try)))
+                ((eq? result 'failed) 'failed)
+                (else (error "Unexpected value -- TRY-DELAYED-FILTERS"))))))
+  (iter frame '() (reverse (delayed-filters frame))))
+
+(define the-empty-frame (cons '() '()))
+
+(define (bindings frame) (car frame))
+
+(define (binding-in-frame variable frame)
+  (assoc variable (bindings frame)))
+
+(define (add-binding variable value frame)
+  (cons (cons (make-binding variable value)
+              (bindings frame))
+        (delayed-filters frame)))
+
+(define (delayed-filters frame) (cdr frame))
+
+(define (attach-delayed-filter filter frame)
+  (cons (bindings frame) (cons filter (delayed-filters frame))))
+
+(define (without-delayed-filters frame)
+  (cons (bindings frame) '()))
+
+(define (vars-in-query query)
+  (cond ((var? query) (list query))
+        ((pair? query)
+         (append (vars-in-query (car query))
+                 (vars-in-query (cdr query))))
+        (else '())))
+
+
 ;; EXERCISE 4.79
 
 (define (square x)

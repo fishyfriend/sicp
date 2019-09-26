@@ -41,7 +41,13 @@
                             frame
                             (lambda (v f)
                               (contract-question-mark v))))
-             (qeval q (singleton-stream '()))))
+
+             ;; from exercise 77
+             ;; allow custom representation of empty frames
+             (let ((frame (if (defined? 'the-empty-frame)
+                              the-empty-frame
+                              '())))
+               (qeval q (singleton-stream frame)))))
            (query-driver-loop)))))
 
 (define (instantiate exp frame unbound-var-handler)
