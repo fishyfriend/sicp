@@ -4404,6 +4404,8 @@
 ;; is no longer applied, as the new implementation processes each conjunct
 ;; separately. In some cases this filtering is needed to constrain the recursive
 ;; query in such a way that infinite recursion is avoided.
+;;
+;; TODO: add this exercise to the query system
 
 (define (conjoin conjuncts frame-stream)
   (cond ((or (empty-conjunction? conjuncts)
